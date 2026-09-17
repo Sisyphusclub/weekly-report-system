@@ -31,7 +31,12 @@ export function BlockerActions({
       const r = await fetch(`/api/blockers/${id}`, {
         method: "PATCH",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ action, resolution, version, coordinatorId: action === "ASSIGN" ? coordinatorId : undefined }),
+        body: JSON.stringify({
+          action,
+          resolution,
+          version,
+          coordinatorId: action === "ASSIGN" ? coordinatorId : undefined,
+        }),
       });
       const result = await r.json();
       if (!r.ok) setMessage(result.error);
@@ -45,12 +50,30 @@ export function BlockerActions({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex gap-2">
-        {canAssign && <>
-          <Select aria-label="协调负责人" selectedKey={coordinatorId || null} onSelectionChange={(key) => setCoordinatorId(String(key))} isDisabled={pending}>
-            {coordinators.map((person) => <SelectItem key={person.id} id={person.id}>{person.name}</SelectItem>)}
-          </Select>
-          <Button type="button" variant="secondary" onClick={() => void act("ASSIGN")} disabled={pending || !coordinatorId}>分配协调人</Button>
-        </>}
+        {canAssign && (
+          <>
+            <Select
+              aria-label="协调负责人"
+              selectedKey={coordinatorId || null}
+              onSelectionChange={(key) => setCoordinatorId(String(key))}
+              isDisabled={pending}
+            >
+              {coordinators.map((person) => (
+                <SelectItem key={person.id} id={person.id}>
+                  {person.name}
+                </SelectItem>
+              ))}
+            </Select>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => void act("ASSIGN")}
+              disabled={pending || !coordinatorId}
+            >
+              分配协调人
+            </Button>
+          </>
+        )}
         {canAcknowledge && (
           <Button
             type="button"

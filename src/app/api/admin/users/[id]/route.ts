@@ -27,20 +27,16 @@ export async function PATCH(
       if (!changed.length) throw new BusinessError("账号不存在", 404);
       if (parsed.data.status === "DISABLED")
         await tx.delete(session).where(eq(session.userId, id));
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action:
-            parsed.data.status === "DISABLED"
-              ? "USER_DISABLED"
-              : "USER_ENABLED",
-          resourceType: "USER",
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action:
+          parsed.data.status === "DISABLED" ? "USER_DISABLED" : "USER_ENABLED",
+        resourceType: "USER",
+        resourceId: id,
+        result: "SUCCESS",
+      });
     });
     return Response.json({ ok: true });
   } catch (error) {

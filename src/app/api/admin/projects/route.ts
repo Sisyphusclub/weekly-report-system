@@ -67,26 +67,22 @@ export async function POST(request: Request) {
         await tx
           .insert(project)
           .values({ id, organizationId: actor.organizationId, ...values });
-      await tx
-        .insert(projectMember)
-        .values(
-          members.map((userId) => ({
-            organizationId: actor.organizationId,
-            projectId: id,
-            userId,
-          })),
-        );
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
+      await tx.insert(projectMember).values(
+        members.map((userId) => ({
           organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: input.id ? "PROJECT_UPDATE" : "PROJECT_CREATE",
-          resourceType: "project",
-          resourceId: id,
-          result: "SUCCESS",
-        });
+          projectId: id,
+          userId,
+        })),
+      );
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: input.id ? "PROJECT_UPDATE" : "PROJECT_CREATE",
+        resourceType: "project",
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return { id, version: values.version };
     });
     return Response.json(result);

@@ -18,15 +18,13 @@ beforeEach(() => {
 it.each(["OPEN", "RESOLVED"])(
   "协调人接收时遵循状态限制：%s",
   async (status) => {
-    const update = vi
-      .fn()
-      .mockReturnValue({
-        set: () => ({
-          where: () => ({
-            returning: async () => [{ version: 2, status: "ACKNOWLEDGED" }],
-          }),
+    const update = vi.fn().mockReturnValue({
+      set: () => ({
+        where: () => ({
+          returning: async () => [{ version: 2, status: "ACKNOWLEDGED" }],
         }),
-      });
+      }),
+    });
     const tx = {
       select: () => ({
         from: () => ({

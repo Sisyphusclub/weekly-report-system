@@ -56,17 +56,15 @@ export async function POST(request: Request) {
         await tx
           .insert(table)
           .values({ id, organizationId: actor.organizationId, ...values });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: input.id ? "DICTIONARY_UPDATE" : "DICTIONARY_CREATE",
-          resourceType: input.kind,
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: input.id ? "DICTIONARY_UPDATE" : "DICTIONARY_CREATE",
+        resourceType: input.kind,
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return { id, ...values };
     });
     return Response.json(result);

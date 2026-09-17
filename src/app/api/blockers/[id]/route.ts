@@ -62,17 +62,15 @@ export async function PATCH(
           .where(and(eq(blocker.id, id), eq(blocker.version, item.version)))
           .returning({ version: blocker.version, status: blocker.status });
         if (!updated) throw new Error("CONFLICT");
-        await tx
-          .insert(auditLog)
-          .values({
-            id: crypto.randomUUID(),
-            organizationId: actor.organizationId,
-            actorId: actor.id,
-            action: "BLOCKER_ASSIGN",
-            resourceType: "BLOCKER",
-            resourceId: id,
-            result: "SUCCESS",
-          });
+        await tx.insert(auditLog).values({
+          id: crypto.randomUUID(),
+          organizationId: actor.organizationId,
+          actorId: actor.id,
+          action: "BLOCKER_ASSIGN",
+          resourceType: "BLOCKER",
+          resourceId: id,
+          result: "SUCCESS",
+        });
         await tx
           .insert(notification)
           .values({

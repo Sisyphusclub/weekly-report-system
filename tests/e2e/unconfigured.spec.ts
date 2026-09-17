@@ -31,6 +31,15 @@ test("business routes require authentication", async ({ page }) => {
     "/reports",
     "/reports/unknown",
     "/security",
+    "/daily",
+    "/weekly",
+    "/tasks",
+    "/notifications",
+    "/blockers",
+    "/blockers/unknown",
+    "/admin/users",
+    "/admin/projects",
+    "/admin/dictionaries",
   ]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login$/);

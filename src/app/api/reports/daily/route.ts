@@ -150,17 +150,15 @@ export async function POST(request: Request) {
           ),
         );
       if (selectedTasks.length)
-        await tx
-          .insert(reportTask)
-          .values(
-            selectedTasks.map((task) => ({
-              organizationId: actor.organizationId,
-              reportId: id,
-              taskId: task.id,
-              snapshot: task,
-              sourceReportId: id,
-            })),
-          );
+        await tx.insert(reportTask).values(
+          selectedTasks.map((task) => ({
+            organizationId: actor.organizationId,
+            reportId: id,
+            taskId: task.id,
+            snapshot: task,
+            sourceReportId: id,
+          })),
+        );
       if (input.submit)
         await tx.insert(reportRevision).values({
           id: crypto.randomUUID(),
