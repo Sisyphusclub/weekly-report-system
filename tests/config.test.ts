@@ -15,6 +15,14 @@ describe("runtime configuration", () => {
   it.each(["production", "staging"])("requires HTTPS in %s", (APP_ENV) =>
     expect(configurationStatus({ ...env, APP_ENV }).ready).toBe(false),
   );
+  it("requires object storage outside development", () =>
+    expect(
+      configurationStatus({
+        ...env,
+        APP_ENV: "production",
+        BETTER_AUTH_URL: "https://reports.example",
+      }).ready,
+    ).toBe(false));
   it("rejects a non-PostgreSQL URL", () =>
     expect(
       configurationStatus({ ...env, DATABASE_URL: "https://example.com" })

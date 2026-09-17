@@ -25,6 +25,22 @@ const schema = z
         path: ["BETTER_AUTH_URL"],
         message: "HTTPS required",
       });
+    if (env.APP_ENV !== "development") {
+      for (const field of [
+        "S3_ENDPOINT",
+        "S3_REGION",
+        "S3_BUCKET",
+        "S3_ACCESS_KEY_ID",
+        "S3_SECRET_ACCESS_KEY",
+      ] as const) {
+        if (!env[field])
+          context.addIssue({
+            code: "custom",
+            path: [field],
+            message: "生产环境必须配置附件存储",
+          });
+      }
+    }
   });
 
 export function configurationStatus(
