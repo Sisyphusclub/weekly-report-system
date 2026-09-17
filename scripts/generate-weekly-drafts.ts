@@ -63,7 +63,7 @@ async function main() {
           ),
         )
         .limit(1);
-      const [daily] = await tx
+      const daily = await tx
         .select({
           id: report.id,
           reportDate: report.reportDate,
@@ -103,7 +103,10 @@ async function main() {
         weekLabel: period.weekLabel,
         dueAt,
         summary: draftSummary(
-          daily ? [{ date: daily.reportDate!, summary: daily.summary }] : [],
+          daily.map((item) => ({
+            date: item.reportDate!,
+            summary: item.summary,
+          })),
         ),
         calendarVersion: Math.max(0, ...calendar.map((day) => day.version)),
         version: 1,
