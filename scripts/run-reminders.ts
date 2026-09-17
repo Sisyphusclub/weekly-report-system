@@ -19,7 +19,7 @@ async function main() {
   const organizationId = process.env.REMINDER_ORGANIZATION_ID;
   if (!organizationId) throw new Error("REMINDER_ORGANIZATION_ID is required");
   const dates = weekDates(shanghaiDate(now));
-  const [members, bosses, reports, calendar, exemptions, blockers] =
+  const [members, bosses, reports, blockers, calendar, exemptions] =
     await Promise.all([
       db
         .select({ id: user.id, name: user.name, createdAt: user.createdAt })
