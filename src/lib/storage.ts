@@ -5,6 +5,7 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  HeadBucketCommand,
 } from "@aws-sdk/client-s3";
 import { getConfig } from "./config";
 
@@ -121,4 +122,8 @@ export async function verifyObject(
               !ascii.startsWith("\u007fELF") &&
               !ascii.startsWith("#!");
   if (!valid) throw new Error("附件内容与类型不匹配");
+}
+export async function checkStorage() {
+  const config = storageConfig();
+  await client().send(new HeadBucketCommand({ Bucket: config.S3_BUCKET }));
 }
