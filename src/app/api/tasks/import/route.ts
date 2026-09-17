@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     const result = await getDb().transaction(async (tx) => {
       const created: string[] = [];
       for (const item of parsed.data.items) {
-        if (actor.role !== "BOSS" && item.primaryAssigneeId !== actor.id)
+        if (actor.role === "EMPLOYEE" && item.primaryAssigneeId !== actor.id)
           throw new BusinessError("只能导入自己的任务", 403);
         if (item.kind === "ACTUAL" && !item.workDate)
           throw new BusinessError("实际任务必须填写工作日期");
