@@ -5,13 +5,15 @@ export default defineConfig({
   retries: 0,
   use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Edge"], channel: "msedge" } },
+    {
+      name: "desktop",
+      use: { ...devices["Desktop Chrome"], browserName: "chromium" },
+    },
     {
       name: "mobile",
       use: {
         ...devices["iPhone 13"],
         browserName: "chromium",
-        channel: "msedge",
       },
     },
   ],
