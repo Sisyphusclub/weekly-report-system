@@ -72,6 +72,8 @@ export async function POST(request: Request) {
     const parsed = taskInput.safeParse(await request.json().catch(() => null));
     if (!parsed.success) throw new BusinessError("任务内容、日期或版本无效");
     const input = parsed.data;
+    if (!input.id && input.kind === "PLAN" && input.sourceTaskId)
+      throw new BusinessError("请通过滚动计划操作创建后续计划");
     if (actor.role !== "BOSS" && input.primaryAssigneeId !== actor.id)
       throw new BusinessError("只能修改自己的任务", 403);
     const result = await getDb().transaction(async (tx) => {
@@ -92,6 +94,34 @@ export async function POST(request: Request) {
           throw new BusinessError("只能修改自己的任务", 403);
         if (existing.version !== input.version)
           throw new BusinessError("任务已被更新，请刷新后重试", 409);
+        if (existing.sourceTaskId !== input.sourceTaskId)
+          throw new BusinessError("任务来源不能修改");
+        if (
+          existing.kind === "PLAN" &&
+          (input.kind !== "PLAN" || input.dueDate !== existing.dueDate)
+        )
+          throw new BusinessError(
+            "原计划类型和截止日期不能修改，请创建后续任务",
+          );
+      }
+      if (!input.id && input.sourceTaskId) {
+        const [source] = await tx
+          .select()
+          .from(workTask)
+          .where(
+            and(
+              eq(workTask.id, input.sourceTaskId),
+              eq(workTask.organizationId, actor.organizationId),
+            ),
+          )
+          .limit(1)
+          .for("share");
+        if (
+          !source ||
+          source.kind !== "PLAN" ||
+          (actor.role !== "BOSS" && source.primaryAssigneeId !== actor.id)
+        )
+          throw new BusinessError("来源计划不存在或无权引用", 403);
       }
       const [refs] = await tx
         .select({

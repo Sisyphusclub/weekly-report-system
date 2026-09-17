@@ -132,3 +132,54 @@ it("管理员不能调用业务任务写入接口", async () => {
   expect(response.status).toBe(403);
   expect(mocks.getDb).not.toHaveBeenCalled();
 });
+
+it("普通创建接口不能绕过计划滚动规则", async () => {
+  const response = await POST(
+    request({
+      ...payload,
+      id: undefined,
+      version: 0,
+      kind: "PLAN",
+      dueDate: "2026-09-20",
+      sourceTaskId: payload.id,
+    }),
+  );
+  expect(response.status).toBe(400);
+  expect(mocks.getDb).not.toHaveBeenCalled();
+});
+
+it.each([
+  { sourceTaskId: payload.id },
+  { kind: "ACTUAL", dueDate: null },
+  { dueDate: "2026-09-25" },
+])("不能通过编辑清洗原计划事实：%j", async (changes) => {
+  const update = vi.fn();
+  const tx = {
+    select: () => ({
+      from: () => ({
+        where: () => ({
+          limit: () => ({
+            for: async () => [
+              {
+                primaryAssigneeId: "employee",
+                version: 1,
+                kind: "PLAN",
+                dueDate: "2026-09-18",
+                sourceTaskId: null,
+              },
+            ],
+          }),
+        }),
+      }),
+    }),
+    update,
+  };
+  mocks.getDb.mockReturnValue({
+    transaction: (fn: (value: typeof tx) => unknown) => fn(tx),
+  });
+  const response = await POST(
+    request({ ...payload, kind: "PLAN", dueDate: "2026-09-18", ...changes }),
+  );
+  expect(response.status).toBe(400);
+  expect(update).not.toHaveBeenCalled();
+});
