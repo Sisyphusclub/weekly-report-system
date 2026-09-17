@@ -43,6 +43,11 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
       headers: { "content-type": file.type },
       body: file,
     });
+    if (!put.ok) {
+      await fetch(`/api/tasks/attachments?id=${encodeURIComponent(data.id)}`, {
+        method: "DELETE",
+      });
+    }
     setMessage(put.ok ? "上传完成" : "文件上传失败");
     if (put.ok) await load();
   };
