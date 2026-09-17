@@ -1,5 +1,6 @@
 "use client";
 import { useState } from "react";
+import { Button, ButtonLink } from "@/components/base/buttons/button";
 type Item = {
   id: string;
   title: string;
@@ -10,49 +11,76 @@ type Item = {
 };
 export function NotificationList({ items: initial }: { items: Item[] }) {
   const [items, setItems] = useState(initial);
+  const [pending, setPending] = useState<string | null>(null);
+  const [error, setError] = useState("");
   async function mark(id: string) {
-    const response = await fetch("/api/notifications", {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    if (response.ok)
-      setItems((current) =>
-        current.map((item) =>
-          item.id === id ? { ...item, readAt: new Date() } : item,
-        ),
-      );
+    if (pending) return;
+    setPending(id);
+    setError("");
+    try {
+      const response = await fetch("/api/notifications", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+      const result = await response.json();
+      if (response.ok && result.ok)
+        setItems((current) =>
+          current.map((item) =>
+            item.id === id ? { ...item, readAt: new Date() } : item,
+          ),
+        );
+      else setError(result.error ?? "标记失败，请刷新核对通知");
+    } catch {
+      setError("通知更新失败，请稍后重试");
+    } finally {
+      setPending(null);
+    }
   }
   return items.length ? (
-    <ul className="divide-y divide-separator-border rounded-3xl border border-border-button-default">
-      {items.map((item) => (
-        <li
-          key={item.id}
-          className="flex items-start justify-between gap-4 p-5"
-        >
-          <div>
-            <p
-              className={item.readAt ? "text-body-regular" : "text-body-medium"}
-            >
-              {item.title}
-            </p>
-            <time className="mt-2 block text-body-regular text-text-secondary">
-              {item.createdAt.toLocaleString("zh-CN", {
-                timeZone: "Asia/Shanghai",
-              })}
-            </time>
-          </div>
-          <div className="flex gap-3">
-            {item.link && <a href={item.link}>打开</a>}
-            {!item.readAt && (
-              <button type="button" onClick={() => void mark(item.id)}>
-                标为已读
-              </button>
-            )}
-          </div>
-        </li>
-      ))}
-    </ul>
+    <div>
+      {error && <p role="alert">{error}</p>}
+      <ul className="divide-y divide-separator-border rounded-3xl border border-border-button-default">
+        {items.map((item) => (
+          <li
+            key={item.id}
+            className="flex flex-wrap items-start justify-between gap-4 p-5"
+          >
+            <div>
+              <p
+                className={
+                  item.readAt ? "text-body-regular" : "text-body-medium"
+                }
+              >
+                {item.title}
+              </p>
+              <time className="mt-2 block text-body-regular text-text-secondary">
+                {item.createdAt.toLocaleString("zh-CN", {
+                  timeZone: "Asia/Shanghai",
+                })}
+              </time>
+            </div>
+            <div className="flex gap-3">
+              {item.link && (
+                <ButtonLink href={item.link} variant="ghost">
+                  打开
+                </ButtonLink>
+              )}
+              {!item.readAt && (
+                <Button
+                  type="button"
+                  variant="secondary"
+                  disabled={pending !== null}
+                  onClick={() => void mark(item.id)}
+                >
+                  {pending === item.id ? "正在更新…" : "标为已读"}
+                </Button>
+              )}
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
   ) : (
     <div className="rounded-3xl border border-border-button-default p-12 text-center">
       <p className="text-headline-medium">暂无通知</p>
