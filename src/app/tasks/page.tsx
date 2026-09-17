@@ -6,6 +6,7 @@ import { category, project, user, workTask } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { TaskForm } from "@/components/workspace/task-form";
 import { RollPlanForm } from "@/components/workspace/roll-plan-form";
+import { TaskStatusForm } from "@/components/workspace/task-status-form";
 import { ButtonLink } from "@/components/base/buttons/button";
 export const metadata = { title: "任务管理" };
 export default async function TasksPage({
@@ -98,6 +99,12 @@ export default async function TasksPage({
               className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-button-default p-4"
             >
               <span className="min-w-0 break-words">{task.content}</span>
+              <TaskStatusForm
+                key={`${task.id}:${task.version}`}
+                taskId={task.id}
+                version={task.version}
+                status={task.status}
+              />
               <span className="text-body-regular text-text-secondary">
                 {task.kind === "PLAN" ? "计划" : "实际"} · {task.categoryName} ·{" "}
                 {
