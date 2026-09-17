@@ -84,6 +84,7 @@ export function WorkspaceShell({
                     href: "/admin/exemptions",
                   },
                   { key: "audit", label: "审计日志", href: "/admin/audit" },
+                  { key: "tasks", label: "任务数据", href: "/admin/tasks" },
                 ]
               : []),
             ...(actor.role !== "ADMIN"
