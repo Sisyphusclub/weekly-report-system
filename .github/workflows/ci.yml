@@ -30,6 +30,8 @@ jobs:
         run: npm run format:check
       - name: Unit tests
         run: npm test
+      - name: Migration consistency
+        run: npx drizzle-kit check
       - name: Production build
         run: npm run build
       - name: Dependency audit
