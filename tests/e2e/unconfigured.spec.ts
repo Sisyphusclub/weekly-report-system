@@ -40,6 +40,9 @@ test("business routes require authentication", async ({ page }) => {
     "/admin/users",
     "/admin/projects",
     "/admin/dictionaries",
+    "/admin/calendar",
+    "/admin/exemptions",
+    "/admin/audit",
   ]) {
     await page.goto(path);
     await expect(page).toHaveURL(/\/login$/);

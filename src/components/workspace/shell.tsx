@@ -21,7 +21,8 @@ export function WorkspaceShell({
     | "notifications"
     | "tasks"
     | "calendar"
-    | "exemptions";
+    | "exemptions"
+    | "audit";
   children: React.ReactNode;
 }) {
   return (
@@ -82,6 +83,7 @@ export function WorkspaceShell({
                     label: "请假与免报",
                     href: "/admin/exemptions",
                   },
+                  { key: "audit", label: "审计日志", href: "/admin/audit" },
                 ]
               : []),
             ...(actor.role !== "ADMIN"
