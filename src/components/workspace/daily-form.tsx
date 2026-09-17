@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { Input } from "@/components/base/input/input";
 import { Textarea } from "@/components/base/textarea/textarea";
 import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { Checkbox } from "@/components/base/checkbox/checkbox";
 
 export function DailyForm({
   date,
@@ -24,6 +25,7 @@ export function DailyForm({
   const [submitted, setSubmitted] = useState(draft?.status === "SUBMITTED");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const busy = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   async function save(submit: boolean) {
@@ -78,10 +80,9 @@ export function DailyForm({
         <fieldset className="flex flex-col gap-2">
           <legend className="text-label-medium">关联任务</legend>
           {tasks.map((task) => (
-            <label key={task.id} className="flex items-center gap-2 text-body-medium">
-              <input type="checkbox" name="taskIds" value={task.id} disabled={pending || submitted} />
-              <span>{task.content} ({task.kind === "PLAN" ? "计划" : "实际"})</span>
-            </label>
+            <Checkbox key={task.id} name="taskIds" value={task.id} isSelected={selectedTaskIds.includes(task.id)} onChange={(checked) => setSelectedTaskIds((current) => checked ? [...current, task.id] : current.filter((id) => id !== task.id))} isDisabled={pending || submitted}>
+              {task.content} ({task.kind === "PLAN" ? "计划" : "实际"})
+            </Checkbox>
           ))}
         </fieldset>
       )}
