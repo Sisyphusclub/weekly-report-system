@@ -116,6 +116,9 @@ export async function verifyObject(
           ? bytes[0] === 255 && bytes[1] === 216
           : contentType === "image/webp"
             ? ascii.startsWith("RIFF") && ascii.slice(8, 12) === "WEBP"
-            : !bytes.includes(0);
+            : !bytes.includes(0) &&
+              !ascii.startsWith("MZ") &&
+              !ascii.startsWith("\u007fELF") &&
+              !ascii.startsWith("#!");
   if (!valid) throw new Error("附件内容与类型不匹配");
 }
