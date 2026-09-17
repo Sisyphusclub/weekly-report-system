@@ -1,8 +1,13 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, isNotNull } from "drizzle-orm";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { taskAttachment, workTask } from "@/lib/db/schema";
-import { deleteObject, downloadUrl, uploadUrl } from "@/lib/storage";
+import {
+  deleteObject,
+  downloadUrl,
+  uploadUrl,
+  verifyObject,
+} from "@/lib/storage";
 import { attachmentInput } from "@/lib/attachment-input";
 export async function GET(request: Request) {
   try {
@@ -17,6 +22,7 @@ export async function GET(request: Request) {
         and(
           eq(taskAttachment.organizationId, actor.organizationId),
           eq(taskAttachment.taskId, taskId),
+          isNotNull(taskAttachment.verifiedAt),
         ),
       )
       .orderBy(asc(taskAttachment.createdAt));
@@ -43,6 +49,46 @@ export async function GET(request: Request) {
         })),
       ),
     });
+  } catch (e) {
+    return apiError(e);
+  }
+}
+export async function PATCH(request: Request) {
+  try {
+    const actor = await writeActor(request);
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id) throw new BusinessError("附件参数无效");
+    const db = getDb();
+    const [row] = await db
+      .select({
+        id: taskAttachment.id,
+        objectKey: taskAttachment.objectKey,
+        sizeBytes: taskAttachment.sizeBytes,
+        assignee: workTask.primaryAssigneeId,
+      })
+      .from(taskAttachment)
+      .innerJoin(
+        workTask,
+        and(
+          eq(workTask.organizationId, taskAttachment.organizationId),
+          eq(workTask.id, taskAttachment.taskId),
+        ),
+      )
+      .where(
+        and(
+          eq(taskAttachment.id, id),
+          eq(taskAttachment.organizationId, actor.organizationId),
+        ),
+      )
+      .limit(1);
+    if (!row || (actor.role === "EMPLOYEE" && row.assignee !== actor.id))
+      throw new BusinessError("无权确认任务附件", 403);
+    await verifyObject(row.objectKey, row.sizeBytes);
+    await db
+      .update(taskAttachment)
+      .set({ verifiedAt: new Date(), updatedAt: new Date() })
+      .where(eq(taskAttachment.id, id));
+    return Response.json({ ok: true });
   } catch (e) {
     return apiError(e);
   }

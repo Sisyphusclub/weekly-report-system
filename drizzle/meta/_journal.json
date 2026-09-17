@@ -37,6 +37,7 @@
     { "idx": 8, "version": "7", "when": 1789669935004, "tag": "0008_blocker_comments", "breakpoints": true },
     { "idx": 9, "version": "7", "when": 1789720000000, "tag": "0009_dictionary_merge_snapshot", "breakpoints": true },
     { "idx": 10, "version": "7", "when": 1789720000001, "tag": "0010_task_attachments", "breakpoints": true },
-    { "idx": 11, "version": "7", "when": 1789720000002, "tag": "0011_task_attachment_hash", "breakpoints": true }
+    { "idx": 11, "version": "7", "when": 1789720000002, "tag": "0011_task_attachment_hash", "breakpoints": true },
+    { "idx": 12, "version": "7", "when": 1789720000003, "tag": "0012_task_attachment_verified", "breakpoints": true }
   ]
 }

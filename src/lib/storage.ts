@@ -4,6 +4,7 @@ import {
   PutObjectCommand,
   GetObjectCommand,
   DeleteObjectCommand,
+  HeadObjectCommand,
 } from "@aws-sdk/client-s3";
 import { getConfig } from "./config";
 
@@ -71,4 +72,11 @@ export async function deleteObject(key: string) {
       return;
     throw error;
   }
+}
+export async function verifyObject(key: string, sizeBytes: number) {
+  const config = storageConfig();
+  const result = await client().send(
+    new HeadObjectCommand({ Bucket: config.S3_BUCKET, Key: key }),
+  );
+  if (result.ContentLength !== sizeBytes) throw new Error("附件大小校验失败");
 }

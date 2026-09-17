@@ -381,6 +381,7 @@ export const taskAttachment = pgTable(
     contentType: text("content_type").notNull(),
     sizeBytes: integer("size_bytes").notNull(),
     sha256: text("sha256").notNull(),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }),
     objectKey: text("object_key").notNull().unique(),
     ...timestamps(),
   },
