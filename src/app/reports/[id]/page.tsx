@@ -8,6 +8,7 @@ import { taskSnapshot } from "@/lib/task-snapshot";
 import { reportVisibility } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
+import { RevisionForm } from "@/components/workspace/revision-form";
 
 export default async function ReportPage({
   params,
@@ -193,6 +194,15 @@ export default async function ReportPage({
           <p className="mt-4 text-text-secondary">暂无修订记录</p>
         )}
       </section>
+      {item.status === "SUBMITTED" &&
+        (item.authorId === actor.id || actor.role === "BOSS") && (
+          <RevisionForm
+            key={`${item.id}:${item.version}`}
+            reportId={item.id}
+            version={item.version}
+            initialSummary={item.summary ?? ""}
+          />
+        )}
     </WorkspaceShell>
   );
 }
