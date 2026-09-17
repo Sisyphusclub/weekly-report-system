@@ -9,14 +9,14 @@ it("提及用户名去重并统一小写", () => {
 it("外部链接必须是合法 URL", () => {
   expect(
     externalLinkInput.safeParse({
-      taskId: "bad",
+      taskId: "00000000-0000-4000-8000-000000000001",
       title: "文档",
       url: "https://example.com",
     }).success,
   ).toBe(true);
   expect(
     externalLinkInput.safeParse({
-      taskId: "bad",
+      taskId: "00000000-0000-4000-8000-000000000001",
       title: "文档",
       url: "javascript:alert(1)",
     }).success,
