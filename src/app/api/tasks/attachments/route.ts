@@ -85,12 +85,18 @@ export async function PATCH(request: Request) {
       .limit(1);
     if (!row || (actor.role === "EMPLOYEE" && row.assignee !== actor.id))
       throw new BusinessError("无权确认任务附件", 403);
-    await verifyObject(
-      row.objectKey,
-      row.sizeBytes,
-      Buffer.from(row.sha256, "hex").toString("base64"),
-      row.contentType,
-    );
+    try {
+      await verifyObject(
+        row.objectKey,
+        row.sizeBytes,
+        Buffer.from(row.sha256, "hex").toString("base64"),
+        row.contentType,
+      );
+    } catch (error) {
+      await deleteObject(row.objectKey).catch(() => undefined);
+      await db.delete(taskAttachment).where(eq(taskAttachment.id, id));
+      throw error;
+    }
     await db
       .update(taskAttachment)
       .set({ verifiedAt: new Date(), updatedAt: new Date() })
