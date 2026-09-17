@@ -70,7 +70,26 @@ export async function POST(request: Request) {
         )
         .limit(1);
       if (!source || !target) throw new BusinessError("合并资料不存在", 404);
-      if (v.kind === "category")
+      const snapshot: {
+        tasks?: unknown[];
+        deliverables?: unknown[];
+        deletedDeliverables?: unknown[];
+      } = {};
+      if (v.kind === "category") {
+        snapshot.tasks = await tx
+          .select({
+            id: workTask.id,
+            categoryId: workTask.categoryId,
+            categoryName: workTask.categoryName,
+          })
+          .from(workTask)
+          .where(
+            and(
+              eq(workTask.organizationId, actor.organizationId),
+              eq(workTask.categoryId, v.sourceId),
+            ),
+          )
+          .for("update");
         await tx
           .update(workTask)
           .set({
@@ -84,11 +103,12 @@ export async function POST(request: Request) {
               eq(workTask.categoryId, v.sourceId),
             ),
           );
-      else {
+      } else {
         const sourceRows = await tx
           .select({
             id: deliverable.id,
             taskId: deliverable.taskId,
+            unitName: deliverable.unitName,
             quantity: deliverable.quantity,
           })
           .from(deliverable)
@@ -99,6 +119,8 @@ export async function POST(request: Request) {
             ),
           )
           .for("update");
+        snapshot.deliverables = sourceRows;
+        snapshot.deletedDeliverables = [];
         for (const row of sourceRows) {
           const [targetRow] = await tx
             .select({ id: deliverable.id, quantity: deliverable.quantity })
@@ -113,6 +135,12 @@ export async function POST(request: Request) {
             .limit(1)
             .for("update");
           if (targetRow) {
+            snapshot.deletedDeliverables?.push({
+              id: targetRow.id,
+              taskId: row.taskId,
+              unitName: target.name,
+              quantity: targetRow.quantity,
+            });
             await tx
               .update(deliverable)
               .set({
@@ -150,6 +178,7 @@ export async function POST(request: Request) {
         kind: v.kind,
         sourceId: v.sourceId,
         targetId: v.targetId,
+        snapshot,
         expiresAt: new Date(Date.now() + 15 * 60 * 1000),
       });
       await tx.insert(auditLog).values({
@@ -194,6 +223,64 @@ export async function DELETE(request: Request) {
       if (!merge || merge.expiresAt < new Date())
         throw new BusinessError("撤销窗口已结束", 409);
       const table = merge.kind === "category" ? category : deliverableUnit;
+      const snapshot = (merge.snapshot ?? {}) as {
+        tasks?: Array<{ id: string; categoryId: string; categoryName: string }>;
+        deliverables?: Array<{
+          id: string;
+          taskId: string;
+          unitName: string;
+          quantity: string;
+        }>;
+        deletedDeliverables?: Array<{
+          id: string;
+          taskId: string;
+          unitName: string;
+          quantity: string;
+        }>;
+      };
+      if (merge.kind === "category" && snapshot.tasks?.length)
+        for (const row of snapshot.tasks)
+          await tx
+            .update(workTask)
+            .set({
+              categoryId: row.categoryId,
+              categoryName: row.categoryName,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(workTask.organizationId, actor.organizationId),
+                eq(workTask.id, row.id),
+              ),
+            );
+      if (merge.kind === "unit" && snapshot.deliverables?.length) {
+        for (const row of snapshot.deliverables)
+          await tx
+            .update(deliverable)
+            .set({
+              unitId: merge.sourceId,
+              unitName: row.unitName,
+              quantity: row.quantity,
+              updatedAt: new Date(),
+            })
+            .where(
+              and(
+                eq(deliverable.organizationId, actor.organizationId),
+                eq(deliverable.id, row.id),
+              ),
+            );
+        for (const row of snapshot.deletedDeliverables ?? [])
+          await tx
+            .insert(deliverable)
+            .values({
+              id: row.id,
+              organizationId: actor.organizationId,
+              taskId: row.taskId,
+              unitId: merge.targetId,
+              unitName: row.unitName,
+              quantity: row.quantity,
+            });
+      }
       await tx
         .update(table)
         .set({ enabled: true, updatedAt: new Date() })

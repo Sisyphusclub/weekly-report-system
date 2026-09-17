@@ -238,6 +238,7 @@ export const dictionaryMerge = pgTable(
     kind: text("kind").notNull(),
     sourceId: text("source_id").notNull(),
     targetId: text("target_id").notNull(),
+    snapshot: jsonb("snapshot"),
     expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
     undoneAt: timestamp("undone_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
