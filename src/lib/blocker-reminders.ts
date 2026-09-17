@@ -8,7 +8,7 @@ export type ReminderBlocker = {
 export type BlockerReminder = {
   recipientId: string;
   blockerId: string;
-  type: "BLOCKER_24H";
+  type: "BLOCKER_24H" | "BLOCKER_URGENT";
   dedupeKey: string;
   title: string;
 };
@@ -37,4 +37,23 @@ export function overdueBlockerReminders(input: {
       });
   }
   return result;
+}
+
+export function urgentBlockerReminders(input: {
+  now: Date;
+  blockers: ReminderBlocker[];
+  bosses: string[];
+}) {
+  const day = input.now.toISOString().slice(0, 10);
+  return input.blockers.flatMap((item) => {
+    if (item.status === "RESOLVED" || item.severity !== "URGENT") return [];
+    const recipients = item.coordinatorId ? [item.coordinatorId] : input.bosses;
+    return recipients.map((recipientId) => ({
+      recipientId,
+      blockerId: item.id,
+      type: "BLOCKER_URGENT" as const,
+      dedupeKey: `blocker-urgent:${item.id}:${recipientId}:${day}`,
+      title: "有紧急阻塞需要立即处理",
+    }));
+  });
 }

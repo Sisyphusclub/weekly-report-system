@@ -12,7 +12,10 @@ import { dueReminders, weeklyReminders } from "../src/lib/reminders.js";
 import { shanghaiDate } from "../src/lib/daily-input.js";
 import { weekDates } from "../src/lib/domain.js";
 import { deadline, weeklyPeriod } from "../src/lib/domain.js";
-import { overdueBlockerReminders } from "../src/lib/blocker-reminders.js";
+import {
+  overdueBlockerReminders,
+  urgentBlockerReminders,
+} from "../src/lib/blocker-reminders.js";
 
 async function main() {
   const now = new Date();
@@ -141,6 +144,11 @@ async function main() {
       dueAt: deadline(period.dueDate),
     }),
     ...overdueBlockerReminders({
+      now,
+      bosses: bosses.map((boss) => boss.id),
+      blockers,
+    }),
+    ...urgentBlockerReminders({
       now,
       bosses: bosses.map((boss) => boss.id),
       blockers,
