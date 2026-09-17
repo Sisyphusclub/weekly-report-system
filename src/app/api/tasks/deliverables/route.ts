@@ -23,6 +23,7 @@ export async function POST(request: Request) {
         .select({
           taskId: workTask.id,
           assignee: workTask.primaryAssigneeId,
+          version: workTask.version,
           unitName: deliverableUnit.name,
         })
         .from(workTask)
@@ -40,6 +41,8 @@ export async function POST(request: Request) {
       if (!refs) throw new BusinessError("任务或交付物单位无效", 404);
       if (actor.role !== "BOSS" && actor.id !== refs.assignee)
         throw new BusinessError("只能为自己负责的任务添加交付物", 403);
+      if (refs.version !== input.version)
+        throw new BusinessError("任务已更新，请刷新核对交付物后重试", 409);
       const [existing] = await tx
         .select({ id: deliverable.id })
         .from(deliverable)
@@ -80,7 +83,21 @@ export async function POST(request: Request) {
         resourceId: id,
         result: "SUCCESS",
       });
-      return { id, quantity: input.quantity, unitName: refs.unitName };
+      await tx
+        .update(workTask)
+        .set({ version: refs.version + 1, updatedAt: values.updatedAt })
+        .where(
+          and(
+            eq(workTask.id, input.taskId),
+            eq(workTask.organizationId, actor.organizationId),
+          ),
+        );
+      return {
+        id,
+        quantity: input.quantity,
+        unitName: refs.unitName,
+        version: refs.version + 1,
+      };
     });
     return Response.json(result);
   } catch (error) {

@@ -1,8 +1,16 @@
-import { and, asc, desc, eq, ne } from "drizzle-orm";
+import { and, asc, desc, eq, ne, inArray } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { category, project, user, workTask } from "@/lib/db/schema";
+import {
+  category,
+  project,
+  user,
+  workTask,
+  deliverable,
+  deliverableUnit,
+} from "@/lib/db/schema";
+import { DeliverableForm } from "@/components/workspace/deliverable-form";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { TaskForm } from "@/components/workspace/task-form";
 import { RollPlanForm } from "@/components/workspace/roll-plan-form";
@@ -23,7 +31,7 @@ export default async function TasksPage({
       ? Math.min(requestedPage, 50000)
       : 1;
   const db = getDb();
-  const [projects, categories, people, tasks] = await Promise.all([
+  const [projects, categories, people, tasks, units] = await Promise.all([
     db
       .select({ id: project.id, name: project.name })
       .from(project)
@@ -78,7 +86,37 @@ export default async function TasksPage({
       .orderBy(desc(workTask.updatedAt), desc(workTask.id))
       .limit(21)
       .offset((page - 1) * 20),
+    db
+      .select({ id: deliverableUnit.id, name: deliverableUnit.name })
+      .from(deliverableUnit)
+      .where(
+        and(
+          eq(deliverableUnit.organizationId, actor.organizationId),
+          eq(deliverableUnit.enabled, true),
+        ),
+      )
+      .orderBy(asc(deliverableUnit.sortOrder), asc(deliverableUnit.name)),
   ]);
+  const deliveries = tasks.length
+    ? await db
+        .select({
+          taskId: deliverable.taskId,
+          unitId: deliverable.unitId,
+          unitName: deliverable.unitName,
+          quantity: deliverable.quantity,
+        })
+        .from(deliverable)
+        .where(
+          and(
+            eq(deliverable.organizationId, actor.organizationId),
+            inArray(
+              deliverable.taskId,
+              tasks.slice(0, 20).map((task) => task.id),
+            ),
+          ),
+        )
+        .orderBy(asc(deliverable.unitName))
+    : [];
   return (
     <WorkspaceShell actor={actor} selected="tasks">
       <h1 className="text-title-1-medium">任务管理</h1>
@@ -128,6 +166,13 @@ export default async function TasksPage({
                     dueDate={task.dueDate}
                   />
                 )}
+              <DeliverableForm
+                key={`deliverables:${task.id}:${task.version}`}
+                taskId={task.id}
+                version={task.version}
+                units={units}
+                items={deliveries.filter((item) => item.taskId === task.id)}
+              />
             </div>
           ))
         )}
