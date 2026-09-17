@@ -18,6 +18,7 @@ import { RollPlanForm } from "@/components/workspace/roll-plan-form";
 import { TaskStatusForm } from "@/components/workspace/task-status-form";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { ExternalLinkForm } from "@/components/workspace/external-link-form";
+import { TaskImportForm } from "@/components/workspace/task-import-form";
 export const metadata = { title: "任务管理" };
 export default async function TasksPage({
   searchParams,
@@ -154,6 +155,7 @@ export default async function TasksPage({
         people={people}
         selfId={actor.id}
       />
+      <TaskImportForm />
       <section className="flex flex-col gap-3" aria-label="任务列表">
         <h2 className="text-title-2-medium">最近任务</h2>
         {tasks.length === 0 ? (
