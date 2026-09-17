@@ -1,4 +1,5 @@
-import { and, eq, desc } from "drizzle-orm";
+import { and, eq, desc, inArray } from "drizzle-orm";
+import { sourceReferences, updatedSources } from "@/lib/source-updates";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
@@ -41,6 +42,7 @@ export default async function ReportPage({
       number: reportRevision.revisionNumber,
       reason: reportRevision.reason,
       at: reportRevision.createdAt,
+      snapshot: reportRevision.snapshot,
     })
     .from(reportRevision)
     .where(
@@ -51,6 +53,27 @@ export default async function ReportPage({
     )
     .orderBy(desc(reportRevision.revisionNumber))
     .limit(20);
+  const snapshot =
+    item.type === "WEEKLY" && item.status === "SUBMITTED"
+      ? versions[0]?.snapshot
+      : undefined;
+  const references = sourceReferences(snapshot);
+  const currentSources = references.length
+    ? await db
+        .select({ id: report.id, version: report.version })
+        .from(report)
+        .where(
+          and(
+            reportVisibility(actor),
+            eq(report.type, "DAILY"),
+            inArray(
+              report.id,
+              references.map((source) => source.id),
+            ),
+          ),
+        )
+    : [];
+  const changedSources = updatedSources(snapshot, currentSources);
   return (
     <WorkspaceShell actor={actor} selected="reports">
       <ButtonLink href="/reports" variant="ghost" className="self-start">
@@ -67,6 +90,26 @@ export default async function ReportPage({
             : `已提交 · 版本 ${item.revisionNumber}`}
         </p>
       </header>
+      {changedSources.length > 0 && (
+        <section
+          aria-label="来源更新"
+          className="flex flex-col gap-3 rounded-3xl border border-border-button-default p-6"
+        >
+          <h2 className="text-title-2-medium">来源已更新</h2>
+          <p>来源日报已有新版本，本周报仍保留提交时的内容。</p>
+          <div className="flex flex-wrap gap-3">
+            {changedSources.map((sourceId, index) => (
+              <ButtonLink
+                key={sourceId}
+                href={`/reports/${sourceId}`}
+                variant="secondary"
+              >
+                查看更新日报 {index + 1}
+              </ButtonLink>
+            ))}
+          </div>
+        </section>
+      )}
       <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6">
         <h2 className="text-title-2-medium">工作总结</h2>
         <p className="whitespace-pre-wrap break-words">
