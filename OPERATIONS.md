@@ -26,7 +26,7 @@
 
 ## 备份与恢复
 
-PowerShell 执行 `scripts/backup-db.ps1 -OutputDirectory D:\backups\weekly`，并将备份复制到服务器之外，保留至少 30 天。恢复前停止应用并确认目标数据库，执行 `scripts/restore-db.ps1 -InputFile <备份文件> -Confirm`，随后重新运行迁移和关键登录/提交检查。恢复演练应在隔离数据库进行并留存记录。
+PowerShell 执行 `scripts/backup-db.ps1 -OutputDirectory D:\backups\weekly`，脚本会同时生成 SHA-256 sidecar 文件；将 dump 和 sidecar 一起复制到服务器之外，保留至少 30 天。恢复前停止应用并确认目标数据库，执行 `scripts/restore-db.ps1 -InputFile <备份文件> -Confirm`，脚本会在 sidecar 存在时校验完整性，随后重新运行迁移和关键登录/提交检查。恢复演练应在隔离数据库进行并留存记录。
 
 ## 发布与回滚
 
