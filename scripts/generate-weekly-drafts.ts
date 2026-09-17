@@ -1,8 +1,10 @@
-import { and, eq, gte, lte, ne } from "drizzle-orm";
+import { and, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { getDb } from "../src/lib/db/index.js";
 import {
   auditLog,
   report,
+  reportTask,
+  reportingExemption,
   user,
   workCalendarDay,
 } from "../src/lib/db/schema.js";
@@ -82,6 +84,27 @@ async function main() {
           ),
         )
         .orderBy(report.reportDate);
+      const exemptions = await tx
+        .select({
+          startDate: reportingExemption.startDate,
+          endDate: reportingExemption.endDate,
+        })
+        .from(reportingExemption)
+        .where(
+          and(
+            eq(reportingExemption.organizationId, organizationId),
+            eq(reportingExemption.userId, member.id),
+            lte(reportingExemption.startDate, period.weekEnd),
+            gte(reportingExemption.endDate, period.weekStart),
+          ),
+        );
+      const includedDaily = daily.filter(
+        (item) =>
+          !exemptions.some(
+            (e) =>
+              item.reportDate! >= e.startDate && item.reportDate! <= e.endDate,
+          ),
+      );
       const dueAt = deadline(period.dueDate);
       if (
         !shouldGenerateWeeklyDraft({
@@ -103,7 +126,7 @@ async function main() {
         weekLabel: period.weekLabel,
         dueAt,
         summary: draftSummary(
-          daily.map((item) => ({
+          includedDaily.map((item) => ({
             date: item.reportDate!,
             summary: item.summary,
           })),
@@ -111,6 +134,36 @@ async function main() {
         calendarVersion: Math.max(0, ...calendar.map((day) => day.version)),
         version: 1,
       });
+      const sourceIds = includedDaily.map((item) => item.id);
+      if (sourceIds.length) {
+        const sourceTasks = await tx
+          .select({
+            taskId: reportTask.taskId,
+            snapshot: reportTask.snapshot,
+            sourceReportId: reportTask.reportId,
+          })
+          .from(reportTask)
+          .where(
+            and(
+              eq(reportTask.organizationId, organizationId),
+              inArray(reportTask.reportId, sourceIds),
+            ),
+          );
+        const latest = new Map<string, (typeof sourceTasks)[number]>();
+        for (const task of sourceTasks) latest.set(task.taskId, task);
+        if (latest.size)
+          await tx
+            .insert(reportTask)
+            .values(
+              [...latest.values()].map((task) => ({
+                organizationId,
+                reportId: id,
+                taskId: task.taskId,
+                snapshot: task.snapshot,
+                sourceReportId: task.sourceReportId,
+              })),
+            );
+      }
       await tx.insert(auditLog).values({
         id: crypto.randomUUID(),
         organizationId,
