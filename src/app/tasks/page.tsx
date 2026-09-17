@@ -5,6 +5,7 @@ import { getDb } from "@/lib/db";
 import { category, project, user, workTask } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { TaskForm } from "@/components/workspace/task-form";
+import { RollPlanForm } from "@/components/workspace/roll-plan-form";
 import { ButtonLink } from "@/components/base/buttons/button";
 export const metadata = { title: "任务管理" };
 export default async function TasksPage({
@@ -57,6 +58,7 @@ export default async function TasksPage({
     db
       .select({
         id: workTask.id,
+        version: workTask.version,
         content: workTask.content,
         kind: workTask.kind,
         status: workTask.status,
@@ -109,6 +111,16 @@ export default async function TasksPage({
                 }
                 {task.dueDate ? ` · ${task.dueDate}` : ""}
               </span>
+              {task.kind === "PLAN" &&
+                task.dueDate &&
+                task.status !== "DONE" &&
+                task.status !== "CANCELED" && (
+                  <RollPlanForm
+                    taskId={task.id}
+                    version={task.version}
+                    dueDate={task.dueDate}
+                  />
+                )}
             </div>
           ))
         )}
