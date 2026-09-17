@@ -4,18 +4,51 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint .",
+    "format:check": "prettier --check src/app src/lib src/components/workspace tests scripts *.ts *.mjs package.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:e2e": "playwright test",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "tsx --env-file=.env.local scripts/migrate.ts",
+    "admin:bootstrap": "tsx --env-file=.env.local scripts/bootstrap-admin.ts"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs",
+  "type": "module",
   "dependencies": {
+    "@internationalized/date": "^3.12.1",
     "@remixicon/react": "^4.9.0",
     "@tailwindcss/postcss": "^4.3.3",
+    "better-auth": "1.7.5",
+    "drizzle-orm": "0.45.2",
+    "motion": "^12.42.2",
+    "next": "16.3.5",
+    "pg": "8.23.0",
+    "react": "19.3.0",
     "react-aria-components": "^1.21.1",
+    "react-dom": "19.3.0",
     "recharts": "^3.10.1",
     "tailwind-merge": "^3.7.0",
-    "tailwindcss": "^4.3.3"
+    "tailwindcss": "^4.3.3",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0",
+    "@types/node": "22.20.3",
+    "@types/pg": "8.23.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "drizzle-kit": "0.31.10",
+    "eslint": "9.39.5",
+    "eslint-config-next": "16.3.5",
+    "prettier": "3.9.7",
+    "tsx": "4.23.13",
+    "typescript": "6.0.3",
+    "vitest": "5.0.1"
   }
 }

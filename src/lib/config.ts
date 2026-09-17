@@ -1,0 +1,46 @@
+import { z } from "zod";
+
+const schema = z
+  .object({
+    DATABASE_URL: z
+      .string()
+      .url()
+      .refine((value) => /^postgres(ql)?:\/\//.test(value)),
+    BETTER_AUTH_URL: z.string().url(),
+    BETTER_AUTH_SECRET: z.string().min(32),
+    APP_ENV: z.enum(["development", "staging", "production"]),
+  })
+  .superRefine((env, context) => {
+    if (
+      env.APP_ENV !== "development" &&
+      !env.BETTER_AUTH_URL.startsWith("https://")
+    )
+      context.addIssue({
+        code: "custom",
+        path: ["BETTER_AUTH_URL"],
+        message: "HTTPS required",
+      });
+  });
+
+export function configurationStatus(
+  env: Record<string, string | undefined> = process.env,
+) {
+  const result = schema.safeParse(env);
+  return result.success
+    ? { ready: true as const, config: result.data }
+    : {
+        ready: false as const,
+        fields: [
+          ...new Set(
+            result.error.issues.map((issue) => issue.path[0] as string),
+          ),
+        ],
+      };
+}
+
+export function getConfig() {
+  const status = configurationStatus();
+  if (!status.ready)
+    throw new Error(`服务配置缺失或无效：${status.fields.join(", ")}`);
+  return status.config;
+}

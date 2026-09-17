@@ -1,0 +1,4 @@
+ALTER TABLE "report" DROP CONSTRAINT "report_period";--> statement-breakpoint
+ALTER TABLE "app_user" ADD COLUMN "failed_login_count" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "app_user" ADD COLUMN "login_locked_until" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "report" ADD CONSTRAINT "report_period" CHECK (("report"."type" = 'DAILY' AND "report"."report_date" IS NOT NULL AND "report"."week_start" IS NULL AND "report"."week_end" IS NULL AND "report"."week_label" IS NULL) OR ("report"."type" = 'WEEKLY' AND "report"."report_date" IS NULL AND "report"."week_start" IS NOT NULL AND "report"."week_end" IS NOT NULL AND "report"."week_label" IS NOT NULL AND "report"."week_end" = "report"."week_start" + 6 AND "report"."week_label" = "report"."week_start" + 4 AND EXTRACT(ISODOW FROM "report"."week_start") = 1));
