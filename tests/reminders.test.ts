@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { dueReminders } from "@/lib/reminders";
+import { dueReminders, weeklyReminders } from "@/lib/reminders";
 const now = new Date("2026-09-18T19:00:00+08:00");
 const member = {
   id: "u1",
@@ -105,4 +105,37 @@ it("未来截止时间、周末和免报日期不提醒，已提交不提醒", (
     ],
   });
   expect(result).toEqual([]);
+});
+it("周报截止日前两小时提醒，截止后切换逾期键", () => {
+  const dueAt = new Date("2026-09-18T10:30:00Z");
+  expect(
+    weeklyReminders({
+      now: new Date("2026-09-18T08:29:59Z"),
+      members: [member],
+      reports: [],
+      weekStart: "2026-09-14",
+      dueAt,
+    }),
+  ).toEqual([]);
+  expect(
+    weeklyReminders({
+      now: new Date("2026-09-18T08:30:00Z"),
+      members: [member],
+      reports: [],
+      weekStart: "2026-09-14",
+      dueAt,
+    })[0],
+  ).toMatchObject({
+    type: "WEEKLY_DUE",
+    dedupeKey: "weekly-reminder:u1:2026-09-14:due",
+  });
+  expect(
+    weeklyReminders({
+      now: dueAt,
+      members: [member],
+      reports: [],
+      weekStart: "2026-09-14",
+      dueAt,
+    })[0],
+  ).toMatchObject({ dedupeKey: "weekly-reminder:u1:2026-09-14:overdue" });
 });

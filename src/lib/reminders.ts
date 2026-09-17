@@ -82,3 +82,34 @@ export function dueReminders(input: {
   }
   return result;
 }
+
+export function weeklyReminders(input: {
+  now: Date;
+  members: ReminderMember[];
+  reports: Array<{
+    authorId: string;
+    weekStart: string;
+    status: string;
+    dueAt: Date;
+  }>;
+  weekStart: string;
+  dueAt: Date;
+}) {
+  const result: Reminder[] = [];
+  const reports = new Map(input.reports.map((item) => [item.authorId, item]));
+  const reminderAt = new Date(input.dueAt.getTime() - 2 * 60 * 60 * 1000);
+  if (input.now < reminderAt) return result;
+  for (const member of input.members) {
+    const report = reports.get(member.id);
+    if (report?.status === "SUBMITTED") continue;
+    const overdue = input.now >= input.dueAt;
+    result.push({
+      recipientId: member.id,
+      type: "WEEKLY_DUE",
+      date: input.weekStart,
+      title: overdue ? "本周周报已逾期" : "本周周报待提交",
+      dedupeKey: `weekly-reminder:${member.id}:${input.weekStart}:${overdue ? "overdue" : "due"}`,
+    });
+  }
+  return result;
+}

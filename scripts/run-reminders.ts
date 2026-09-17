@@ -8,9 +8,10 @@ import {
   user,
   workCalendarDay,
 } from "../src/lib/db/schema.js";
-import { dueReminders } from "../src/lib/reminders.js";
+import { dueReminders, weeklyReminders } from "../src/lib/reminders.js";
 import { shanghaiDate } from "../src/lib/daily-input.js";
 import { weekDates } from "../src/lib/domain.js";
+import { weeklyPeriod } from "../src/lib/domain.js";
 import { overdueBlockerReminders } from "../src/lib/blocker-reminders.js";
 
 async function main() {
@@ -19,6 +20,7 @@ async function main() {
   const organizationId = process.env.REMINDER_ORGANIZATION_ID;
   if (!organizationId) throw new Error("REMINDER_ORGANIZATION_ID is required");
   const dates = weekDates(shanghaiDate(now));
+  const period = weeklyPeriod(shanghaiDate(now));
   const [members, bosses, reports, blockers, calendar, exemptions] =
     await Promise.all([
       db
@@ -96,6 +98,21 @@ async function main() {
           ),
         ),
     ]);
+  const weeklyReports = await db
+    .select({
+      authorId: report.authorId,
+      weekStart: report.weekStart,
+      status: report.status,
+      dueAt: report.dueAt,
+    })
+    .from(report)
+    .where(
+      and(
+        eq(report.organizationId, organizationId),
+        eq(report.type, "WEEKLY"),
+        eq(report.weekStart, period.weekStart),
+      ),
+    );
   const reminders = [
     ...dueReminders({
       now,
@@ -109,6 +126,16 @@ async function main() {
         calendar.map((day) => [day.date, day.isWorkday]),
       ),
       exemptions,
+    }),
+    ...weeklyReminders({
+      now,
+      members,
+      reports: weeklyReports.map((item) => ({
+        ...item,
+        weekStart: item.weekStart!,
+      })),
+      weekStart: period.weekStart,
+      dueAt: new Date(`${period.dueDate}T10:30:00.000Z`),
     }),
     ...overdueBlockerReminders({
       now,
