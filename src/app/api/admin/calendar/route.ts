@@ -33,27 +33,23 @@ export async function POST(request: Request) {
         throw new BusinessError("该日期已被修改，请刷新后核对", 409);
       const id = crypto.randomUUID();
       const version = input.version + 1;
-      await tx
-        .insert(workCalendarDay)
-        .values({
-          id,
-          organizationId: actor.organizationId,
-          date: input.date,
-          isWorkday: input.isWorkday,
-          description: input.description,
-          version,
-        });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "CALENDAR_OVERRIDE",
-          resourceType: "WORK_CALENDAR_DAY",
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(workCalendarDay).values({
+        id,
+        organizationId: actor.organizationId,
+        date: input.date,
+        isWorkday: input.isWorkday,
+        description: input.description,
+        version,
+      });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "CALENDAR_OVERRIDE",
+        resourceType: "WORK_CALENDAR_DAY",
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return { id, version };
     });
     return Response.json(result);

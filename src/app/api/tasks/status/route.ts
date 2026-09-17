@@ -58,17 +58,15 @@ export async function PATCH(request: Request) {
           status: workTask.status,
         });
       if (!updated) throw new BusinessError("任务已更新，请刷新后重试", 409);
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: `TASK_STATUS_${task.status}_TO_${input.status}`,
-          resourceType: "TASK",
-          resourceId: task.id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: `TASK_STATUS_${task.status}_TO_${input.status}`,
+        resourceType: "TASK",
+        resourceId: task.id,
+        result: "SUCCESS",
+      });
       return updated;
     });
     return Response.json(result);

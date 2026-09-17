@@ -83,27 +83,23 @@ export async function POST(request: Request) {
       } catch (error) {
         throw new BusinessError((error as Error).message);
       }
-      await tx
-        .insert(workTask)
-        .values({
-          ...next,
-          createdById: actor.id,
-          version: 1,
-          workDate: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "PLAN_ROLL",
-          resourceType: "TASK",
-          resourceId: next.id,
-          result: "SUCCESS",
-        });
+      await tx.insert(workTask).values({
+        ...next,
+        createdById: actor.id,
+        version: 1,
+        workDate: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "PLAN_ROLL",
+        resourceType: "TASK",
+        resourceId: next.id,
+        result: "SUCCESS",
+      });
       return { id: next.id, version: 1 };
     });
     return Response.json(result);

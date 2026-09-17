@@ -48,25 +48,21 @@ export async function POST(request: Request) {
         .limit(1);
       if (existing) return existing;
       const id = crypto.randomUUID();
-      await tx
-        .insert(reportingExemption)
-        .values({
-          ...input,
-          id,
-          organizationId: actor.organizationId,
-          createdById: actor.id,
-        });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "REPORTING_EXEMPTION_CREATE",
-          resourceType: "REPORTING_EXEMPTION",
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(reportingExemption).values({
+        ...input,
+        id,
+        organizationId: actor.organizationId,
+        createdById: actor.id,
+      });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "REPORTING_EXEMPTION_CREATE",
+        resourceType: "REPORTING_EXEMPTION",
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return { id };
     });
     return Response.json(result);

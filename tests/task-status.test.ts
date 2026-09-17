@@ -27,13 +27,11 @@ function request(status = "DONE", version = 1) {
   });
 }
 function database(task: unknown) {
-  const set = vi
-    .fn()
-    .mockReturnValue({
-      where: () => ({
-        returning: async () => [{ id: taskId, version: 2, status: "DONE" }],
-      }),
-    });
+  const set = vi.fn().mockReturnValue({
+    where: () => ({
+      returning: async () => [{ id: taskId, version: 2, status: "DONE" }],
+    }),
+  });
   const audit = vi.fn().mockResolvedValue(undefined);
   const tx = {
     select: () => ({
