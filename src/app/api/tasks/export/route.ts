@@ -6,7 +6,7 @@ import * as XLSX from "xlsx";
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
-    const rows = await getDb()
+    const query = getDb()
       .select({
         projectId: workTask.projectId,
         categoryId: workTask.categoryId,
@@ -26,8 +26,8 @@ export async function GET(request: Request) {
             : undefined,
         ),
       )
-      .orderBy(desc(workTask.updatedAt), desc(workTask.id))
-      .limit(5000);
+      .orderBy(desc(workTask.updatedAt), desc(workTask.id));
+    const rows = await (actor.role === "ADMIN" ? query : query.limit(5000));
     await getDb().insert(auditLog).values({
       id: crypto.randomUUID(),
       organizationId: actor.organizationId,
