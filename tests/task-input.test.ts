@@ -19,6 +19,13 @@ it("计划必须有截止日期", () => {
       .success,
   ).toBe(true);
 });
+it("实际任务必须提供有效工作日期", () => {
+  expect(taskInput.safeParse({ ...base, workDate: null }).success).toBe(false);
+  expect(taskInput.safeParse({ ...base, workDate: "2026-02-30" }).success).toBe(
+    false,
+  );
+  expect(taskInput.safeParse(base).success).toBe(true);
+});
 it("新任务使用零版本，更新使用正版本", () => {
   expect(taskInput.safeParse({ ...base, version: 1 }).success).toBe(false);
   expect(

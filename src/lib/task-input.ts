@@ -15,6 +15,12 @@ export const taskInput = z
     sourceTaskId: z.string().uuid().nullable().default(null),
   })
   .superRefine((value, ctx) => {
+    if (value.kind === "ACTUAL" && !value.workDate)
+      ctx.addIssue({
+        code: "custom",
+        path: ["workDate"],
+        message: "实际任务必须填写工作日期",
+      });
     if (value.kind === "PLAN" && !value.dueDate)
       ctx.addIssue({
         code: "custom",

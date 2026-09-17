@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { shanghaiDate } from "@/lib/daily-input";
 import { Input } from "@/components/base/input/input";
 import { Textarea } from "@/components/base/textarea/textarea";
 import { Select, SelectItem } from "@/components/base/select/select";
@@ -24,6 +25,7 @@ export function TaskForm({
   const [status, setStatus] = useState("TODO");
   const [content, setContent] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [workDate, setWorkDate] = useState(() => shanghaiDate());
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   async function submit(event: React.FormEvent) {
@@ -43,7 +45,7 @@ export function TaskForm({
           content,
           kind,
           status,
-          workDate: null,
+          workDate: kind === "ACTUAL" ? workDate : null,
           dueDate: dueDate || null,
           sourceTaskId: null,
         }),
@@ -139,6 +141,16 @@ export function TaskForm({
               </SelectItem>
             ))}
           </Select>
+        )}
+        {kind === "ACTUAL" && (
+          <Input
+            label="工作日期"
+            type="date"
+            value={workDate}
+            onChange={setWorkDate}
+            isRequired
+            isDisabled={pending}
+          />
         )}
         <Input
           label="截止日期"
