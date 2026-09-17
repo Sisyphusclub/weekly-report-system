@@ -18,7 +18,8 @@ export function WorkspaceShell({
     | "projects"
     | "users"
     | "weekly"
-    | "notifications";
+    | "notifications"
+    | "tasks";
   children: React.ReactNode;
 }) {
   return (
@@ -79,6 +80,9 @@ export function WorkspaceShell({
               : []),
             ...(actor.role !== "ADMIN"
               ? [{ key: "weekly", label: "填写周报", href: "/weekly" }]
+              : []),
+            ...(actor.role !== "ADMIN"
+              ? [{ key: "tasks", label: "任务管理", href: "/tasks" }]
               : []),
             { key: "notifications", label: "通知中心", href: "/notifications" },
             {
