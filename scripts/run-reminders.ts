@@ -8,7 +8,12 @@ import {
   user,
   workCalendarDay,
 } from "../src/lib/db/schema.js";
-import { dueReminders, weeklyReminders } from "../src/lib/reminders.js";
+import {
+  dailyBossSummary,
+  dueReminders,
+  missingDailyCount,
+  weeklyReminders,
+} from "../src/lib/reminders.js";
 import { shanghaiDate } from "../src/lib/daily-input.js";
 import { weekDates } from "../src/lib/domain.js";
 import { deadline, weeklyPeriod } from "../src/lib/domain.js";
@@ -153,6 +158,26 @@ async function main() {
       bosses: bosses.map((boss) => boss.id),
       blockers,
     }),
+    ...bosses.map((boss) =>
+      dailyBossSummary({
+        now,
+        bossId: boss.id,
+        missingDaily: missingDailyCount({
+          now,
+          members,
+          reports: reports.map((item) => ({
+            ...item,
+            reportDate: item.reportDate!,
+          })),
+          overrides: Object.fromEntries(
+            calendar.map((day) => [day.date, day.isWorkday]),
+          ),
+          exemptions,
+        }),
+        openBlockers: blockers.filter((item) => item.status !== "RESOLVED")
+          .length,
+      }),
+    ),
   ];
   if (reminders.length)
     await db

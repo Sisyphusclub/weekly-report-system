@@ -21,6 +21,51 @@ export type Reminder = {
   title: string;
   dedupeKey: string;
 };
+export function dailyBossSummary(input: {
+  now: Date;
+  bossId: string;
+  missingDaily: number;
+  openBlockers: number;
+}): Reminder {
+  const date = shanghaiDate(input.now);
+  return {
+    recipientId: input.bossId,
+    type: "DAILY_DUE",
+    date,
+    title: `今日待跟进：${input.missingDaily} 人未提交日报，${input.openBlockers} 个阻塞未解决`,
+    dedupeKey: `daily-summary:${input.bossId}:${date}`,
+  };
+}
+
+export function missingDailyCount(input: {
+  now: Date;
+  members: ReminderMember[];
+  reports: ReminderReport[];
+  overrides?: CalendarOverrides;
+  exemptions?: Array<{ userId: string; startDate: string; endDate: string }>;
+}) {
+  const date = shanghaiDate(input.now);
+  if (!isWorkday(date, input.overrides ?? {})) return 0;
+  const exemptions = input.exemptions ?? [];
+  return input.members.filter((member) => {
+    if (date < shanghaiDate(member.createdAt)) return false;
+    if (
+      exemptions.some(
+        (item) =>
+          item.userId === member.id &&
+          item.startDate <= date &&
+          item.endDate >= date,
+      )
+    )
+      return false;
+    return !input.reports.some(
+      (report) =>
+        report.authorId === member.id &&
+        report.reportDate === date &&
+        report.status === "SUBMITTED",
+    );
+  }).length;
+}
 
 /** Calculate actionable reminders without writing side effects. Callers persist using dedupeKey. */
 export function dueReminders(input: {
