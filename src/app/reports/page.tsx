@@ -5,6 +5,7 @@ import { listReports, PAGE_SIZE } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { Input } from "@/components/base/input/input";
 import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { CopyFilterLink } from "@/components/workspace/copy-filter-link";
 
 export const metadata = { title: "报告查询" };
 export default async function ReportsPage({
@@ -71,6 +72,9 @@ export default async function ReportsPage({
       >
         导出 JSON
       </ButtonLink>
+      <CopyFilterLink
+        href={`/reports?${new URLSearchParams({ q: query, from: dates.from ?? "", to: dates.to ?? "", page: "1" })}`}
+      />
       {!parsedDates.success && (
         <p role="alert">日期范围无效，请检查开始和结束日期。</p>
       )}
