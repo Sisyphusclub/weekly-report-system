@@ -20,6 +20,7 @@ import { ButtonLink } from "@/components/base/buttons/button";
 import { ExternalLinkForm } from "@/components/workspace/external-link-form";
 import { TaskImportForm } from "@/components/workspace/task-import-form";
 import { TaskCommentSection } from "@/components/workspace/task-comment-section";
+import { TaskAttachmentSection } from "@/components/workspace/task-attachment-section";
 export const metadata = { title: "任务管理" };
 export default async function TasksPage({
   searchParams,
@@ -186,6 +187,7 @@ export default async function TasksPage({
                 />
               </details>
               <TaskCommentSection taskId={task.id} actorId={actor.id} />
+              <TaskAttachmentSection taskId={task.id} />
               <TaskStatusForm
                 key={`${task.id}:${task.version}`}
                 taskId={task.id}
