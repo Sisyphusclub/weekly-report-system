@@ -7,6 +7,7 @@ import {
   workCalendarDay,
   workTask,
   reportTask,
+  deliverable,
 } from "@/lib/db/schema";
 import { deadline, validateSubmission } from "@/lib/domain";
 import { dailyInput, shanghaiDate } from "@/lib/daily-input";
@@ -21,21 +22,65 @@ export async function POST(request: Request) {
     const input = parsed.data;
     if (input.reportDate > shanghaiDate())
       throw new BusinessError("不能提前填写未来日报");
-    const selectedTasks = input.taskIds.length
-      ? await getDb()
-          .select({ id: workTask.id, content: workTask.content, kind: workTask.kind, status: workTask.status, projectId: workTask.projectId, categoryId: workTask.categoryId, categoryName: workTask.categoryName, dueDate: workTask.dueDate })
-          .from(workTask)
-          .where(and(eq(workTask.organizationId, actor.organizationId), inArray(workTask.id, input.taskIds), eq(workTask.primaryAssigneeId, actor.id)))
-      : [];
-    if (selectedTasks.length !== input.taskIds.length) throw new BusinessError("任务不存在或无权选择", 403);
-    if (input.submit) {
-      try {
-        validateSubmission({ tasks: selectedTasks, ...input });
-      } catch (error) {
-        throw new BusinessError((error as Error).message);
-      }
-    }
     const result = await getDb().transaction(async (tx) => {
+      const taskRows = input.taskIds.length
+        ? await tx
+            .select({
+              id: workTask.id,
+              content: workTask.content,
+              kind: workTask.kind,
+              status: workTask.status,
+              projectId: workTask.projectId,
+              categoryId: workTask.categoryId,
+              categoryName: workTask.categoryName,
+              dueDate: workTask.dueDate,
+            })
+            .from(workTask)
+            .where(
+              and(
+                eq(workTask.organizationId, actor.organizationId),
+                inArray(workTask.id, input.taskIds),
+                eq(workTask.primaryAssigneeId, actor.id),
+              ),
+            )
+            .orderBy(workTask.id)
+            .for("share")
+        : [];
+      const deliveries = input.taskIds.length
+        ? await tx
+            .select({
+              taskId: deliverable.taskId,
+              unitId: deliverable.unitId,
+              unitName: deliverable.unitName,
+              quantity: deliverable.quantity,
+            })
+            .from(deliverable)
+            .where(
+              and(
+                eq(deliverable.organizationId, actor.organizationId),
+                inArray(deliverable.taskId, input.taskIds),
+              ),
+            )
+        : [];
+      const selectedTasks = taskRows.map((task) => ({
+        ...task,
+        deliverables: deliveries
+          .filter((item) => item.taskId === task.id)
+          .map(({ unitId, unitName, quantity }) => ({
+            unitId,
+            unitName,
+            quantity,
+          })),
+      }));
+      if (selectedTasks.length !== input.taskIds.length)
+        throw new BusinessError("任务不存在或无权选择", 403);
+      if (input.submit) {
+        try {
+          validateSubmission({ tasks: selectedTasks, ...input });
+        } catch (error) {
+          throw new BusinessError((error as Error).message);
+        }
+      }
       await tx.execute(
         sql`select pg_advisory_xact_lock(hashtextextended(${`${actor.organizationId}:${actor.id}:${input.reportDate}`}, 0))`,
       );
@@ -86,45 +131,60 @@ export async function POST(request: Request) {
       if (existing)
         await tx.update(report).set(values).where(eq(report.id, id));
       else
-        await tx
-          .insert(report)
-          .values({
-            id,
-            organizationId: actor.organizationId,
-            authorId: actor.id,
-            type: "DAILY",
-            reportDate: input.reportDate,
-            dueAt,
-            calendarVersion: calendar?.version ?? 0,
-            ...values,
-          });
-      await tx.delete(reportTask).where(and(eq(reportTask.organizationId, actor.organizationId), eq(reportTask.reportId, id)));
-      if (selectedTasks.length)
-        await tx.insert(reportTask).values(selectedTasks.map((task) => ({ organizationId: actor.organizationId, reportId: id, taskId: task.id, snapshot: task, sourceReportId: id })));
-      if (input.submit)
-        await tx
-          .insert(reportRevision)
-          .values({
-            id: crypto.randomUUID(),
-            organizationId: actor.organizationId,
-            reportId: id,
-            revisionNumber: 1,
-            editorId: actor.id,
-            reason: "首次提交日报",
-            snapshot: { ...values, reportDate: input.reportDate, tasks: selectedTasks },
-            diff: { status: ["DRAFT", "SUBMITTED"] },
-          });
+        await tx.insert(report).values({
+          id,
+          organizationId: actor.organizationId,
+          authorId: actor.id,
+          type: "DAILY",
+          reportDate: input.reportDate,
+          dueAt,
+          calendarVersion: calendar?.version ?? 0,
+          ...values,
+        });
       await tx
-        .insert(auditLog)
-        .values({
+        .delete(reportTask)
+        .where(
+          and(
+            eq(reportTask.organizationId, actor.organizationId),
+            eq(reportTask.reportId, id),
+          ),
+        );
+      if (selectedTasks.length)
+        await tx
+          .insert(reportTask)
+          .values(
+            selectedTasks.map((task) => ({
+              organizationId: actor.organizationId,
+              reportId: id,
+              taskId: task.id,
+              snapshot: task,
+              sourceReportId: id,
+            })),
+          );
+      if (input.submit)
+        await tx.insert(reportRevision).values({
           id: crypto.randomUUID(),
           organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: input.submit ? "REPORT_SUBMIT" : "REPORT_SAVE",
-          resourceType: "report",
-          resourceId: id,
-          result: "SUCCESS",
+          reportId: id,
+          revisionNumber: 1,
+          editorId: actor.id,
+          reason: "首次提交日报",
+          snapshot: {
+            ...values,
+            reportDate: input.reportDate,
+            tasks: selectedTasks,
+          },
+          diff: { status: ["DRAFT", "SUBMITTED"] },
         });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: input.submit ? "REPORT_SUBMIT" : "REPORT_SAVE",
+        resourceType: "report",
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return { id, version: values.version, status: values.status };
     });
     return Response.json(result);

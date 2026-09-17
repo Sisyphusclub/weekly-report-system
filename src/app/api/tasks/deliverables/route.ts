@@ -11,6 +11,8 @@ import {
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
+    if (actor.role === "ADMIN")
+      throw new BusinessError("管理员不能修改业务交付物", 403);
     const parsed = deliverableInput.safeParse(
       await request.json().catch(() => null),
     );
@@ -33,7 +35,8 @@ export async function POST(request: Request) {
             eq(deliverableUnit.enabled, true),
           ),
         )
-        .limit(1);
+        .limit(1)
+        .for("update", { of: workTask });
       if (!refs) throw new BusinessError("任务或交付物单位无效", 404);
       if (actor.role !== "BOSS" && actor.id !== refs.assignee)
         throw new BusinessError("只能为自己负责的任务添加交付物", 403);
@@ -60,27 +63,23 @@ export async function POST(request: Request) {
           .where(eq(deliverable.id, existing.id));
       else {
         id = crypto.randomUUID();
-        await tx
-          .insert(deliverable)
-          .values({
-            id,
-            organizationId: actor.organizationId,
-            taskId: input.taskId,
-            unitId: input.unitId,
-            ...values,
-          });
-      }
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
+        await tx.insert(deliverable).values({
+          id,
           organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: existing ? "DELIVERABLE_UPDATE" : "DELIVERABLE_CREATE",
-          resourceType: "DELIVERABLE",
-          resourceId: id,
-          result: "SUCCESS",
+          taskId: input.taskId,
+          unitId: input.unitId,
+          ...values,
         });
+      }
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: existing ? "DELIVERABLE_UPDATE" : "DELIVERABLE_CREATE",
+        resourceType: "DELIVERABLE",
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return { id, quantity: input.quantity, unitName: refs.unitName };
     });
     return Response.json(result);
