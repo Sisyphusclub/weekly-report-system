@@ -67,7 +67,7 @@ export default async function BlockerPage({
           coordinators={coordinators}
         />
       )}
-      <BlockerCommentSection blockerId={id} />
+      <BlockerCommentSection blockerId={id} actorId={actor.id} />
     </WorkspaceShell>
   );
 }
