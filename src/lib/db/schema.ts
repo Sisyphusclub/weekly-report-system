@@ -557,6 +557,40 @@ export const notification = pgTable(
     }),
   ],
 );
+export const comment = pgTable(
+  "comment",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    reportId: text("report_id").notNull(),
+    authorId: text("author_id").notNull(),
+    parentId: text("parent_id"),
+    body: text("body").notNull(),
+    mentions: jsonb("mentions").notNull().default([]),
+    editedAt: timestamp("edited_at", { withTimezone: true }),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    ...timestamps(),
+  },
+  (t) => [
+    index("comment_report_created").on(
+      t.organizationId,
+      t.reportId,
+      t.createdAt,
+    ),
+    foreignKey({
+      columns: [t.organizationId, t.reportId],
+      foreignColumns: [report.organizationId, report.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.authorId],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.parentId],
+      foreignColumns: [t.organizationId, t.id],
+    }),
+  ],
+);
 export const workCalendarDay = pgTable(
   "work_calendar_day",
   {
