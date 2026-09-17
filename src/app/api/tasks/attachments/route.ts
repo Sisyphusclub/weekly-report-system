@@ -1,0 +1,102 @@
+import { and, asc, eq } from "drizzle-orm";
+import { z } from "zod";
+import { writeActor, BusinessError, apiError } from "@/lib/api";
+import { getDb } from "@/lib/db";
+import { taskAttachment, workTask } from "@/lib/db/schema";
+import { downloadUrl, uploadUrl } from "@/lib/storage";
+
+const input = z.object({
+  fileName: z.string().trim().min(1).max(180),
+  contentType: z.enum([
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "application/pdf",
+    "text/plain",
+  ]),
+  sizeBytes: z
+    .number()
+    .int()
+    .positive()
+    .max(10 * 1024 * 1024),
+});
+export async function GET(request: Request) {
+  try {
+    const actor = await writeActor(request);
+    const taskId = new URL(request.url).searchParams.get("taskId");
+    if (!taskId) throw new BusinessError("任务参数无效");
+    const db = getDb();
+    const rows = await db
+      .select()
+      .from(taskAttachment)
+      .where(
+        and(
+          eq(taskAttachment.organizationId, actor.organizationId),
+          eq(taskAttachment.taskId, taskId),
+        ),
+      )
+      .orderBy(asc(taskAttachment.createdAt));
+    const task = await db
+      .select({ id: workTask.id, assignee: workTask.primaryAssigneeId })
+      .from(workTask)
+      .where(
+        and(
+          eq(workTask.organizationId, actor.organizationId),
+          eq(workTask.id, taskId),
+        ),
+      )
+      .limit(1);
+    if (
+      !task[0] ||
+      (actor.role === "EMPLOYEE" && task[0].assignee !== actor.id)
+    )
+      throw new BusinessError("无权查看任务附件", 403);
+    return Response.json({
+      items: await Promise.all(
+        rows.map(async (row) => ({
+          ...row,
+          url: await downloadUrl(row.objectKey, row.fileName),
+        })),
+      ),
+    });
+  } catch (e) {
+    return apiError(e);
+  }
+}
+export async function POST(request: Request) {
+  try {
+    const actor = await writeActor(request);
+    const body = await request.json().catch(() => null);
+    const parsed = input.safeParse(body);
+    if (!parsed.success) throw new BusinessError("附件格式或大小无效");
+    const taskId = typeof body?.taskId === "string" ? body.taskId : "";
+    const [task] = await getDb()
+      .select({ id: workTask.id, assignee: workTask.primaryAssigneeId })
+      .from(workTask)
+      .where(
+        and(
+          eq(workTask.organizationId, actor.organizationId),
+          eq(workTask.id, taskId),
+        ),
+      )
+      .limit(1);
+    if (!task || (actor.role === "EMPLOYEE" && task.assignee !== actor.id))
+      throw new BusinessError("无权上传任务附件", 403);
+    const id = crypto.randomUUID();
+    const objectKey = `${actor.organizationId}/tasks/${taskId}/${id}-${parsed.data.fileName}`;
+    const url = await uploadUrl(objectKey, parsed.data.contentType);
+    await getDb()
+      .insert(taskAttachment)
+      .values({
+        id,
+        organizationId: actor.organizationId,
+        taskId,
+        uploadedBy: actor.id,
+        ...parsed.data,
+        objectKey,
+      });
+    return Response.json({ id, uploadUrl: url });
+  } catch (e) {
+    return apiError(e);
+  }
+}

@@ -370,6 +370,31 @@ export const externalLink = pgTable(
     }),
   ],
 );
+export const taskAttachment = pgTable(
+  "task_attachment",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    taskId: text("task_id").notNull(),
+    uploadedBy: text("uploaded_by").notNull(),
+    fileName: text("file_name").notNull(),
+    contentType: text("content_type").notNull(),
+    sizeBytes: integer("size_bytes").notNull(),
+    objectKey: text("object_key").notNull().unique(),
+    ...timestamps(),
+  },
+  (t) => [
+    index("task_attachment_task").on(t.organizationId, t.taskId),
+    foreignKey({
+      columns: [t.organizationId, t.taskId],
+      foreignColumns: [workTask.organizationId, workTask.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.uploadedBy],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+  ],
+);
 export const taskComment = pgTable(
   "task_comment",
   {
