@@ -27,3 +27,7 @@ PowerShell 执行 `scripts/backup-db.ps1 -OutputDirectory D:\backups\weekly`，�
 每次发布使用明确 Git 提交构建不可变镜像；发布前备份并评估迁移。应用异常时回滚镜像，不自动执行破坏性数据库降级。
 
 本地没有真实服务器、域名、证书或备份目标时，不得声称已经完成公网部署或恢复演练。
+
+# 迁移执行约束
+
+数据库迁移由 `npm run db:migrate` 按 Drizzle journal 顺序执行。不要直接重复运行已标记完成的 SQL，也不要修改已经在任一环境执行过的迁移文件；线上修复必须新增迁移并先在预发布数据库演练。
