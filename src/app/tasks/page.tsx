@@ -148,7 +148,12 @@ export default async function TasksPage({
     : [];
   return (
     <WorkspaceShell actor={actor} selected="tasks">
-      <h1 className="text-title-1-medium">任务管理</h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 className="text-title-1-medium">任务管理</h1>
+        <ButtonLink href="/api/tasks/export" variant="secondary" download>
+          导出任务 JSON
+        </ButtonLink>
+      </div>
       <TaskForm
         projects={projects}
         categories={categories}
