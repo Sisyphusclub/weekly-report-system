@@ -121,8 +121,9 @@ export type WeeklySource = {
 
 export function weeklyPeriod(date: string, overrides: CalendarOverrides = {}) {
   const dates = weekDates(date);
-  const deadlineDate =
-    dates.filter((day) => isWorkday(day, overrides)).at(-1) ?? dates[4];
+  const workdays = dates.filter((day) => isWorkday(day, overrides));
+  if (!workdays.length) throw new Error("该周期没有工作日，无法生成周报");
+  const deadlineDate = workdays.at(-1)!;
   return {
     weekStart: dates[0],
     weekEnd: dates[6],
@@ -137,6 +138,11 @@ export function buildWeeklySnapshot(
   overrides: CalendarOverrides = {},
 ) {
   const period = weeklyPeriod(date, overrides);
+  const allowed = new Set(weekDates(date));
+  const invalidSource = sources.find(
+    (source) => !allowed.has(source.reportDate),
+  );
+  if (invalidSource) throw new Error("周报来源必须属于当前周期");
   const missing = missingDailyReports(
     date,
     sources

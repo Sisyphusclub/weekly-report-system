@@ -20,6 +20,26 @@ it("缺少日报时禁止生成快照", () => {
     ]),
   ).toThrow("未提交日报");
 });
+it("拒绝跨周期来源", () => {
+  expect(() =>
+    buildWeeklySnapshot("2026-09-17", [
+      { reportDate: "2026-09-07", submitted: true },
+    ]),
+  ).toThrow("当前周期");
+});
+it("没有工作日时不生成伪截止日", () => {
+  expect(() =>
+    weeklyPeriod("2026-09-17", {
+      "2026-09-14": false,
+      "2026-09-15": false,
+      "2026-09-16": false,
+      "2026-09-17": false,
+      "2026-09-18": false,
+      "2026-09-19": false,
+      "2026-09-20": false,
+    }),
+  ).toThrow("没有工作日");
+});
 it("快照保留来源和总结", () => {
   const result = buildWeeklySnapshot(
     "2026-09-17",
