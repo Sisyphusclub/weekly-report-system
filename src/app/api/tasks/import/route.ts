@@ -7,8 +7,6 @@ import * as XLSX from "xlsx";
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
-    if (actor.role === "ADMIN")
-      throw new BusinessError("管理员不能导入业务任务", 403);
     const contentType = request.headers.get("content-type") ?? "";
     let payload: unknown;
     if (contentType.includes("multipart/form-data")) {

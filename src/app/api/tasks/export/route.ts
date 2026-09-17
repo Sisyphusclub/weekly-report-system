@@ -1,13 +1,11 @@
 import { and, desc, eq } from "drizzle-orm";
 import { apiError, BusinessError, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
-import { workTask } from "@/lib/db/schema";
+import { auditLog, workTask } from "@/lib/db/schema";
 import * as XLSX from "xlsx";
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
-    if (actor.role === "ADMIN")
-      throw new BusinessError("管理员不能导出业务任务", 403);
     const rows = await getDb()
       .select({
         projectId: workTask.projectId,
@@ -30,6 +28,17 @@ export async function GET(request: Request) {
       )
       .orderBy(desc(workTask.updatedAt), desc(workTask.id))
       .limit(5000);
+    await getDb()
+      .insert(auditLog)
+      .values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "TASK_EXPORT",
+        resourceType: "TASK",
+        resourceId: "BATCH",
+        result: "SUCCESS",
+      });
     if (new URL(request.url).searchParams.get("format") === "xlsx") {
       const sheet = XLSX.utils.json_to_sheet(rows);
       const workbook = XLSX.utils.book_new();
