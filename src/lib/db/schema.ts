@@ -369,6 +369,30 @@ export const externalLink = pgTable(
     }),
   ],
 );
+export const taskComment = pgTable(
+  "task_comment",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    taskId: text("task_id").notNull(),
+    authorId: text("author_id").notNull(),
+    body: text("body").notNull(),
+    mentions: jsonb("mentions").notNull().default([]),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    ...timestamps(),
+  },
+  (t) => [
+    index("task_comment_created").on(t.organizationId, t.taskId, t.createdAt),
+    foreignKey({
+      columns: [t.organizationId, t.taskId],
+      foreignColumns: [workTask.organizationId, workTask.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.authorId],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+  ],
+);
 export const report = pgTable(
   "report",
   {

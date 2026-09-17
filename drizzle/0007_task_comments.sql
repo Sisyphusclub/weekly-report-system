@@ -1,0 +1,4 @@
+CREATE TABLE IF NOT EXISTS "task_comment" ("id" text PRIMARY KEY NOT NULL, "organization_id" text NOT NULL, "task_id" text NOT NULL, "author_id" text NOT NULL, "body" text NOT NULL, "mentions" jsonb DEFAULT '[]'::jsonb NOT NULL, "deleted_at" timestamp with time zone, "created_at" timestamp with time zone DEFAULT now() NOT NULL, "updated_at" timestamp with time zone DEFAULT now() NOT NULL);
+CREATE INDEX IF NOT EXISTS "task_comment_created" ON "task_comment" ("organization_id", "task_id", "created_at");
+ALTER TABLE "task_comment" ADD CONSTRAINT "task_comment_task_fk" FOREIGN KEY ("organization_id", "task_id") REFERENCES "work_task"("organization_id", "id");
+ALTER TABLE "task_comment" ADD CONSTRAINT "task_comment_author_fk" FOREIGN KEY ("organization_id", "author_id") REFERENCES "app_user"("organization_id", "id");
