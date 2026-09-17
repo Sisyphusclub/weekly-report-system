@@ -82,17 +82,15 @@ export async function GET(request: Request) {
             ),
           )
       : [];
-    await db
-      .insert(auditLog)
-      .values({
-        id: crypto.randomUUID(),
-        organizationId: actor.organizationId,
-        actorId: actor.id,
-        action: "REPORT_EXPORT",
-        resourceType: "REPORT",
-        resourceId: "FILTER",
-        result: "SUCCESS",
-      });
+    await db.insert(auditLog).values({
+      id: crypto.randomUUID(),
+      organizationId: actor.organizationId,
+      actorId: actor.id,
+      action: "REPORT_EXPORT",
+      resourceType: "REPORT",
+      resourceId: "FILTER",
+      result: "SUCCESS",
+    });
     return new Response(
       JSON.stringify({
         generatedAt: new Date().toISOString(),
