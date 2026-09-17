@@ -101,6 +101,17 @@ export async function PATCH(request: Request) {
       .update(taskAttachment)
       .set({ verifiedAt: new Date(), updatedAt: new Date() })
       .where(eq(taskAttachment.id, id));
+    await db
+      .insert(auditLog)
+      .values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "ATTACHMENT_VERIFY",
+        resourceType: "TASK_ATTACHMENT",
+        resourceId: id,
+        result: "SUCCESS",
+      });
     return Response.json({ ok: true });
   } catch (e) {
     return apiError(e);
@@ -143,6 +154,17 @@ export async function POST(request: Request) {
         uploadedBy: actor.id,
         ...parsed.data,
         objectKey,
+      });
+    await getDb()
+      .insert(auditLog)
+      .values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "ATTACHMENT_UPLOAD_INIT",
+        resourceType: "TASK_ATTACHMENT",
+        resourceId: id,
+        result: "SUCCESS",
       });
     return Response.json({ id, uploadUrl: url });
   } catch (e) {
