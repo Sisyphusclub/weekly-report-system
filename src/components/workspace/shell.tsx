@@ -20,7 +20,8 @@ export function WorkspaceShell({
     | "weekly"
     | "notifications"
     | "tasks"
-    | "calendar";
+    | "calendar"
+    | "exemptions";
   children: React.ReactNode;
 }) {
   return (
@@ -75,6 +76,11 @@ export function WorkspaceShell({
                     key: "calendar",
                     label: "工作日历",
                     href: "/admin/calendar",
+                  },
+                  {
+                    key: "exemptions",
+                    label: "请假与免报",
+                    href: "/admin/exemptions",
                   },
                 ]
               : []),
