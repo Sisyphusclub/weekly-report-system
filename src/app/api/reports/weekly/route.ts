@@ -1,4 +1,5 @@
-import { and, desc, eq, gte, lte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lte, sql, inArray } from "drizzle-orm";
+import { weeklyTaskSnapshot } from "@/lib/weekly-task-snapshot";
 import { z } from "zod";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
@@ -54,7 +55,12 @@ export async function POST(request: Request) {
       if (value.submit && shanghaiDate() < actualPeriod.dueDate)
         throw new BusinessError("请在本周最后一个工作日提交周报");
       const days = await tx
-        .select({ id: report.id, reportDate: report.reportDate, summary: report.summary })
+        .select({
+          id: report.id,
+          reportDate: report.reportDate,
+          summary: report.summary,
+          version: report.version,
+        })
         .from(report)
         .where(
           and(
@@ -91,11 +97,17 @@ export async function POST(request: Request) {
       }));
       const sourceIds = days.map((day) => day.id);
       const sourceTasks = sourceIds.length
-        ? await tx.select().from(reportTask).where(and(eq(reportTask.organizationId, actor.organizationId), sql`${reportTask.sourceReportId} in ${sourceIds}`))
+        ? await tx
+            .select()
+            .from(reportTask)
+            .where(
+              and(
+                eq(reportTask.organizationId, actor.organizationId),
+                inArray(reportTask.reportId, sourceIds),
+              ),
+            )
         : [];
-      (sources as Array<Record<string, unknown>>).forEach((source) => {
-        source.tasks = source.reportId ? sourceTasks.filter((task) => task.sourceReportId === source.reportId).map((task) => task.snapshot) : [];
-      });
+      const taskSnapshot = weeklyTaskSnapshot(days, sourceTasks);
       let snapshot;
       try {
         snapshot = value.submit
@@ -147,43 +159,60 @@ export async function POST(request: Request) {
       if (existing)
         await tx.update(report).set(values).where(eq(report.id, id));
       else
-        await tx
-          .insert(report)
-          .values({
-            id,
-            organizationId: actor.organizationId,
-            authorId: actor.id,
-            type: "WEEKLY",
-            weekStart: snapshot.weekStart,
-            weekEnd: snapshot.weekEnd,
-            weekLabel: snapshot.weekLabel,
-            ...values,
-          });
-      if (value.submit)
-        await tx
-          .insert(reportRevision)
-          .values({
-            id: crypto.randomUUID(),
-            organizationId: actor.organizationId,
-            reportId: id,
-            revisionNumber: 1,
-            editorId: actor.id,
-            reason: "首次提交周报",
-            snapshot,
-            diff: { status: ["DRAFT", "SUBMITTED"] },
-          });
+        await tx.insert(report).values({
+          id,
+          organizationId: actor.organizationId,
+          authorId: actor.id,
+          type: "WEEKLY",
+          weekStart: snapshot.weekStart,
+          weekEnd: snapshot.weekEnd,
+          weekLabel: snapshot.weekLabel,
+          ...values,
+        });
       await tx
-        .insert(auditLog)
-        .values({
+        .delete(reportTask)
+        .where(
+          and(
+            eq(reportTask.organizationId, actor.organizationId),
+            eq(reportTask.reportId, id),
+          ),
+        );
+      if (taskSnapshot.tasks.length)
+        await tx
+          .insert(reportTask)
+          .values(
+            taskSnapshot.tasks.map((task) => ({
+              ...task,
+              reportId: id,
+              organizationId: actor.organizationId,
+            })),
+          );
+      if (value.submit)
+        await tx.insert(reportRevision).values({
           id: crypto.randomUUID(),
           organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: value.submit ? "WEEKLY_REPORT_SUBMIT" : "WEEKLY_REPORT_SAVE",
-          resourceType: "REPORT",
-          resourceId: id,
-          result: "SUCCESS",
+          reportId: id,
+          revisionNumber: 1,
+          editorId: actor.id,
+          reason: "首次提交周报",
+          snapshot: { ...snapshot, ...taskSnapshot, summary: values.summary },
+          diff: { status: ["DRAFT", "SUBMITTED"] },
         });
-      return { id, version: values.version, status: values.status, snapshot };
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: value.submit ? "WEEKLY_REPORT_SUBMIT" : "WEEKLY_REPORT_SAVE",
+        resourceType: "REPORT",
+        resourceId: id,
+        result: "SUCCESS",
+      });
+      return {
+        id,
+        version: values.version,
+        status: values.status,
+        snapshot: { ...snapshot, ...taskSnapshot, summary: values.summary },
+      };
     });
     return Response.json(result);
   } catch (error) {
