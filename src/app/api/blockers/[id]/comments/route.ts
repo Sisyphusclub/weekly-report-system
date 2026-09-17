@@ -1,8 +1,15 @@
 import { and, asc, eq } from "drizzle-orm";
 import { apiError, BusinessError, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
-import { auditLog, blocker, blockerComment, user } from "@/lib/db/schema";
+import {
+  auditLog,
+  blocker,
+  blockerComment,
+  notification,
+  user,
+} from "@/lib/db/schema";
 import { z } from "zod";
+import { mentionedUsernames } from "@/lib/comment-input";
 const input = z.object({ body: z.string().trim().min(1).max(5000) });
 async function access(
   tx: any,
@@ -84,6 +91,37 @@ export async function POST(
         authorId: actor.id,
         body: parsed.data.body,
       });
+      const names = mentionedUsernames(parsed.data.body);
+      if (names.length) {
+        const recipients = await tx
+          .select({ id: user.id, username: user.username })
+          .from(user)
+          .where(
+            and(
+              eq(user.organizationId, actor.organizationId),
+              eq(user.status, "ACTIVE"),
+            ),
+          );
+        const valid = recipients.filter(
+          (item) =>
+            names.includes(item.username.toLowerCase()) && item.id !== actor.id,
+        );
+        if (valid.length)
+          await tx
+            .insert(notification)
+            .values(
+              valid.map((item) => ({
+                id: crypto.randomUUID(),
+                organizationId: actor.organizationId,
+                recipientId: item.id,
+                dedupeKey: `blocker-comment:${commentId}:${item.id}`,
+                type: "COMMENT_MENTIONED",
+                title: "有人在阻塞评论中提及你",
+                link: `/blockers/${id}`,
+              })),
+            )
+            .onConflictDoNothing();
+      }
       await tx.insert(auditLog).values({
         id: crypto.randomUUID(),
         organizationId: actor.organizationId,
