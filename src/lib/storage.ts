@@ -102,12 +102,15 @@ export async function verifyObject(
   const bytes = object.Body
     ? new Uint8Array(await object.Body.transformToByteArray())
     : new Uint8Array();
+  if (bytes.length !== Math.min(sizeBytes, 16) || bytes.length === 0)
+    throw new Error("附件内容读取不完整");
   const ascii = String.fromCharCode(...bytes);
   const valid =
     contentType === "application/pdf"
       ? ascii.startsWith("%PDF-")
       : contentType === "image/png"
-        ? bytes
+        ? bytes.length >= 8 &&
+          bytes
             .slice(0, 8)
             .every(
               (value, index) =>
@@ -117,7 +120,8 @@ export async function verifyObject(
           ? bytes[0] === 255 && bytes[1] === 216
           : contentType === "image/webp"
             ? ascii.startsWith("RIFF") && ascii.slice(8, 12) === "WEBP"
-            : !bytes.includes(0) &&
+            : contentType === "text/plain" &&
+              !bytes.includes(0) &&
               !ascii.startsWith("MZ") &&
               !ascii.startsWith("\u007fELF") &&
               !ascii.startsWith("#!");
