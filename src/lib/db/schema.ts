@@ -411,10 +411,6 @@ export const blockerComment = pgTable(
       t.createdAt,
     ),
     foreignKey({
-      columns: [t.organizationId, t.blockerId],
-      foreignColumns: [blocker.organizationId, blocker.id],
-    }),
-    foreignKey({
       columns: [t.organizationId, t.authorId],
       foreignColumns: [user.organizationId, user.id],
     }),
