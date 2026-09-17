@@ -65,6 +65,7 @@ export async function PATCH(request: Request) {
         objectKey: taskAttachment.objectKey,
         sizeBytes: taskAttachment.sizeBytes,
         sha256: taskAttachment.sha256,
+        contentType: taskAttachment.contentType,
         assignee: workTask.primaryAssigneeId,
       })
       .from(taskAttachment)
@@ -88,6 +89,7 @@ export async function PATCH(request: Request) {
       row.objectKey,
       row.sizeBytes,
       Buffer.from(row.sha256, "hex").toString("base64"),
+      row.contentType,
     );
     await db
       .update(taskAttachment)

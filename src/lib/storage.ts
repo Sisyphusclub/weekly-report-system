@@ -77,6 +77,7 @@ export async function verifyObject(
   key: string,
   sizeBytes: number,
   checksumSha256: string,
+  contentType: string,
 ) {
   const config = storageConfig();
   const result = await client().send(
@@ -89,4 +90,31 @@ export async function verifyObject(
   if (result.ContentLength !== sizeBytes) throw new Error("附件大小校验失败");
   if (result.ChecksumSHA256 && result.ChecksumSHA256 !== checksumSha256)
     throw new Error("附件哈希校验失败");
+  const object = await client().send(
+    new GetObjectCommand({
+      Bucket: config.S3_BUCKET,
+      Key: key,
+      Range: "bytes=0-15",
+    }),
+  );
+  const bytes = object.Body
+    ? new Uint8Array(await object.Body.transformToByteArray())
+    : new Uint8Array();
+  const ascii = String.fromCharCode(...bytes);
+  const valid =
+    contentType === "application/pdf"
+      ? ascii.startsWith("%PDF-")
+      : contentType === "image/png"
+        ? bytes
+            .slice(0, 8)
+            .every(
+              (value, index) =>
+                value === [137, 80, 78, 71, 13, 10, 26, 10][index],
+            )
+        : contentType === "image/jpeg"
+          ? bytes[0] === 255 && bytes[1] === 216
+          : contentType === "image/webp"
+            ? ascii.startsWith("RIFF") && ascii.slice(8, 12) === "WEBP"
+            : !bytes.includes(0);
+  if (!valid) throw new Error("附件内容与类型不匹配");
 }
