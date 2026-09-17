@@ -19,7 +19,7 @@
 
 ## 后台任务
 
-由外部 cron、CI 或任务平台调用，并传入 `REMINDER_ORGANIZATION_ID`：`npm run reminders:run`、`npm run weekly:drafts`。任务可重复执行，通知使用唯一键去重，周报草稿只在不存在时创建。
+由外部 cron、CI 或任务平台调用，并传入 `REMINDER_ORGANIZATION_ID`：`npm run reminders:run`、`npm run weekly:drafts`、`npm run attachments:cleanup`。任务可重复执行，通知使用唯一键去重，周报草稿只在不存在时创建；附件清理任务删除超过 1 小时仍未完成确认的对象和元数据。
 
 ## 备份与恢复
 
