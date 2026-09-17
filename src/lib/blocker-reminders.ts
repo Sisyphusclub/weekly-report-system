@@ -1,3 +1,5 @@
+import { shanghaiDate } from "./daily-input";
+
 export type ReminderBlocker = {
   id: string;
   severity: "NORMAL" | "IMPORTANT" | "URGENT";
@@ -44,7 +46,7 @@ export function urgentBlockerReminders(input: {
   blockers: ReminderBlocker[];
   bosses: string[];
 }) {
-  const day = input.now.toISOString().slice(0, 10);
+  const day = shanghaiDate(input.now);
   return input.blockers.flatMap((item) => {
     if (item.status === "RESOLVED" || item.severity !== "URGENT") return [];
     const recipients = item.coordinatorId ? [item.coordinatorId] : input.bosses;
