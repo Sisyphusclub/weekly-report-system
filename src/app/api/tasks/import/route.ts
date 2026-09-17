@@ -3,7 +3,7 @@ import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { taskImportBatch } from "@/lib/task-import-input";
 import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
@@ -17,15 +17,23 @@ export async function POST(request: Request) {
         throw new BusinessError("仅支持 .xlsx 文件");
       if (file.size > 10 * 1024 * 1024)
         throw new BusinessError("Excel 文件不能超过 10 MB");
-      const workbook = XLSX.read(await file.arrayBuffer(), {
-        type: "array",
-        cellDates: false,
-      });
-      const sheetName = workbook.SheetNames[0];
-      if (!sheetName) throw new BusinessError("Excel 文件没有工作表");
-      const sheet = workbook.Sheets[sheetName];
-      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
-        defval: null,
+      const workbook = new ExcelJS.Workbook();
+      await workbook.xlsx.load(await file.arrayBuffer());
+      const sheet = workbook.worksheets[0];
+      if (!sheet) throw new BusinessError("Excel 文件没有工作表");
+      const headers = (sheet.getRow(1).values as unknown[])
+        .slice(1)
+        .map(String);
+      const rows: Record<string, unknown>[] = [];
+      sheet.eachRow((row, index) => {
+        if (index > 1) {
+          const values = (row.values as unknown[]).slice(1);
+          rows.push(
+            Object.fromEntries(
+              headers.map((header, i) => [header, values[i] ?? null]),
+            ),
+          );
+        }
       });
       payload = {
         items: rows.map((row) => ({

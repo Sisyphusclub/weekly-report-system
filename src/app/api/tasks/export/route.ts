@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { apiError, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, workTask } from "@/lib/db/schema";
-import * as XLSX from "xlsx";
+import ExcelJS from "exceljs";
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
@@ -44,10 +44,14 @@ export async function GET(request: Request) {
         generatedAt,
         generatedBy: actor.id,
       }));
-      const sheet = XLSX.utils.json_to_sheet(exportRows);
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, sheet, "任务");
-      const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
+      const workbook = new ExcelJS.Workbook();
+      const sheet = workbook.addWorksheet("任务");
+      sheet.columns = Object.keys(exportRows[0] ?? {}).map((key) => ({
+        header: key,
+        key,
+      }));
+      exportRows.forEach((row) => sheet.addRow(row));
+      const buffer = await workbook.xlsx.writeBuffer();
       return new Response(buffer, {
         headers: {
           "Content-Type":
