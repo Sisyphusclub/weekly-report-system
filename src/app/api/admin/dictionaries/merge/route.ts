@@ -140,6 +140,9 @@ export async function POST(request: Request) {
               taskId: row.taskId,
               unitName: target.name,
               quantity: targetRow.quantity,
+              sourceId: row.id,
+              sourceQuantity: row.quantity,
+              sourceUnitName: row.unitName,
             });
             await tx
               .update(deliverable)
@@ -230,6 +233,9 @@ export async function DELETE(request: Request) {
           taskId: string;
           unitName: string;
           quantity: string;
+          sourceId?: string;
+          sourceQuantity?: string;
+          sourceUnitName?: string;
         }>;
         deletedDeliverables?: Array<{
           id: string;
@@ -269,17 +275,28 @@ export async function DELETE(request: Request) {
                 eq(deliverable.id, row.id),
               ),
             );
-        for (const row of snapshot.deletedDeliverables ?? [])
+        for (const row of snapshot.deletedDeliverables ?? []) {
           await tx
-            .insert(deliverable)
-            .values({
-              id: row.id,
-              organizationId: actor.organizationId,
-              taskId: row.taskId,
-              unitId: merge.targetId,
-              unitName: row.unitName,
-              quantity: row.quantity,
-            });
+            .update(deliverable)
+            .set({ quantity: row.quantity, updatedAt: new Date() })
+            .where(
+              and(
+                eq(deliverable.organizationId, actor.organizationId),
+                eq(deliverable.id, row.id),
+              ),
+            );
+          if (row.sourceId && row.sourceQuantity)
+            await tx
+              .insert(deliverable)
+              .values({
+                id: row.sourceId,
+                organizationId: actor.organizationId,
+                taskId: row.taskId,
+                unitId: merge.sourceId,
+                unitName: row.sourceUnitName ?? "",
+                quantity: row.sourceQuantity,
+              });
+        }
       }
       await tx
         .update(table)
