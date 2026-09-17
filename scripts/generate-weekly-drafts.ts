@@ -3,7 +3,6 @@ import { getDb } from "../src/lib/db/index.js";
 import {
   auditLog,
   report,
-  reportingExemption,
   user,
   workCalendarDay,
 } from "../src/lib/db/schema.js";
