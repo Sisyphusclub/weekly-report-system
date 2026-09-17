@@ -3,14 +3,42 @@ import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { taskImportBatch } from "@/lib/task-import-input";
 import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
+import * as XLSX from "xlsx";
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
     if (actor.role === "ADMIN")
       throw new BusinessError("管理员不能导入业务任务", 403);
-    const parsed = taskImportBatch.safeParse(
-      await request.json().catch(() => null),
-    );
+    const contentType = request.headers.get("content-type") ?? "";
+    let payload: unknown;
+    if (contentType.includes("multipart/form-data")) {
+      const form = await request.formData();
+      const file = form.get("file");
+      if (!(file instanceof File)) throw new BusinessError("请选择 Excel 文件");
+      if (file.size > 10 * 1024 * 1024)
+        throw new BusinessError("Excel 文件不能超过 10 MB");
+      const workbook = XLSX.read(await file.arrayBuffer(), {
+        type: "array",
+        cellDates: false,
+      });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
+        defval: null,
+      });
+      payload = {
+        items: rows.map((row) => ({
+          projectId: row.projectId ?? row["项目编号"],
+          categoryId: row.categoryId ?? row["分类编号"],
+          primaryAssigneeId: row.primaryAssigneeId ?? row["负责人编号"],
+          content: row.content ?? row["任务内容"],
+          kind: row.kind ?? row["任务类型"],
+          status: row.status ?? row["状态"] ?? "TODO",
+          workDate: row.workDate ?? row["工作日期"] ?? null,
+          dueDate: row.dueDate ?? row["截止日期"] ?? null,
+        })),
+      };
+    } else payload = await request.json().catch(() => null);
+    const parsed = taskImportBatch.safeParse(payload);
     if (!parsed.success) throw new BusinessError("导入任务格式无效");
     const result = await getDb().transaction(async (tx) => {
       const created: string[] = [];
