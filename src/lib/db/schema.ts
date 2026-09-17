@@ -393,6 +393,33 @@ export const taskComment = pgTable(
     }),
   ],
 );
+export const blockerComment = pgTable(
+  "blocker_comment",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    blockerId: text("blocker_id").notNull(),
+    authorId: text("author_id").notNull(),
+    body: text("body").notNull(),
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
+    ...timestamps(),
+  },
+  (t) => [
+    index("blocker_comment_created").on(
+      t.organizationId,
+      t.blockerId,
+      t.createdAt,
+    ),
+    foreignKey({
+      columns: [t.organizationId, t.blockerId],
+      foreignColumns: [blocker.organizationId, blocker.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.authorId],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+  ],
+);
 export const report = pgTable(
   "report",
   {
