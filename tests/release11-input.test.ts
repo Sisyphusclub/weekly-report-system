@@ -61,4 +61,14 @@ it("附件校验类型、大小和 SHA-256", () => {
   expect(attachmentInput.safeParse({ ...valid, sha256: "bad" }).success).toBe(
     false,
   );
+  expect(
+    attachmentInput.safeParse({
+      ...valid,
+      fileName: "run.exe",
+      contentType: "text/plain",
+    }).success,
+  ).toBe(false);
+  expect(
+    attachmentInput.safeParse({ ...valid, fileName: "../a.pdf" }).success,
+  ).toBe(false);
 });
