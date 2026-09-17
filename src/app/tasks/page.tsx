@@ -155,6 +155,13 @@ export default async function TasksPage({
         <ButtonLink href="/api/tasks/export" variant="secondary" download>
           导出任务 JSON
         </ButtonLink>
+        <ButtonLink
+          href="/api/tasks/export?format=xlsx"
+          variant="secondary"
+          download
+        >
+          导出任务 Excel
+        </ButtonLink>
       </div>
       <TaskForm
         projects={projects}
