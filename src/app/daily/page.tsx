@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, lt, ne, or } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
 import { report, reportTask } from "@/lib/db/schema";
@@ -51,6 +51,22 @@ export default async function DailyPage({
         eq(workTask.primaryAssigneeId, actor.id),
       ),
     );
+  const carryover = await getDb()
+    .select({ id: workTask.id })
+    .from(workTask)
+    .where(
+      and(
+        eq(workTask.organizationId, actor.organizationId),
+        eq(workTask.primaryAssigneeId, actor.id),
+        eq(workTask.kind, "PLAN"),
+        lt(workTask.dueDate, date),
+        or(
+          eq(workTask.status, "TODO"),
+          eq(workTask.status, "IN_PROGRESS"),
+          eq(workTask.status, "BLOCKED"),
+        ),
+      ),
+    );
   const associations = draft
     ? await getDb()
         .select({ taskId: reportTask.taskId })
@@ -76,7 +92,12 @@ export default async function DailyPage({
         date={date}
         draft={draft ?? null}
         tasks={tasks}
-        initialTaskIds={associations.map((item) => item.taskId)}
+        initialTaskIds={Array.from(
+          new Set([
+            ...carryover.map((item) => item.id),
+            ...associations.map((item) => item.taskId),
+          ]),
+        )}
       />
     </WorkspaceShell>
   );

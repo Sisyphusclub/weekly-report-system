@@ -114,7 +114,9 @@ export function DailyForm({
       />
       {tasks.length > 0 && (
         <fieldset className="flex flex-col gap-2">
-          <legend className="text-label-medium">关联任务</legend>
+          <legend className="text-label-medium">
+            关联任务（未完成计划已预选）
+          </legend>
           {tasks.map((task) => (
             <Checkbox
               key={task.id}
