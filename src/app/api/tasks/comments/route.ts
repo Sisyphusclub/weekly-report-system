@@ -84,27 +84,23 @@ export async function POST(request: Request) {
           item.id !== actor.id,
       );
       const id = crypto.randomUUID();
-      await tx
-        .insert(taskComment)
-        .values({
-          id,
-          organizationId: actor.organizationId,
-          taskId: v.taskId,
-          authorId: actor.id,
-          body: v.body,
-          mentions: valid.map((item) => item.username),
-        });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "TASK_COMMENT_CREATE",
-          resourceType: "TASK",
-          resourceId: v.taskId,
-          result: "SUCCESS",
-        });
+      await tx.insert(taskComment).values({
+        id,
+        organizationId: actor.organizationId,
+        taskId: v.taskId,
+        authorId: actor.id,
+        body: v.body,
+        mentions: valid.map((item) => item.username),
+      });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "TASK_COMMENT_CREATE",
+        resourceType: "TASK",
+        resourceId: v.taskId,
+        result: "SUCCESS",
+      });
       if (valid.length)
         await tx
           .insert(notification)

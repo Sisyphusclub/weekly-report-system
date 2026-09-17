@@ -45,27 +45,23 @@ export async function POST(request: Request) {
       if (actor.role !== "BOSS" && task.assignee !== actor.id)
         throw new BusinessError("无权添加链接", 403);
       const id = crypto.randomUUID();
-      await tx
-        .insert(externalLink)
-        .values({
-          id,
-          organizationId: actor.organizationId,
-          taskId: input.taskId,
-          title: input.title,
-          url: input.url,
-          createdBy: actor.id,
-        });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "EXTERNAL_LINK_CREATE",
-          resourceType: "TASK",
-          resourceId: input.taskId,
-          result: "SUCCESS",
-        });
+      await tx.insert(externalLink).values({
+        id,
+        organizationId: actor.organizationId,
+        taskId: input.taskId,
+        title: input.title,
+        url: input.url,
+        createdBy: actor.id,
+      });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "EXTERNAL_LINK_CREATE",
+        resourceType: "TASK",
+        resourceId: input.taskId,
+        result: "SUCCESS",
+      });
       return { id };
     });
     return Response.json(result, { status: 201 });

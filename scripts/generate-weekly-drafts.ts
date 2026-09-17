@@ -152,17 +152,15 @@ async function main() {
         const latest = new Map<string, (typeof sourceTasks)[number]>();
         for (const task of sourceTasks) latest.set(task.taskId, task);
         if (latest.size)
-          await tx
-            .insert(reportTask)
-            .values(
-              [...latest.values()].map((task) => ({
-                organizationId,
-                reportId: id,
-                taskId: task.taskId,
-                snapshot: task.snapshot,
-                sourceReportId: task.sourceReportId,
-              })),
-            );
+          await tx.insert(reportTask).values(
+            [...latest.values()].map((task) => ({
+              organizationId,
+              reportId: id,
+              taskId: task.taskId,
+              snapshot: task.snapshot,
+              sourceReportId: task.sourceReportId,
+            })),
+          );
       }
       await tx.insert(auditLog).values({
         id: crypto.randomUUID(),

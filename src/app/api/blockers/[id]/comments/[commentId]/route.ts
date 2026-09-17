@@ -40,17 +40,15 @@ export async function PATCH(
             : { body: parsed!.data, updatedAt: now },
         )
         .where(eq(blockerComment.id, commentId));
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: deleted ? "BLOCKER_COMMENT_DELETE" : "BLOCKER_COMMENT_UPDATE",
-          resourceType: "BLOCKER",
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: deleted ? "BLOCKER_COMMENT_DELETE" : "BLOCKER_COMMENT_UPDATE",
+        resourceType: "BLOCKER",
+        resourceId: id,
+        result: "SUCCESS",
+      });
     });
     return Response.json({ ok: true });
   } catch (e) {

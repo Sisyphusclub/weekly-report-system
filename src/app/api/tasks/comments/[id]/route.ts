@@ -39,17 +39,15 @@ export async function PATCH(
             : { body: parsed!.data, updatedAt: now },
         )
         .where(eq(taskComment.id, id));
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: deleted ? "TASK_COMMENT_DELETE" : "TASK_COMMENT_UPDATE",
-          resourceType: "TASK_COMMENT",
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: deleted ? "TASK_COMMENT_DELETE" : "TASK_COMMENT_UPDATE",
+        resourceType: "TASK_COMMENT",
+        resourceId: id,
+        result: "SUCCESS",
+      });
     });
     return Response.json({ ok: true });
   } catch (e) {
