@@ -64,6 +64,7 @@ export async function PATCH(request: Request) {
         id: taskAttachment.id,
         objectKey: taskAttachment.objectKey,
         sizeBytes: taskAttachment.sizeBytes,
+        sha256: taskAttachment.sha256,
         assignee: workTask.primaryAssigneeId,
       })
       .from(taskAttachment)
@@ -83,7 +84,11 @@ export async function PATCH(request: Request) {
       .limit(1);
     if (!row || (actor.role === "EMPLOYEE" && row.assignee !== actor.id))
       throw new BusinessError("无权确认任务附件", 403);
-    await verifyObject(row.objectKey, row.sizeBytes);
+    await verifyObject(
+      row.objectKey,
+      row.sizeBytes,
+      Buffer.from(row.sha256, "hex").toString("base64"),
+    );
     await db
       .update(taskAttachment)
       .set({ verifiedAt: new Date(), updatedAt: new Date() })

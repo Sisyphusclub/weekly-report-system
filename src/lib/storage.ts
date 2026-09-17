@@ -73,10 +73,16 @@ export async function deleteObject(key: string) {
     throw error;
   }
 }
-export async function verifyObject(key: string, sizeBytes: number) {
+export async function verifyObject(
+  key: string,
+  sizeBytes: number,
+  checksumSha256: string,
+) {
   const config = storageConfig();
   const result = await client().send(
     new HeadObjectCommand({ Bucket: config.S3_BUCKET, Key: key }),
   );
   if (result.ContentLength !== sizeBytes) throw new Error("附件大小校验失败");
+  if (result.ChecksumSHA256 && result.ChecksumSHA256 !== checksumSha256)
+    throw new Error("附件哈希校验失败");
 }
