@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { BusinessError, enforceRateLimit } from "@/lib/api";
+import { apiError, BusinessError, enforceRateLimit } from "@/lib/api";
 
 describe("enforceRateLimit", () => {
   it("rejects requests after the configured limit", () => {
@@ -15,5 +15,11 @@ describe("enforceRateLimit", () => {
     const key = `test-${crypto.randomUUID()}`;
     enforceRateLimit(key, 1, 1_000, 100);
     expect(() => enforceRateLimit(key, 1, 1_000, 1_100)).not.toThrow();
+  });
+
+  it("exposes a retry hint for throttled requests", async () => {
+    const response = apiError(new BusinessError("操作过于频繁，请稍后重试", 429));
+    expect(response.status).toBe(429);
+    expect(response.headers.get("retry-after")).toBe("60");
   });
 });

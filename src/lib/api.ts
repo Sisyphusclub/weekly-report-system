@@ -49,6 +49,9 @@ export async function writeActor(request: Request) {
     (actor.role !== "EMPLOYEE" && !actor.twoFactorEnabled)
   )
     throw new BusinessError("请先完成账号安全设置", 403);
+  if (["POST", "PATCH", "DELETE"].includes(request.method)) {
+    enforceRateLimit(`write:${actor.organizationId}:${actor.id}`, 120, 60_000);
+  }
   return actor;
 }
 export function apiError(error: unknown) {
