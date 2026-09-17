@@ -242,6 +242,9 @@ export async function DELETE(request: Request) {
           taskId: string;
           unitName: string;
           quantity: string;
+          sourceId?: string;
+          sourceQuantity?: string;
+          sourceUnitName?: string;
         }>;
       };
       if (merge.kind === "category" && snapshot.tasks?.length)
