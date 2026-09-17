@@ -67,7 +67,12 @@ export async function POST(request: Request) {
     if (!task || (actor.role === "EMPLOYEE" && task.assignee !== actor.id))
       throw new BusinessError("无权上传任务附件", 403);
     const id = crypto.randomUUID();
-    const objectKey = `${actor.organizationId}/tasks/${taskId}/${id}-${parsed.data.fileName}`;
+    const safeName = parsed.data.fileName
+      .split(/[\\/]/)
+      .pop()!
+      .replace(/[^a-zA-Z0-9._-]/g, "_")
+      .slice(0, 120);
+    const objectKey = `${actor.organizationId}/tasks/${taskId}/${id}-${safeName}`;
     const url = await uploadUrl(objectKey, parsed.data.contentType);
     await getDb()
       .insert(taskAttachment)
