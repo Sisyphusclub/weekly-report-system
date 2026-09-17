@@ -8,6 +8,7 @@ import {
   reportRevision,
   reportingExemption,
   workCalendarDay,
+  reportTask,
 } from "@/lib/db/schema";
 import { buildWeeklySnapshot, weeklyPeriod, weekDates } from "@/lib/domain";
 import { dateInput, shanghaiDate } from "@/lib/daily-input";
@@ -53,7 +54,7 @@ export async function POST(request: Request) {
       if (value.submit && shanghaiDate() < actualPeriod.dueDate)
         throw new BusinessError("请在本周最后一个工作日提交周报");
       const days = await tx
-        .select({ reportDate: report.reportDate, summary: report.summary })
+        .select({ id: report.id, reportDate: report.reportDate, summary: report.summary })
         .from(report)
         .where(
           and(
@@ -81,12 +82,20 @@ export async function POST(request: Request) {
         );
       const sources = weekDates(value.date).map((reportDate) => ({
         reportDate,
+        reportId: days.find((day) => day.reportDate === reportDate)?.id,
         summary: days.find((day) => day.reportDate === reportDate)?.summary,
         submitted: days.some((day) => day.reportDate === reportDate),
         exempt: exemptions.some(
           (e) => reportDate >= e.startDate && reportDate <= e.endDate,
         ),
       }));
+      const sourceIds = days.map((day) => day.id);
+      const sourceTasks = sourceIds.length
+        ? await tx.select().from(reportTask).where(and(eq(reportTask.organizationId, actor.organizationId), sql`${reportTask.sourceReportId} in ${sourceIds}`))
+        : [];
+      (sources as Array<Record<string, unknown>>).forEach((source) => {
+        source.tasks = source.reportId ? sourceTasks.filter((task) => task.sourceReportId === source.reportId).map((task) => task.snapshot) : [];
+      });
       let snapshot;
       try {
         snapshot = value.submit
