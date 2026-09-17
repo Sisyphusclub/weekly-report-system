@@ -15,6 +15,7 @@ export const dailyInput = z.object({
   noPlanReason: z.string().trim().max(200).default(""),
   submit: z.boolean().default(false),
   version: z.number().int().min(0),
+  taskIds: z.array(z.string().uuid()).max(100).default([]),
 });
 export function shanghaiDate(now = new Date()) {
   return new Intl.DateTimeFormat("en-CA", {

@@ -2,6 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
 import { report } from "@/lib/db/schema";
+import { workTask } from "@/lib/db/schema";
 import { dateInput, shanghaiDate } from "@/lib/daily-input";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { DailyForm } from "@/components/workspace/daily-form";
@@ -36,6 +37,7 @@ export default async function DailyPage({
       ),
     )
     .limit(1);
+  const tasks = await getDb().select({ id: workTask.id, content: workTask.content, kind: workTask.kind, status: workTask.status }).from(workTask).where(and(eq(workTask.organizationId, actor.organizationId), eq(workTask.primaryAssigneeId, actor.id)));
   return (
     <WorkspaceShell actor={actor} selected="daily">
       <header>
@@ -45,7 +47,7 @@ export default async function DailyPage({
         <Input name="date" type="date" label="报告日期" defaultValue={date} />
         <Button type="submit">打开该日报</Button>
       </form>
-      <DailyForm key={date} date={date} draft={draft ?? null} />
+      <DailyForm key={date} date={date} draft={draft ?? null} tasks={tasks} />
     </WorkspaceShell>
   );
 }

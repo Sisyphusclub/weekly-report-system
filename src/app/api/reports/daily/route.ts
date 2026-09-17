@@ -1,10 +1,12 @@
-import { and, desc, eq, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import {
   report,
   reportRevision,
   auditLog,
   workCalendarDay,
+  workTask,
+  reportTask,
 } from "@/lib/db/schema";
 import { deadline, validateSubmission } from "@/lib/domain";
 import { dailyInput, shanghaiDate } from "@/lib/daily-input";
@@ -19,9 +21,16 @@ export async function POST(request: Request) {
     const input = parsed.data;
     if (input.reportDate > shanghaiDate())
       throw new BusinessError("不能提前填写未来日报");
+    const selectedTasks = input.taskIds.length
+      ? await getDb()
+          .select({ id: workTask.id, content: workTask.content, kind: workTask.kind, status: workTask.status, projectId: workTask.projectId, categoryId: workTask.categoryId, categoryName: workTask.categoryName, dueDate: workTask.dueDate })
+          .from(workTask)
+          .where(and(eq(workTask.organizationId, actor.organizationId), inArray(workTask.id, input.taskIds), eq(workTask.primaryAssigneeId, actor.id)))
+      : [];
+    if (selectedTasks.length !== input.taskIds.length) throw new BusinessError("任务不存在或无权选择", 403);
     if (input.submit) {
       try {
-        validateSubmission({ tasks: [], ...input });
+        validateSubmission({ tasks: selectedTasks, ...input });
       } catch (error) {
         throw new BusinessError((error as Error).message);
       }
@@ -89,6 +98,9 @@ export async function POST(request: Request) {
             calendarVersion: calendar?.version ?? 0,
             ...values,
           });
+      await tx.delete(reportTask).where(and(eq(reportTask.organizationId, actor.organizationId), eq(reportTask.reportId, id)));
+      if (selectedTasks.length)
+        await tx.insert(reportTask).values(selectedTasks.map((task) => ({ organizationId: actor.organizationId, reportId: id, taskId: task.id, snapshot: task, sourceReportId: id })));
       if (input.submit)
         await tx
           .insert(reportRevision)
@@ -99,7 +111,7 @@ export async function POST(request: Request) {
             revisionNumber: 1,
             editorId: actor.id,
             reason: "首次提交日报",
-            snapshot: { ...values, reportDate: input.reportDate, tasks: [] },
+            snapshot: { ...values, reportDate: input.reportDate, tasks: selectedTasks },
             diff: { status: ["DRAFT", "SUBMITTED"] },
           });
       await tx

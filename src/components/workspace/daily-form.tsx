@@ -7,6 +7,7 @@ import { Button, ButtonLink } from "@/components/base/buttons/button";
 export function DailyForm({
   date,
   draft,
+  tasks,
 }: {
   date: string;
   draft: {
@@ -17,6 +18,7 @@ export function DailyForm({
     version: number;
     status: string;
   } | null;
+  tasks: Array<{ id: string; content: string; kind: "ACTUAL" | "PLAN"; status: string }>;
 }) {
   const [version, setVersion] = useState(draft?.version ?? 0);
   const [submitted, setSubmitted] = useState(draft?.status === "SUBMITTED");
@@ -72,6 +74,17 @@ export function DailyForm({
         isDisabled={pending || submitted}
         maxLength={10000}
       />
+      {tasks.length > 0 && (
+        <fieldset className="flex flex-col gap-2">
+          <legend className="text-label-medium">关联任务</legend>
+          {tasks.map((task) => (
+            <label key={task.id} className="flex items-center gap-2 text-body-medium">
+              <input type="checkbox" name="taskIds" value={task.id} disabled={pending || submitted} />
+              <span>{task.content} ({task.kind === "PLAN" ? "计划" : "实际"})</span>
+            </label>
+          ))}
+        </fieldset>
+      )}
       <Input
         name="noWorkReason"
         label="无实际任务时的原因"
