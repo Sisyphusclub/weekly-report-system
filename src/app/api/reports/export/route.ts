@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
 import { z } from "zod";
-import { apiError, BusinessError, writeActor } from "@/lib/api";
+import { apiError, BusinessError, enforceRateLimit, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, report, reportTask, user } from "@/lib/db/schema";
 import { reportExportVisibility } from "@/lib/reports";
@@ -14,6 +14,7 @@ const querySchema = z.object({
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
+    enforceRateLimit(`report-export:${actor.organizationId}:${actor.id}`, 10, 60_000);
     const url = new URL(request.url);
     const parsed = querySchema.safeParse({
       q: url.searchParams.get("q") ?? "",

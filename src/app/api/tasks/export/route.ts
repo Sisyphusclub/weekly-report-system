@@ -1,11 +1,12 @@
 import { and, desc, eq } from "drizzle-orm";
-import { apiError, writeActor } from "@/lib/api";
+import { apiError, enforceRateLimit, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, workTask } from "@/lib/db/schema";
 import ExcelJS from "exceljs";
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
+    enforceRateLimit(`task-export:${actor.organizationId}:${actor.id}`, 10, 60_000);
     const query = getDb()
       .select({
         projectId: workTask.projectId,

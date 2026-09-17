@@ -9,6 +9,28 @@ export class BusinessError extends Error {
     super(message);
   }
 }
+
+type RateLimitEntry = { count: number; resetAt: number };
+const rateLimitEntries = new Map<string, RateLimitEntry>();
+
+/** Process-local guard for expensive authenticated operations. */
+export function enforceRateLimit(
+  key: string,
+  limit: number,
+  windowMs: number,
+  now = Date.now(),
+) {
+  const current = rateLimitEntries.get(key);
+  if (!current || current.resetAt <= now) {
+    rateLimitEntries.set(key, { count: 1, resetAt: now + windowMs });
+    return;
+  }
+  if (current.count >= limit) {
+    throw new BusinessError("操作过于频繁，请稍后重试", 429);
+  }
+  current.count += 1;
+}
+
 export async function writeActor(request: Request) {
   if (
     request.headers.get("origin") !==
