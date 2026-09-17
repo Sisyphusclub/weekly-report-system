@@ -1,0 +1,21 @@
+{
+  "name": "weekly-report-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "@remixicon/react": "^4.9.0",
+    "@tailwindcss/postcss": "^4.3.3",
+    "react-aria-components": "^1.21.1",
+    "recharts": "^3.10.1",
+    "tailwind-merge": "^3.7.0",
+    "tailwindcss": "^4.3.3"
+  }
+}
