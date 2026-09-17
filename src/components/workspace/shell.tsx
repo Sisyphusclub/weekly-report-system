@@ -17,7 +17,8 @@ export function WorkspaceShell({
     | "dictionaries"
     | "projects"
     | "users"
-    | "weekly";
+    | "weekly"
+    | "notifications";
   children: React.ReactNode;
 }) {
   return (
@@ -79,6 +80,7 @@ export function WorkspaceShell({
             ...(actor.role !== "ADMIN"
               ? [{ key: "weekly", label: "填写周报", href: "/weekly" }]
               : []),
+            { key: "notifications", label: "通知中心", href: "/notifications" },
             {
               key: "dashboard",
               label: actor.role === "ADMIN" ? "系统概览" : "工作看板",
