@@ -10,6 +10,7 @@ import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { RevisionForm } from "@/components/workspace/revision-form";
 import { RevisionRequests } from "@/components/workspace/revision-requests";
+import { CommentSection } from "@/components/workspace/comment-section";
 
 export default async function ReportPage({
   params,
@@ -232,6 +233,7 @@ export default async function ReportPage({
             page={requestsPage}
           />
         )}
+      <CommentSection reportId={id} />
     </WorkspaceShell>
   );
 }
