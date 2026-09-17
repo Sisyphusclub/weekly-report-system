@@ -88,7 +88,8 @@ export async function verifyObject(
     }),
   );
   if (result.ContentLength !== sizeBytes) throw new Error("附件大小校验失败");
-  if (result.ChecksumSHA256 && result.ChecksumSHA256 !== checksumSha256)
+  if (!result.ChecksumSHA256) throw new Error("对象存储未返回附件校验和");
+  if (result.ChecksumSHA256 !== checksumSha256)
     throw new Error("附件哈希校验失败");
   const object = await client().send(
     new GetObjectCommand({
