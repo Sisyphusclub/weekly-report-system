@@ -1,0 +1,109 @@
+import { and, eq } from "drizzle-orm";
+import { z } from "zod";
+import { currentUser } from "@/lib/access";
+import { getDb } from "@/lib/db";
+import { auditLog, blocker, notification } from "@/lib/db/schema";
+import { canReadBlocker } from "@/lib/domain";
+const input = z.object({
+  action: z.enum(["ACKNOWLEDGE", "RESOLVE"]),
+  resolution: z.string().trim().min(1).max(5000).optional(),
+  version: z.number().int().positive(),
+});
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> },
+) {
+  const actor = await currentUser();
+  if (!actor) return Response.json({ error: "请先登录" }, { status: 401 });
+  const parsed = input.safeParse(await request.json().catch(() => null));
+  if (!parsed.success)
+    return Response.json({ error: "操作参数无效" }, { status: 400 });
+  const { id } = await params;
+  try {
+    const result = await getDb().transaction(async (tx) => {
+      const [item] = await tx
+        .select()
+        .from(blocker)
+        .where(
+          and(
+            eq(blocker.id, id),
+            eq(blocker.organizationId, actor.organizationId),
+          ),
+        )
+        .limit(1);
+      if (!item || !canReadBlocker(actor, item)) throw new Error("NOT_FOUND");
+      if (item.version !== parsed.data.version) throw new Error("CONFLICT");
+      if (parsed.data.action === "ACKNOWLEDGE" && actor.role !== "BOSS")
+        throw new Error("FORBIDDEN");
+      if (
+        parsed.data.action === "RESOLVE" &&
+        actor.id !== item.reporterId &&
+        actor.role !== "BOSS"
+      )
+        throw new Error("FORBIDDEN");
+      const resolved = parsed.data.action === "RESOLVE";
+      if (resolved && !parsed.data.resolution)
+        throw new Error("RESOLUTION_REQUIRED");
+      const [updated] = await tx
+        .update(blocker)
+        .set({
+          status: resolved ? "RESOLVED" : "ACKNOWLEDGED",
+          acknowledgedAt: item.acknowledgedAt ?? new Date(),
+          resolvedAt: resolved ? new Date() : null,
+          resolution: resolved ? parsed.data.resolution : item.resolution,
+          version: item.version + 1,
+          updatedAt: new Date(),
+        })
+        .where(and(eq(blocker.id, id), eq(blocker.version, item.version)))
+        .returning({ version: blocker.version, status: blocker.status });
+      if (!updated) throw new Error("CONFLICT");
+      await tx
+        .insert(auditLog)
+        .values({
+          id: crypto.randomUUID(),
+          organizationId: actor.organizationId,
+          actorId: actor.id,
+          action: resolved ? "BLOCKER_RESOLVE" : "BLOCKER_ACKNOWLEDGE",
+          resourceType: "BLOCKER",
+          resourceId: id,
+          result: "SUCCESS",
+        });
+      if (resolved && item.reporterId !== actor.id)
+        await tx
+          .insert(notification)
+          .values({
+            id: crypto.randomUUID(),
+            organizationId: actor.organizationId,
+            recipientId: item.reporterId,
+            dedupeKey: `blocker-resolved:${id}:${item.version}`,
+            type: "BLOCKER_RESOLVED",
+            title: "阻塞已解决",
+            link: `/blockers/${id}`,
+          })
+          .onConflictDoNothing();
+      return updated;
+    });
+    return Response.json(result);
+  } catch (error) {
+    const code = error instanceof Error ? error.message : "";
+    const status =
+      code === "NOT_FOUND"
+        ? 404
+        : code === "FORBIDDEN"
+          ? 403
+          : code === "CONFLICT"
+            ? 409
+            : 400;
+    return Response.json(
+      {
+        error:
+          code === "CONFLICT"
+            ? "阻塞已被更新，请刷新后重试"
+            : code === "RESOLUTION_REQUIRED"
+              ? "请填写解决说明"
+              : "无法执行该操作",
+      },
+      { status },
+    );
+  }
+}

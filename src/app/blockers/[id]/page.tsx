@@ -6,6 +6,7 @@ import { blocker } from "@/lib/db/schema";
 import { blockerVisibility } from "@/lib/blockers";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
+import { BlockerActions } from "@/components/workspace/blocker-actions";
 export default async function BlockerPage({
   params,
 }: {
@@ -38,6 +39,14 @@ export default async function BlockerPage({
         <p className="whitespace-pre-wrap break-words">
           解决说明：{item.resolution}
         </p>
+      )}
+      {item.status !== "RESOLVED" && (
+        <BlockerActions
+          id={item.id}
+          version={item.version}
+          canAcknowledge={actor.role === "BOSS" && item.status === "OPEN"}
+          canResolve={actor.role === "BOSS" || actor.id === item.reporterId}
+        />
       )}
     </WorkspaceShell>
   );
