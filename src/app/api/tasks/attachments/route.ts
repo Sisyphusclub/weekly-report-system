@@ -1,26 +1,9 @@
 import { and, asc, eq } from "drizzle-orm";
-import { z } from "zod";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { taskAttachment, workTask } from "@/lib/db/schema";
 import { deleteObject, downloadUrl, uploadUrl } from "@/lib/storage";
-
-const input = z.object({
-  fileName: z.string().trim().min(1).max(180),
-  contentType: z.enum([
-    "image/jpeg",
-    "image/png",
-    "image/webp",
-    "application/pdf",
-    "text/plain",
-  ]),
-  sizeBytes: z
-    .number()
-    .int()
-    .positive()
-    .max(10 * 1024 * 1024),
-  sha256: z.string().regex(/^[a-f0-9]{64}$/),
-});
+import { attachmentInput } from "@/lib/attachment-input";
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
