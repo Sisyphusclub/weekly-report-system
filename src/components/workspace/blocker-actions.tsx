@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { Button } from "@/components/base/buttons/button";
 import { Select, SelectItem } from "@/components/base/select/select";
+import { Textarea } from "@/components/base/textarea/textarea";
 export function BlockerActions({
   id,
   version,
@@ -95,12 +96,12 @@ export function BlockerActions({
         )}
       </div>
       {canResolve && (
-        <textarea
+        <Textarea
           value={resolution}
-          onChange={(e) => setResolution(e.target.value)}
+          onChange={(value) => setResolution(value)}
           maxLength={5000}
           placeholder="解决说明"
-          className="rounded-xl border border-border-button-default p-3"
+          rows={4}
         />
       )}
       {message && <p role="status">{message}</p>}
