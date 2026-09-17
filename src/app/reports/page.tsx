@@ -65,6 +65,12 @@ export default async function ReportsPage({
           defaultValue={typeof params.to === "string" ? params.to : ""}
         />
       </form>
+      <ButtonLink
+        href={`/api/reports/export?${new URLSearchParams({ q: query, from: dates.from ?? "", to: dates.to ?? "" })}`}
+        variant="secondary"
+      >
+        导出 JSON
+      </ButtonLink>
       {!parsedDates.success && (
         <p role="alert">日期范围无效，请检查开始和结束日期。</p>
       )}

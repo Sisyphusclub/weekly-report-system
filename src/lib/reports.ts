@@ -12,6 +12,14 @@ export function reportVisibility(actor: Actor) {
       : or(eq(report.authorId, actor.id), eq(report.status, "SUBMITTED")),
   );
 }
+export function reportExportVisibility(actor: Actor) {
+  return and(
+    eq(report.organizationId, actor.organizationId),
+    actor.role === "BOSS"
+      ? or(eq(report.authorId, actor.id), eq(report.status, "SUBMITTED"))
+      : eq(report.authorId, actor.id),
+  );
+}
 export async function listReports(
   actor: Actor,
   query: string,
