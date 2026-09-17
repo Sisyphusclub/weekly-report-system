@@ -1,5 +1,6 @@
 import { and, eq, gte, lte, ne } from "drizzle-orm";
 import { getDb } from "../src/lib/db/index.js";
+import { runJob } from "./run-job.js";
 import {
   notification,
   blocker,
@@ -198,7 +199,4 @@ async function main() {
     `Reminder run complete: ${reminders.length} candidate notifications.`,
   );
 }
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : "Reminder run failed");
-  process.exitCode = 1;
-});
+void runJob("Reminder run", main);

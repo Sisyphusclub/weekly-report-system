@@ -1,5 +1,6 @@
 import { and, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { getDb } from "../src/lib/db/index.js";
+import { runJob } from "./run-job.js";
 import {
   auditLog,
   report,
@@ -175,9 +176,4 @@ async function main() {
   }
   console.log("Weekly draft generation complete.");
 }
-main().catch((error) => {
-  console.error(
-    error instanceof Error ? error.message : "Weekly draft generation failed",
-  );
-  process.exitCode = 1;
-});
+void runJob("Weekly draft generation", main);

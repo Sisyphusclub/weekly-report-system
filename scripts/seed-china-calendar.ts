@@ -1,5 +1,6 @@
 import { and, eq, desc } from "drizzle-orm";
 import { getDb } from "../src/lib/db/index.js";
+import { runJob } from "./run-job.js";
 import { workCalendarDay } from "../src/lib/db/schema.js";
 import { chinaCalendarPreset } from "../src/lib/china-calendar.js";
 
@@ -34,9 +35,4 @@ async function main() {
   }
   console.log(`China calendar seed complete: ${inserted} dates inserted.`);
 }
-main().catch((error) => {
-  console.error(
-    error instanceof Error ? error.message : "Calendar seed failed",
-  );
-  process.exitCode = 1;
-});
+void runJob("Calendar seed", main);

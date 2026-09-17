@@ -16,3 +16,10 @@ export function getPool() {
 export function getDb() {
   return drizzle(getPool(), { schema });
 }
+
+export async function closePool() {
+  const pool = state.weeklyPool;
+  if (!pool) return;
+  delete state.weeklyPool;
+  await pool.end();
+}

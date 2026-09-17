@@ -2,6 +2,7 @@ import { and, eq, isNull, lt } from "drizzle-orm";
 import { getDb } from "../src/lib/db/index.js";
 import { taskAttachment } from "../src/lib/db/schema.js";
 import { deleteObject } from "../src/lib/storage.js";
+import { runJob } from "./run-job.js";
 
 async function main() {
   const cutoff = new Date(Date.now() - 60 * 60 * 1000);
@@ -21,9 +22,4 @@ async function main() {
   }
   console.log(`Cleaned ${rows.length} unverified attachments.`);
 }
-main().catch((error) => {
-  console.error(
-    error instanceof Error ? error.message : "Attachment cleanup failed",
-  );
-  process.exitCode = 1;
-});
+void runJob("Attachment cleanup", main);
