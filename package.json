@@ -16,7 +16,8 @@
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
     "admin:bootstrap": "tsx --env-file-if-exists=.env.local scripts/bootstrap-admin.ts",
     "reminders:run": "tsx --env-file-if-exists=.env.local scripts/run-reminders.ts",
-    "weekly:drafts": "tsx --env-file-if-exists=.env.local scripts/generate-weekly-drafts.ts"
+    "weekly:drafts": "tsx --env-file-if-exists=.env.local scripts/generate-weekly-drafts.ts",
+    "calendar:seed": "tsx --env-file-if-exists=.env.local scripts/seed-china-calendar.ts"
   },
   "keywords": [],
   "author": "",
