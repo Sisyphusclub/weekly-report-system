@@ -1,4 +1,4 @@
-import { and, or, eq, desc, ilike, count } from "drizzle-orm";
+import { and, or, eq, desc, ilike, count, gte, lte, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { report, user } from "@/lib/db/schema";
 import type { Actor } from "@/lib/domain";
@@ -12,9 +12,20 @@ export function reportVisibility(actor: Actor) {
       : or(eq(report.authorId, actor.id), eq(report.status, "SUBMITTED")),
   );
 }
-export async function listReports(actor: Actor, query: string, page: number) {
+export async function listReports(
+  actor: Actor,
+  query: string,
+  page: number,
+  dates: { from?: string; to?: string } = {},
+) {
   const filter = and(
     reportVisibility(actor),
+    dates.from
+      ? gte(sql`coalesce(${report.reportDate}, ${report.weekEnd})`, dates.from)
+      : undefined,
+    dates.to
+      ? lte(sql`coalesce(${report.reportDate}, ${report.weekStart})`, dates.to)
+      : undefined,
     query
       ? ilike(report.summary, `%${query.replace(/[\\%_]/g, "\\$&")}%`)
       : undefined,

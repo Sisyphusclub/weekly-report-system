@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { reportFilter } from "@/lib/report-filter";
 import { requireUser } from "@/lib/access";
 import { listReports, PAGE_SIZE } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
@@ -22,9 +23,16 @@ export default async function ReportsPage({
     .parse(params.page);
   const query =
     typeof params.q === "string" ? params.q.trim().slice(0, 200) : "";
-  const result = await listReports(actor, query, page);
+  const parsedDates = reportFilter.safeParse({
+    from: params.from,
+    to: params.to,
+  });
+  const dates = parsedDates.success ? parsedDates.data : {};
+  const result = parsedDates.success
+    ? await listReports(actor, query, page, dates)
+    : { items: [], total: 0 };
   const href = (value: number) =>
-    `/reports?${new URLSearchParams({ q: query, page: String(value) })}`;
+    `/reports?${new URLSearchParams({ q: query, from: dates.from ?? "", to: dates.to ?? "", page: String(value) })}`;
   return (
     <WorkspaceShell actor={actor} selected="reports">
       <header>
@@ -35,7 +43,7 @@ export default async function ReportsPage({
           共 {result.total} 份可查看的报告
         </p>
       </header>
-      <form action="/reports" className="flex items-end gap-3">
+      <form action="/reports" className="flex flex-wrap items-end gap-3">
         <Input
           name="q"
           label="搜索报告总结"
@@ -44,7 +52,22 @@ export default async function ReportsPage({
           maxLength={200}
         />
         <Button type="submit">搜索</Button>
+        <Input
+          name="from"
+          type="date"
+          label="开始日期"
+          defaultValue={typeof params.from === "string" ? params.from : ""}
+        />
+        <Input
+          name="to"
+          type="date"
+          label="结束日期"
+          defaultValue={typeof params.to === "string" ? params.to : ""}
+        />
       </form>
+      {!parsedDates.success && (
+        <p role="alert">日期范围无效，请检查开始和结束日期。</p>
+      )}
       <section className="rounded-3xl border border-border-button-default p-6">
         {result.items.length ? (
           <ul className="divide-y divide-separator-border">
