@@ -6,6 +6,62 @@ const member = {
   name: "小周",
   createdAt: new Date("2026-01-01T00:00:00Z"),
 };
+it("工作日 17:30 生成预提醒，18:30 切换为逾期提醒", () => {
+  const dueAt = new Date("2026-09-18T10:30:00Z");
+  const before = dueReminders({
+    now: new Date("2026-09-18T09:29:59Z"),
+    members: [member],
+    bosses: ["boss"],
+    reports: [
+      {
+        authorId: "u1",
+        reportDate: "2026-09-18",
+        status: "DRAFT",
+        submittedAt: null,
+        dueAt,
+      },
+    ],
+  });
+  expect(before).toEqual([]);
+  const pre = dueReminders({
+    now: new Date("2026-09-18T09:30:00Z"),
+    members: [member],
+    bosses: ["boss"],
+    reports: [
+      {
+        authorId: "u1",
+        reportDate: "2026-09-18",
+        status: "DRAFT",
+        submittedAt: null,
+        dueAt,
+      },
+    ],
+  });
+  expect(pre).toEqual([
+    expect.objectContaining({
+      type: "DAILY_DUE",
+      dedupeKey: "daily-reminder:u1:2026-09-18:due",
+    }),
+  ]);
+  const late = dueReminders({
+    now: new Date("2026-09-18T10:30:00Z"),
+    members: [member],
+    bosses: ["boss"],
+    reports: [
+      {
+        authorId: "u1",
+        reportDate: "2026-09-18",
+        status: "DRAFT",
+        submittedAt: null,
+        dueAt,
+      },
+    ],
+  });
+  expect(late[0]).toMatchObject({
+    type: "DAILY_OVERDUE",
+    dedupeKey: "daily-reminder:u1:2026-09-18:overdue",
+  });
+});
 it("生成本人逾期提醒和老板汇总提醒，并用键保证幂等", () => {
   const result = dueReminders({
     now,

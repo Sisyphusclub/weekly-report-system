@@ -58,8 +58,10 @@ export function dueReminders(input: {
         continue;
       const report = reports.get(`${member.id}:${date}`);
       const dueAt = report?.dueAt ?? deadline(date);
-      if (report?.status === "SUBMITTED" || input.now < dueAt) continue;
-      const overdue = input.now.getTime() > dueAt.getTime();
+      if (report?.status === "SUBMITTED") continue;
+      const reminderAt = new Date(dueAt.getTime() - 60 * 60 * 1000);
+      if (input.now < reminderAt) continue;
+      const overdue = input.now.getTime() >= dueAt.getTime();
       result.push({
         recipientId: member.id,
         type: overdue ? "DAILY_OVERDUE" : "DAILY_DUE",
