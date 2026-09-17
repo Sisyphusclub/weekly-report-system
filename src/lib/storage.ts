@@ -57,7 +57,13 @@ export async function downloadUrl(key: string, fileName: string) {
 }
 export async function deleteObject(key: string) {
   const config = storageConfig();
-  await client().send(
-    new DeleteObjectCommand({ Bucket: config.S3_BUCKET, Key: key }),
-  );
+  try {
+    await client().send(
+      new DeleteObjectCommand({ Bucket: config.S3_BUCKET, Key: key }),
+    );
+  } catch (error) {
+    if (error instanceof Error && "name" in error && error.name === "NoSuchKey")
+      return;
+    throw error;
+  }
 }
