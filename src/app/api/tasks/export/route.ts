@@ -38,7 +38,13 @@ export async function GET(request: Request) {
       result: "SUCCESS",
     });
     if (new URL(request.url).searchParams.get("format") === "xlsx") {
-      const sheet = XLSX.utils.json_to_sheet(rows);
+      const generatedAt = new Date().toISOString();
+      const exportRows = rows.map((row) => ({
+        ...row,
+        generatedAt,
+        generatedBy: actor.id,
+      }));
+      const sheet = XLSX.utils.json_to_sheet(exportRows);
       const workbook = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(workbook, sheet, "任务");
       const buffer = XLSX.write(workbook, { type: "buffer", bookType: "xlsx" });
@@ -52,7 +58,11 @@ export async function GET(request: Request) {
       });
     }
     return Response.json(
-      { items: rows },
+      {
+        items: rows,
+        generatedAt: new Date().toISOString(),
+        generatedBy: actor.id,
+      },
       {
         headers: {
           "Content-Disposition": "attachment; filename=tasks.json",
