@@ -5,6 +5,7 @@ import { auditLog, taskAttachment, workTask } from "@/lib/db/schema";
 import {
   deleteObject,
   downloadUrl,
+  scanObject,
   uploadUrl,
   verifyObject,
 } from "@/lib/storage";
@@ -66,6 +67,7 @@ export async function PATCH(request: Request) {
         sizeBytes: taskAttachment.sizeBytes,
         sha256: taskAttachment.sha256,
         contentType: taskAttachment.contentType,
+        fileName: taskAttachment.fileName,
         assignee: workTask.primaryAssigneeId,
       })
       .from(taskAttachment)
@@ -92,6 +94,13 @@ export async function PATCH(request: Request) {
         Buffer.from(row.sha256, "hex").toString("base64"),
         row.contentType,
       );
+      await scanObject({
+        key: row.objectKey,
+        fileName: row.fileName,
+        contentType: row.contentType,
+        sizeBytes: row.sizeBytes,
+        sha256: row.sha256,
+      });
     } catch (error) {
       await deleteObject(row.objectKey).catch(() => undefined);
       await db.delete(taskAttachment).where(eq(taskAttachment.id, id));

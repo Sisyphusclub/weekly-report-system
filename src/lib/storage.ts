@@ -123,6 +123,50 @@ export async function verifyObject(
               !ascii.startsWith("#!");
   if (!valid) throw new Error("附件内容与类型不匹配");
 }
+export async function scanObject(input: {
+  key: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+  sha256: string;
+}) {
+  const config = getConfig();
+  if (!config.ATTACHMENT_SCANNER_URL) return { configured: false as const };
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15_000);
+  try {
+    const response = await fetch(config.ATTACHMENT_SCANNER_URL, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(config.ATTACHMENT_SCANNER_TOKEN
+          ? { authorization: `Bearer ${config.ATTACHMENT_SCANNER_TOKEN}` }
+          : {}),
+      },
+      body: JSON.stringify({
+        objectKey: input.key,
+        fileName: input.fileName,
+        contentType: input.contentType,
+        sizeBytes: input.sizeBytes,
+        sha256: input.sha256,
+        downloadUrl: await downloadUrl(input.key, input.fileName),
+      }),
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error("附件扫描服务不可用");
+    const result: unknown = await response.json().catch(() => null);
+    if (
+      !result ||
+      typeof result !== "object" ||
+      !("clean" in result) ||
+      result.clean !== true
+    )
+      throw new Error("附件未通过安全扫描");
+    return { configured: true as const };
+  } finally {
+    clearTimeout(timeout);
+  }
+}
 export async function checkStorage() {
   const config = storageConfig();
   await client().send(new HeadBucketCommand({ Bucket: config.S3_BUCKET }));
