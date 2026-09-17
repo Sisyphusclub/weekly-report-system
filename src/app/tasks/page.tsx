@@ -73,6 +73,11 @@ export default async function TasksPage({
         status: workTask.status,
         dueDate: workTask.dueDate,
         categoryName: workTask.categoryName,
+        projectId: workTask.projectId,
+        categoryId: workTask.categoryId,
+        primaryAssigneeId: workTask.primaryAssigneeId,
+        workDate: workTask.workDate,
+        sourceTaskId: workTask.sourceTaskId,
       })
       .from(workTask)
       .where(
@@ -137,6 +142,18 @@ export default async function TasksPage({
               className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-border-button-default p-4"
             >
               <span className="min-w-0 break-words">{task.content}</span>
+              <details className="w-full">
+                <summary className="cursor-pointer text-body-medium">
+                  编辑任务
+                </summary>
+                <TaskForm
+                  projects={projects}
+                  categories={categories}
+                  people={people}
+                  selfId={actor.id}
+                  initial={task}
+                />
+              </details>
               <TaskStatusForm
                 key={`${task.id}:${task.version}`}
                 taskId={task.id}

@@ -11,21 +11,41 @@ export function TaskForm({
   categories,
   people,
   selfId,
+  initial,
 }: {
   projects: Array<{ id: string; name: string }>;
   categories: Array<{ id: string; name: string }>;
   people: Array<{ id: string; name: string }>;
   selfId: string;
+  initial?: {
+    id: string;
+    version: number;
+    projectId: string;
+    categoryId: string;
+    primaryAssigneeId: string;
+    content: string;
+    kind: "ACTUAL" | "PLAN";
+    status: string;
+    workDate: string | null;
+    dueDate: string | null;
+    sourceTaskId: string | null;
+  };
 }) {
   const router = useRouter();
-  const [projectId, setProjectId] = useState(projects[0]?.id ?? "");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id ?? "");
-  const [primaryAssigneeId, setPrimaryAssigneeId] = useState(selfId);
-  const [kind, setKind] = useState("ACTUAL");
-  const [status, setStatus] = useState("TODO");
-  const [content, setContent] = useState("");
-  const [dueDate, setDueDate] = useState("");
-  const [workDate, setWorkDate] = useState(() => shanghaiDate());
+  const [projectId, setProjectId] = useState(
+    initial?.projectId ?? projects[0]?.id ?? "",
+  );
+  const [categoryId, setCategoryId] = useState(
+    initial?.categoryId ?? categories[0]?.id ?? "",
+  );
+  const [primaryAssigneeId, setPrimaryAssigneeId] = useState(
+    initial?.primaryAssigneeId ?? selfId,
+  );
+  const [kind, setKind] = useState(initial?.kind ?? "ACTUAL");
+  const [status, setStatus] = useState(initial?.status ?? "TODO");
+  const [content, setContent] = useState(initial?.content ?? "");
+  const [dueDate, setDueDate] = useState(initial?.dueDate ?? "");
+  const [workDate, setWorkDate] = useState(initial?.workDate ?? shanghaiDate());
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   async function submit(event: React.FormEvent) {
@@ -38,7 +58,8 @@ export function TaskForm({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          version: 0,
+          id: initial?.id,
+          version: initial?.version ?? 0,
           projectId,
           categoryId,
           primaryAssigneeId,
@@ -55,9 +76,11 @@ export function TaskForm({
         setMessage(result.error ?? "创建任务失败");
         return;
       }
-      setContent("");
-      setDueDate("");
-      setMessage("任务已创建");
+      if (!initial) {
+        setContent("");
+        setDueDate("");
+      }
+      setMessage(initial ? "任务已更新" : "任务已创建");
       router.refresh();
     } catch {
       setMessage("创建失败，请稍后重试");
@@ -110,7 +133,7 @@ export function TaskForm({
         <Select
           aria-label="任务类型"
           selectedKey={kind}
-          onSelectionChange={(key) => setKind(String(key))}
+          onSelectionChange={(key) => setKind(String(key) as "ACTUAL" | "PLAN")}
           isDisabled={pending}
         >
           <SelectItem id="ACTUAL">实际工作</SelectItem>
