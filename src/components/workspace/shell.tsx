@@ -16,7 +16,8 @@ export function WorkspaceShell({
     | "blockers"
     | "dictionaries"
     | "projects"
-    | "users";
+    | "users"
+    | "weekly";
   children: React.ReactNode;
 }) {
   return (
@@ -74,6 +75,9 @@ export function WorkspaceShell({
               : []),
             ...(actor.role !== "ADMIN"
               ? [{ key: "blockers", label: "阻塞中心", href: "/blockers" }]
+              : []),
+            ...(actor.role !== "ADMIN"
+              ? [{ key: "weekly", label: "填写周报", href: "/weekly" }]
               : []),
             {
               key: "dashboard",
