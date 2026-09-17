@@ -187,11 +187,22 @@ export default async function ReportPage({
       </section>
       <section className="rounded-3xl border border-border-button-default p-6">
         <h2 className="text-title-2-medium">最近修订记录</h2>
+        {versions.length > 0 && (
+          <ButtonLink href={`/reports/${id}/history`} variant="ghost">
+            查看历史版本与变更
+          </ButtonLink>
+        )}
         {versions.length ? (
           <ul className="mt-4 flex flex-col gap-3">
             {versions.map((version) => (
               <li key={version.number}>
-                版本 {version.number} · {version.reason} ·{" "}
+                <ButtonLink
+                  href={`/reports/${id}/history?version=${version.number}`}
+                  variant="ghost"
+                >
+                  版本 {version.number}
+                </ButtonLink>{" "}
+                · {version.reason} ·{" "}
                 {version.at.toLocaleString("zh-CN", {
                   timeZone: "Asia/Shanghai",
                 })}
