@@ -6,6 +6,7 @@ type Attachment = {
   fileName: string;
   sizeBytes: number;
   url: string;
+  sha256: string;
 };
 export function TaskAttachmentSection({ taskId }: { taskId: string }) {
   const [items, setItems] = useState<Attachment[]>([]);
@@ -23,6 +24,13 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
   }, [taskId]);
   const upload = async (file: File) => {
     setMessage("上传中...");
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      await file.arrayBuffer(),
+    );
+    const sha256 = Array.from(new Uint8Array(digest), (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
     const response = await fetch("/api/tasks/attachments", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -31,6 +39,7 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
         fileName: file.name,
         contentType: file.type,
         sizeBytes: file.size,
+        sha256,
       }),
     });
     const data = await response.json();

@@ -19,6 +19,7 @@ const input = z.object({
     .int()
     .positive()
     .max(10 * 1024 * 1024),
+  sha256: z.string().regex(/^[a-f0-9]{64}$/),
 });
 export async function GET(request: Request) {
   try {

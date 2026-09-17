@@ -6,6 +6,7 @@ CREATE TABLE IF NOT EXISTS "task_attachment" (
   "file_name" text NOT NULL,
   "content_type" text NOT NULL,
   "size_bytes" integer NOT NULL,
+  "sha256" text NOT NULL,
   "object_key" text NOT NULL UNIQUE,
   "created_at" timestamp with time zone DEFAULT now() NOT NULL,
   "updated_at" timestamp with time zone DEFAULT now() NOT NULL,
