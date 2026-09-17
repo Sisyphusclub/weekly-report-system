@@ -2,6 +2,7 @@ import { and, eq, gte, lte, ne } from "drizzle-orm";
 import { getDb } from "../src/lib/db/index.js";
 import {
   notification,
+  blocker,
   report,
   reportingExemption,
   user,
@@ -10,6 +11,7 @@ import {
 import { dueReminders } from "../src/lib/reminders.js";
 import { shanghaiDate } from "../src/lib/daily-input.js";
 import { weekDates } from "../src/lib/domain.js";
+import { overdueBlockerReminders } from "../src/lib/blocker-reminders.js";
 
 async function main() {
   const now = new Date();
@@ -17,82 +19,103 @@ async function main() {
   const organizationId = process.env.REMINDER_ORGANIZATION_ID;
   if (!organizationId) throw new Error("REMINDER_ORGANIZATION_ID is required");
   const dates = weekDates(shanghaiDate(now));
-  const [members, bosses, reports, calendar, exemptions] = await Promise.all([
-    db
-      .select({ id: user.id, name: user.name, createdAt: user.createdAt })
-      .from(user)
-      .where(
-        and(
-          eq(user.organizationId, organizationId),
-          eq(user.status, "ACTIVE"),
-          ne(user.role, "ADMIN"),
+  const [members, bosses, reports, calendar, exemptions, blockers] =
+    await Promise.all([
+      db
+        .select({ id: user.id, name: user.name, createdAt: user.createdAt })
+        .from(user)
+        .where(
+          and(
+            eq(user.organizationId, organizationId),
+            eq(user.status, "ACTIVE"),
+            ne(user.role, "ADMIN"),
+          ),
         ),
-      ),
-    db
-      .select({ id: user.id })
-      .from(user)
-      .where(
-        and(
-          eq(user.organizationId, organizationId),
-          eq(user.status, "ACTIVE"),
-          eq(user.role, "BOSS"),
+      db
+        .select({ id: user.id })
+        .from(user)
+        .where(
+          and(
+            eq(user.organizationId, organizationId),
+            eq(user.status, "ACTIVE"),
+            eq(user.role, "BOSS"),
+          ),
         ),
-      ),
-    db
-      .select({
-        authorId: report.authorId,
-        reportDate: report.reportDate,
-        status: report.status,
-        submittedAt: report.submittedAt,
-        dueAt: report.dueAt,
-      })
-      .from(report)
-      .where(
-        and(
-          eq(report.organizationId, organizationId),
-          eq(report.type, "DAILY"),
-          gte(report.reportDate, dates[0]),
-          lte(report.reportDate, dates[6]),
+      db
+        .select({
+          authorId: report.authorId,
+          reportDate: report.reportDate,
+          status: report.status,
+          submittedAt: report.submittedAt,
+          dueAt: report.dueAt,
+        })
+        .from(report)
+        .where(
+          and(
+            eq(report.organizationId, organizationId),
+            eq(report.type, "DAILY"),
+            gte(report.reportDate, dates[0]),
+            lte(report.reportDate, dates[6]),
+          ),
         ),
-      ),
-    db
-      .select({
-        date: workCalendarDay.date,
-        isWorkday: workCalendarDay.isWorkday,
-      })
-      .from(workCalendarDay)
-      .where(
-        and(
-          eq(workCalendarDay.organizationId, organizationId),
-          gte(workCalendarDay.date, dates[0]),
-          lte(workCalendarDay.date, dates[6]),
+      db
+        .select({
+          id: blocker.id,
+          severity: blocker.severity,
+          status: blocker.status,
+          createdAt: blocker.createdAt,
+          coordinatorId: blocker.coordinatorId,
+        })
+        .from(blocker)
+        .where(eq(blocker.organizationId, organizationId)),
+      db
+        .select({
+          date: workCalendarDay.date,
+          isWorkday: workCalendarDay.isWorkday,
+        })
+        .from(workCalendarDay)
+        .where(
+          and(
+            eq(workCalendarDay.organizationId, organizationId),
+            gte(workCalendarDay.date, dates[0]),
+            lte(workCalendarDay.date, dates[6]),
+          ),
         ),
-      ),
-    db
-      .select({
-        userId: reportingExemption.userId,
-        startDate: reportingExemption.startDate,
-        endDate: reportingExemption.endDate,
-      })
-      .from(reportingExemption)
-      .where(
-        and(
-          eq(reportingExemption.organizationId, organizationId),
-          lte(reportingExemption.startDate, dates[6]),
-          gte(reportingExemption.endDate, dates[0]),
+      db
+        .select({
+          userId: reportingExemption.userId,
+          startDate: reportingExemption.startDate,
+          endDate: reportingExemption.endDate,
+        })
+        .from(reportingExemption)
+        .where(
+          and(
+            eq(reportingExemption.organizationId, organizationId),
+            lte(reportingExemption.startDate, dates[6]),
+            gte(reportingExemption.endDate, dates[0]),
+          ),
         ),
+    ]);
+  const reminders = [
+    ...dueReminders({
+      now,
+      members,
+      bosses: bosses.map((boss) => boss.id),
+      reports: reports.map((item) => ({
+        ...item,
+        reportDate: item.reportDate!,
+      })),
+      overrides: Object.fromEntries(
+        calendar.map((day) => [day.date, day.isWorkday]),
       ),
-  ]);
-  const reminders = dueReminders({
-    now,
-    members,
-    bosses: bosses.map((boss) => boss.id),
-    reports: reports.map((item) => ({ ...item, reportDate: item.reportDate! })),
-    overrides: Object.fromEntries(
-      calendar.map((day) => [day.date, day.isWorkday]),
-    ),
-    exemptions,
-  });
+      exemptions,
+    }),
+    ...overdueBlockerReminders({
+      now,
+      bosses: bosses.map((boss) => boss.id),
+      blockers,
+    }),
+  ];
   if (reminders.length)
     await db
       .insert(notification)
@@ -104,7 +127,7 @@ async function main() {
           dedupeKey: item.dedupeKey,
           type: item.type,
           title: item.title,
-          link: "/daily",
+          link: "blockerId" in item ? `/blockers/${item.blockerId}` : "/daily",
         })),
       )
       .onConflictDoNothing();
