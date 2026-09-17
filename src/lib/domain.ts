@@ -112,6 +112,56 @@ export function missingDailyReports(
   );
 }
 
+export type WeeklySource = {
+  reportDate: string;
+  summary?: string | null;
+  submitted: boolean;
+  exempt?: boolean;
+};
+
+export function weeklyPeriod(date: string, overrides: CalendarOverrides = {}) {
+  const dates = weekDates(date);
+  const deadlineDate =
+    dates.filter((day) => isWorkday(day, overrides)).at(-1) ?? dates[4];
+  return {
+    weekStart: dates[0],
+    weekEnd: dates[6],
+    weekLabel: dates[4],
+    dueDate: deadlineDate,
+  };
+}
+
+export function buildWeeklySnapshot(
+  date: string,
+  sources: WeeklySource[],
+  overrides: CalendarOverrides = {},
+) {
+  const period = weeklyPeriod(date, overrides);
+  const missing = missingDailyReports(
+    date,
+    sources
+      .filter((source) => source.submitted)
+      .map((source) => source.reportDate),
+    sources
+      .filter((source) => source.exempt)
+      .map((source) => source.reportDate),
+    overrides,
+  );
+  if (missing.length) throw new Error(`仍有未提交日报：${missing.join("、")}`);
+  return {
+    ...period,
+    sourceDates: sources
+      .filter((source) => source.submitted || source.exempt)
+      .map((source) => source.reportDate),
+    summaries: sources
+      .filter((source) => source.submitted && source.summary?.trim())
+      .map((source) => ({
+        date: source.reportDate,
+        summary: source.summary!.trim(),
+      })),
+  };
+}
+
 export function canReadBlocker(
   actor: Actor,
   blocker: {
