@@ -31,7 +31,11 @@ function client() {
     },
   });
 }
-export async function uploadUrl(key: string, contentType: string) {
+export async function uploadUrl(
+  key: string,
+  contentType: string,
+  checksumSha256: string,
+) {
   const config = storageConfig();
   return getSignedUrl(
     client(),
@@ -39,6 +43,7 @@ export async function uploadUrl(key: string, contentType: string) {
       Bucket: config.S3_BUCKET,
       Key: key,
       ContentType: contentType,
+      ChecksumSHA256: checksumSha256,
     }),
     { expiresIn: 600 },
   );

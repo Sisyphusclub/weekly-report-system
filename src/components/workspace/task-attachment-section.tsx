@@ -31,6 +31,7 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
     const sha256 = Array.from(new Uint8Array(digest), (byte) =>
       byte.toString(16).padStart(2, "0"),
     ).join("");
+    const checksum = btoa(String.fromCharCode(...new Uint8Array(digest)));
     const response = await fetch("/api/tasks/attachments", {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -49,7 +50,7 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
     }
     const put = await fetch(data.uploadUrl, {
       method: "PUT",
-      headers: { "content-type": file.type },
+      headers: { "content-type": file.type, "x-amz-checksum-sha256": checksum },
       body: file,
     });
     if (!put.ok) {

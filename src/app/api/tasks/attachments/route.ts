@@ -73,7 +73,8 @@ export async function POST(request: Request) {
       .replace(/[^a-zA-Z0-9._-]/g, "_")
       .slice(0, 120);
     const objectKey = `${actor.organizationId}/tasks/${taskId}/${id}-${safeName}`;
-    const url = await uploadUrl(objectKey, parsed.data.contentType);
+    const checksum = Buffer.from(parsed.data.sha256, "hex").toString("base64");
+    const url = await uploadUrl(objectKey, parsed.data.contentType, checksum);
     await getDb()
       .insert(taskAttachment)
       .values({
