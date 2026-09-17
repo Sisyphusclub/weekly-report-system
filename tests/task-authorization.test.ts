@@ -9,7 +9,7 @@ vi.mock("@/lib/config", () => ({
   getConfig: () => ({ BETTER_AUTH_URL: "https://reports.example" }),
 }));
 vi.mock("@/lib/db", () => ({ getDb: mocks.getDb }));
-import { POST } from "../src/app/api/tasks/route";
+import { POST, GET } from "../src/app/api/tasks/route";
 
 const payload = {
   id: "00000000-0000-4000-8000-000000000001",
@@ -42,6 +42,49 @@ beforeEach(() => {
     mustChangePassword: false,
     twoFactorEnabled: false,
   });
+});
+
+it.each([
+  "limit=NaN",
+  "limit=1.5",
+  "limit=101",
+  "offset=-1",
+  "offset=Infinity",
+])("非法分页参数拒绝进入数据库：%s", async (query) => {
+  const response = await GET(
+    new Request(`https://reports.example/api/tasks?${query}`),
+  );
+  expect(response.status).toBe(400);
+  expect(mocks.getDb).not.toHaveBeenCalled();
+});
+
+it("普通同源 GET 无 Origin 头也可读取任务", async () => {
+  const offset = vi.fn().mockResolvedValue([]);
+  mocks.getDb.mockReturnValue({
+    select: () => ({
+      from: () => ({
+        where: () => ({ orderBy: () => ({ limit: () => ({ offset }) }) }),
+      }),
+    }),
+  });
+  const response = await GET(new Request("https://reports.example/api/tasks"));
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ items: [], limit: 50, offset: 0 });
+  expect(response.headers.get("Cache-Control")).toBe("no-store");
+});
+
+it("认证服务异常返回服务错误，不伪装成未登录", async () => {
+  mocks.currentUser.mockRejectedValue(new Error("private details"));
+  const log = vi.spyOn(console, "error").mockImplementation(() => {});
+  try {
+    const response = await GET(
+      new Request("https://reports.example/api/tasks"),
+    );
+    expect(response.status).toBe(500);
+    expect(await response.text()).not.toContain("private details");
+  } finally {
+    log.mockRestore();
+  }
 });
 
 it("员工不能通过把负责人改为自己来修改他人任务", async () => {

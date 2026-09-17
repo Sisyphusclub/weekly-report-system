@@ -4,43 +4,65 @@ import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
+import { currentUser } from "@/lib/access";
 export async function GET(request: Request) {
-  const actor = await (async () => {
-    try {
-      return await writeActor(request);
-    } catch {
-      return null;
-    }
-  })();
-  if (!actor) return Response.json({ error: "请先登录" }, { status: 401 });
-  const url = new URL(request.url);
-  const limit = Math.min(
-    100,
-    Math.max(1, Number(url.searchParams.get("limit") || 50)),
-  );
-  const offset = Math.max(0, Number(url.searchParams.get("offset") || 0));
-  const conditions = [eq(workTask.organizationId, actor.organizationId)];
-  if (actor.role === "EMPLOYEE")
-    conditions.push(eq(workTask.primaryAssigneeId, actor.id));
-  const items = await getDb()
-    .select({
-      id: workTask.id,
-      content: workTask.content,
-      kind: workTask.kind,
-      status: workTask.status,
-      projectId: workTask.projectId,
-      categoryId: workTask.categoryId,
-      categoryName: workTask.categoryName,
-      workDate: workTask.workDate,
-      dueDate: workTask.dueDate,
-      version: workTask.version,
-    })
-    .from(workTask)
-    .where(and(...conditions))
-    .orderBy(desc(workTask.updatedAt), desc(workTask.id))
-    .limit(limit)
-    .offset(offset);
-  return Response.json({ items, limit, offset });
+  try {
+    const actor = await currentUser();
+    if (!actor) throw new BusinessError("请先登录", 401);
+    if (
+      actor.mustChangePassword ||
+      (actor.role !== "EMPLOYEE" && !actor.twoFactorEnabled)
+    )
+      throw new BusinessError("请先完成账号安全设置", 403);
+    if (actor.role === "ADMIN")
+      throw new BusinessError("管理员不能查看业务任务", 403);
+    const url = new URL(request.url);
+    const limit = Number(url.searchParams.get("limit") ?? 50);
+    const offset = Number(url.searchParams.get("offset") ?? 0);
+    if (
+      !Number.isSafeInteger(limit) ||
+      limit < 1 ||
+      limit > 100 ||
+      !Number.isSafeInteger(offset) ||
+      offset < 0 ||
+      offset > 1000000
+    )
+      throw new BusinessError("分页参数无效");
+    const conditions = [eq(workTask.organizationId, actor.organizationId)];
+    if (actor.role === "EMPLOYEE")
+      conditions.push(eq(workTask.primaryAssigneeId, actor.id));
+    const items = await getDb()
+      .select({
+        id: workTask.id,
+        content: workTask.content,
+        kind: workTask.kind,
+        status: workTask.status,
+        projectId: workTask.projectId,
+        categoryId: workTask.categoryId,
+        categoryName: workTask.categoryName,
+        workDate: workTask.workDate,
+        dueDate: workTask.dueDate,
+        version: workTask.version,
+      })
+      .from(workTask)
+      .where(and(...conditions))
+      .orderBy(desc(workTask.updatedAt), desc(workTask.id))
+      .limit(limit)
+      .offset(offset);
+    return Response.json(
+      { items, limit, offset },
+      { headers: { "Cache-Control": "no-store" } },
+    );
+  } catch (error) {
+    if (error instanceof BusinessError) return apiError(error);
+    console.error("Task query failed", {
+      name: error instanceof Error ? error.name : "UnknownError",
+    });
+    return Response.json(
+      { error: "任务加载失败，请稍后重试" },
+      { status: 500 },
+    );
+  }
 }
 export async function POST(request: Request) {
   try {
