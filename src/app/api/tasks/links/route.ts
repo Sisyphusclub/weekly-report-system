@@ -8,6 +8,18 @@ export async function GET(request: Request) {
     const actor = await writeActor(request);
     const taskId = new URL(request.url).searchParams.get("taskId");
     if (!taskId) throw new BusinessError("任务编号无效");
+    const [task] = await getDb()
+      .select({ id: workTask.id, assignee: workTask.primaryAssigneeId })
+      .from(workTask)
+      .where(
+        and(
+          eq(workTask.id, taskId),
+          eq(workTask.organizationId, actor.organizationId),
+        ),
+      )
+      .limit(1);
+    if (!task || (actor.role === "EMPLOYEE" && task.assignee !== actor.id))
+      throw new BusinessError("任务不存在或无权查看", 404);
     const items = await getDb()
       .select()
       .from(externalLink)
