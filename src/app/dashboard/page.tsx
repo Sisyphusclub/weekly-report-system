@@ -63,7 +63,7 @@ export default async function DashboardPage() {
     );
   }
   const reports = await listReports(actor, "", 1);
-  const metrics = await getDashboardMetrics(actor.organizationId);
+  const metrics = await getDashboardMetrics(actor);
   return (
     <WorkspaceShell actor={actor} selected="dashboard">
       <header>
@@ -78,11 +78,10 @@ export default async function DashboardPage() {
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {[
           [
-            "本周提交率",
-            submissionRate(metrics.submittedReports, metrics.dueReports) ===
-            null
+            "本周按时提交率",
+            submissionRate(metrics.onTimeReports, metrics.dueReports) === null
               ? "暂无数据"
-              : `${submissionRate(metrics.submittedReports, metrics.dueReports)}%`,
+              : `${submissionRate(metrics.onTimeReports, metrics.dueReports)}%`,
           ],
           ["待处理阻塞", String(metrics.openBlockers)],
           ["紧急阻塞", String(metrics.urgentBlockers)],
@@ -97,6 +96,9 @@ export default async function DashboardPage() {
           </section>
         ))}
       </div>
+      <p className="text-body-regular text-text-secondary">
+        按当前有效成员本周已到截止时间的日报统计，扣除休息日和免报日期。
+      </p>
       <section className="rounded-3xl border border-border-button-default p-6">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-title-2-medium">最近报告</h2>
