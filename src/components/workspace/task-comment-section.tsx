@@ -8,8 +8,15 @@ type Item = {
   authorName: string;
   createdAt: string;
   deletedAt: string | null;
+  authorId: string;
 };
-export function TaskCommentSection({ taskId }: { taskId: string }) {
+export function TaskCommentSection({
+  taskId,
+  actorId: _actorId,
+}: {
+  taskId: string;
+  actorId: string;
+}) {
   const [items, setItems] = useState<Item[]>([]);
   const [body, setBody] = useState("");
   const [message, setMessage] = useState("");

@@ -40,6 +40,7 @@ export async function GET(request: Request) {
         createdAt: taskComment.createdAt,
         deletedAt: taskComment.deletedAt,
         authorName: user.name,
+        authorId: taskComment.authorId,
       })
       .from(taskComment)
       .innerJoin(user, eq(taskComment.authorId, user.id))

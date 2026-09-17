@@ -185,7 +185,7 @@ export default async function TasksPage({
                   initial={task}
                 />
               </details>
-              <TaskCommentSection taskId={task.id} />
+              <TaskCommentSection taskId={task.id} actorId={actor.id} />
               <TaskStatusForm
                 key={`${task.id}:${task.version}`}
                 taskId={task.id}
