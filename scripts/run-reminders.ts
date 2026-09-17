@@ -11,7 +11,7 @@ import {
 import { dueReminders, weeklyReminders } from "../src/lib/reminders.js";
 import { shanghaiDate } from "../src/lib/daily-input.js";
 import { weekDates } from "../src/lib/domain.js";
-import { weeklyPeriod } from "../src/lib/domain.js";
+import { deadline, weeklyPeriod } from "../src/lib/domain.js";
 import { overdueBlockerReminders } from "../src/lib/blocker-reminders.js";
 
 async function main() {
@@ -20,7 +20,6 @@ async function main() {
   const organizationId = process.env.REMINDER_ORGANIZATION_ID;
   if (!organizationId) throw new Error("REMINDER_ORGANIZATION_ID is required");
   const dates = weekDates(shanghaiDate(now));
-  const period = weeklyPeriod(shanghaiDate(now));
   const [members, bosses, reports, blockers, calendar, exemptions] =
     await Promise.all([
       db
@@ -113,6 +112,10 @@ async function main() {
         eq(report.weekStart, period.weekStart),
       ),
     );
+  const period = weeklyPeriod(
+    shanghaiDate(now),
+    Object.fromEntries(calendar.map((day) => [day.date, day.isWorkday])),
+  );
   const reminders = [
     ...dueReminders({
       now,
@@ -135,7 +138,7 @@ async function main() {
         weekStart: item.weekStart!,
       })),
       weekStart: period.weekStart,
-      dueAt: new Date(`${period.dueDate}T10:30:00.000Z`),
+      dueAt: deadline(period.dueDate),
     }),
     ...overdueBlockerReminders({
       now,
