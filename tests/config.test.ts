@@ -34,6 +34,7 @@ describe("runtime configuration", () => {
         S3_BUCKET: "weekly",
         S3_ACCESS_KEY_ID: "access",
         S3_SECRET_ACCESS_KEY: "secret",
+        ATTACHMENT_SCANNER_URL: "https://scanner.example/scan",
       }).ready,
     ).toBe(true));
   it("rejects a non-PostgreSQL URL", () =>

@@ -42,6 +42,12 @@ const schema = z
             message: "生产环境必须配置附件存储",
           });
       }
+      if (!env.ATTACHMENT_SCANNER_URL)
+        context.addIssue({
+          code: "custom",
+          path: ["ATTACHMENT_SCANNER_URL"],
+          message: "预发布和生产环境必须配置附件安全扫描服务",
+        });
     }
   });
 

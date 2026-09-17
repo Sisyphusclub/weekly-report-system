@@ -6,7 +6,7 @@
 
 附件存储需要配置 `S3_ENDPOINT`、`S3_REGION`、`S3_BUCKET`、`S3_ACCESS_KEY_ID` 和 `S3_SECRET_ACCESS_KEY`。系统使用支持 S3 checksum API 的私有兼容桶，通过 10 分钟预签名 URL 上传和下载；允许图片、PDF、纯文本，单文件上限 10 MB。生产环境应为应用账号授予目标桶的最小读写权限，禁止公开桶策略。
 
-如需接入企业恶意文件扫描，在应用环境配置 `ATTACHMENT_SCANNER_URL`，可选配置 `ATTACHMENT_SCANNER_TOKEN`。附件确认时系统向该地址发送 JSON（包含对象键、文件名、类型、大小、SHA-256 和 10 分钟私有下载地址），扫描服务必须返回 JSON `{ "clean": true }`；超时、非 2xx、响应格式不符或返回 `clean: false` 都会拒绝确认并清理附件。未配置扫描地址时不会伪造扫描结果，系统仅执行类型、魔数和哈希校验；生产环境建议将扫描服务设为必配并限制其网络访问范围。
+预发布和生产环境必须接入企业恶意文件扫描：配置 `ATTACHMENT_SCANNER_URL`，可选配置 `ATTACHMENT_SCANNER_TOKEN`。附件确认时系统向该地址发送 JSON（包含对象键、文件名、类型、大小、SHA-256 和 10 分钟私有下载地址），扫描服务必须返回 JSON `{ "clean": true }`；超时、非 2xx、响应格式不符或返回 `clean: false` 都会拒绝确认并清理附件。开发环境未配置扫描地址时不会伪造扫描结果，系统仅执行类型、魔数和哈希校验；扫描服务应限制网络访问范围。
 
 ## 首次部署
 
