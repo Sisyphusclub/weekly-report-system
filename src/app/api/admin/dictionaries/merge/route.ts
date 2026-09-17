@@ -59,7 +59,7 @@ export async function POST(request: Request) {
         )
         .limit(1);
       const [target] = await tx
-        .select({ id: table.id })
+        .select({ id: table.id, name: table.name })
         .from(table)
         .where(
           and(
@@ -73,7 +73,11 @@ export async function POST(request: Request) {
       if (v.kind === "category")
         await tx
           .update(workTask)
-          .set({ categoryId: v.targetId })
+          .set({
+            categoryId: v.targetId,
+            categoryName: target.name,
+            updatedAt: new Date(),
+          })
           .where(
             and(
               eq(workTask.organizationId, actor.organizationId),
@@ -122,7 +126,11 @@ export async function POST(request: Request) {
           } else
             await tx
               .update(deliverable)
-              .set({ unitId: v.targetId, updatedAt: new Date() })
+              .set({
+                unitId: v.targetId,
+                unitName: target.name,
+                updatedAt: new Date(),
+              })
               .where(eq(deliverable.id, row.id));
         }
       }
