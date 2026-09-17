@@ -41,36 +41,33 @@ export async function POST(request: Request) {
           .limit(1);
         if (!refs) throw new BusinessError("项目、分类或负责人无效");
         const id = crypto.randomUUID();
-        await tx
-          .insert(workTask)
-          .values({
-            id,
-            organizationId: actor.organizationId,
-            projectId: item.projectId,
-            categoryId: item.categoryId,
-            categoryName: refs.categoryName,
-            primaryAssigneeId: item.primaryAssigneeId,
-            content: item.content,
-            kind: item.kind,
-            status: item.status,
-            workDate: item.workDate,
-            dueDate: item.dueDate,
-            version: 1,
-            sourceTaskId: null,
-          });
+        await tx.insert(workTask).values({
+          id,
+          organizationId: actor.organizationId,
+          createdById: actor.id,
+          projectId: item.projectId,
+          categoryId: item.categoryId,
+          categoryName: refs.categoryName,
+          primaryAssigneeId: item.primaryAssigneeId,
+          content: item.content,
+          kind: item.kind,
+          status: item.status,
+          workDate: item.workDate,
+          dueDate: item.dueDate,
+          version: 1,
+          sourceTaskId: null,
+        });
         created.push(id);
       }
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "TASK_IMPORT",
-          resourceType: "TASK",
-          resourceId: created[0],
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "TASK_IMPORT",
+        resourceType: "TASK",
+        resourceId: created[0],
+        result: "SUCCESS",
+      });
       return { created: created.length, ids: created };
     });
     return Response.json(result, { status: 201 });
