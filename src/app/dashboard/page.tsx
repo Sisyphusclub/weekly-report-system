@@ -5,6 +5,7 @@ import { project, user, category, deliverableUnit } from "@/lib/db/schema";
 import { listReports } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
+import { getDashboardMetrics, submissionRate } from "@/lib/metrics";
 
 export const metadata = { title: "工作看板" };
 export default async function DashboardPage() {
@@ -62,6 +63,7 @@ export default async function DashboardPage() {
     );
   }
   const reports = await listReports(actor, "", 1);
+  const metrics = await getDashboardMetrics(actor.organizationId);
   return (
     <WorkspaceShell actor={actor} selected="dashboard">
       <header>
@@ -73,6 +75,28 @@ export default async function DashboardPage() {
           从工作记录中了解团队进展。
         </p>
       </header>
+      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        {[
+          [
+            "本周提交率",
+            submissionRate(metrics.submittedReports, metrics.dueReports) ===
+            null
+              ? "暂无数据"
+              : `${submissionRate(metrics.submittedReports, metrics.dueReports)}%`,
+          ],
+          ["待处理阻塞", String(metrics.openBlockers)],
+          ["紧急阻塞", String(metrics.urgentBlockers)],
+          ["本周完成任务", String(metrics.completedTasks)],
+        ].map(([label, value]) => (
+          <section
+            key={label}
+            className="rounded-3xl border border-border-button-default p-5"
+          >
+            <p className="text-body-regular text-text-secondary">{label}</p>
+            <p className="mt-2 text-title-2-medium">{value}</p>
+          </section>
+        ))}
+      </div>
       <section className="rounded-3xl border border-border-button-default p-6">
         <div className="flex items-center justify-between gap-4">
           <h2 className="text-title-2-medium">最近报告</h2>
