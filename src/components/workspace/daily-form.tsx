@@ -9,8 +9,10 @@ export function DailyForm({
   date,
   draft,
   tasks,
+  initialTaskIds,
 }: {
   date: string;
+  initialTaskIds: string[];
   draft: {
     id: string;
     summary: string | null;
@@ -19,13 +21,19 @@ export function DailyForm({
     version: number;
     status: string;
   } | null;
-  tasks: Array<{ id: string; content: string; kind: "ACTUAL" | "PLAN"; status: string }>;
+  tasks: Array<{
+    id: string;
+    content: string;
+    kind: "ACTUAL" | "PLAN";
+    status: string;
+  }>;
 }) {
   const [version, setVersion] = useState(draft?.version ?? 0);
   const [submitted, setSubmitted] = useState(draft?.status === "SUBMITTED");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
-  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
+  const [selectedTaskIds, setSelectedTaskIds] = useState(initialTaskIds);
+  const [reportId, setReportId] = useState(draft?.id);
   const busy = useRef(false);
   const formRef = useRef<HTMLFormElement>(null);
   async function save(submit: boolean) {
@@ -38,7 +46,13 @@ export function DailyForm({
       const response = await fetch("/api/reports/daily", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ ...data, reportDate: date, submit, version }),
+        body: JSON.stringify({
+          ...data,
+          taskIds: selectedTaskIds,
+          reportDate: date,
+          submit,
+          version,
+        }),
       });
       const result = await response.json();
       if (!response.ok) {
@@ -46,6 +60,7 @@ export function DailyForm({
         return;
       }
       setVersion(result.version);
+      setReportId(result.id);
       setSubmitted(result.status === "SUBMITTED");
       setMessage(submit ? "日报已提交" : "草稿已保存");
     } catch {
@@ -80,7 +95,20 @@ export function DailyForm({
         <fieldset className="flex flex-col gap-2">
           <legend className="text-label-medium">关联任务</legend>
           {tasks.map((task) => (
-            <Checkbox key={task.id} name="taskIds" value={task.id} isSelected={selectedTaskIds.includes(task.id)} onChange={(checked) => setSelectedTaskIds((current) => checked ? [...current, task.id] : current.filter((id) => id !== task.id))} isDisabled={pending || submitted}>
+            <Checkbox
+              key={task.id}
+              name="taskIds"
+              value={task.id}
+              isSelected={selectedTaskIds.includes(task.id)}
+              onChange={(checked) =>
+                setSelectedTaskIds((current) =>
+                  checked
+                    ? [...current, task.id]
+                    : current.filter((id) => id !== task.id),
+                )
+              }
+              isDisabled={pending || submitted}
+            >
               {task.content} ({task.kind === "PLAN" ? "计划" : "实际"})
             </Checkbox>
           ))}
@@ -114,8 +142,8 @@ export function DailyForm({
           </Button>
         </div>
       )}
-      {draft && submitted && (
-        <ButtonLink href={`/reports/${draft.id}`} variant="secondary">
+      {reportId && submitted && (
+        <ButtonLink href={`/reports/${reportId}`} variant="secondary">
           查看报告
         </ButtonLink>
       )}
