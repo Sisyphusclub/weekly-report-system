@@ -330,6 +330,29 @@ export const deliverable = pgTable(
     check("deliverable_nonnegative", sql`${t.quantity} >= 0`),
   ],
 );
+export const externalLink = pgTable(
+  "external_link",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    taskId: text("task_id").notNull(),
+    title: text("title").notNull(),
+    url: text("url").notNull(),
+    createdBy: text("created_by").notNull(),
+    ...timestamps(),
+  },
+  (t) => [
+    index("external_link_task").on(t.organizationId, t.taskId),
+    foreignKey({
+      columns: [t.organizationId, t.taskId],
+      foreignColumns: [workTask.organizationId, workTask.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.createdBy],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+  ],
+);
 export const report = pgTable(
   "report",
   {
