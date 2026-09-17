@@ -433,6 +433,56 @@ export const reportRevision = pgTable(
     }),
   ],
 );
+export const revisionRequest = pgTable(
+  "revision_request",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    reportId: text("report_id").notNull(),
+    requesterId: text("requester_id").notNull(),
+    baseVersion: integer("base_version").notNull(),
+    reason: text("reason").notNull(),
+    proposedChanges: jsonb("proposed_changes").notNull(),
+    status: text("status").notNull().default("PENDING"),
+    reviewerId: text("reviewer_id"),
+    reviewReason: text("review_reason"),
+    reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+    version: integer("version").notNull().default(1),
+    ...timestamps(),
+  },
+  (t) => [
+    uniqueIndex("revision_request_org_id").on(t.organizationId, t.id),
+    uniqueIndex("revision_request_pending_author")
+      .on(t.reportId, t.requesterId)
+      .where(sql`${t.status} = 'PENDING'`),
+    index("revision_request_org_status_created").on(
+      t.organizationId,
+      t.status,
+      t.createdAt,
+    ),
+    foreignKey({
+      columns: [t.organizationId, t.reportId],
+      foreignColumns: [report.organizationId, report.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.requesterId],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.reviewerId],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+    check(
+      "revision_request_positive_versions",
+      sql`${t.baseVersion} > 0 AND ${t.version} > 0`,
+    ),
+    check(
+      "revision_request_review_state",
+      sql`(${t.status} = 'PENDING' AND ${t.reviewerId} IS NULL AND ${t.reviewedAt} IS NULL) OR (${t.status} IN ('APPROVED', 'REJECTED') AND ${t.reviewerId} IS NOT NULL AND ${t.reviewedAt} IS NOT NULL)`,
+    ),
+  ],
+);
+
 export const blockerSeverityEnum = pgEnum("blocker_severity", [
   "NORMAL",
   "IMPORTANT",
