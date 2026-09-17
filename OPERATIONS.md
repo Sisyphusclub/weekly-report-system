@@ -10,6 +10,7 @@
 
 1. 准备独立 production 环境变量，并确认域名、HTTPS 和反向代理。
 2. 执行 `docker compose build`。
+   Compose 不内置对象存储；启动前应准备可访问的私有 S3 兼容桶，并设置上述 `S3_*` 变量。
 3. 执行 `docker compose up -d db`，等待数据库健康检查通过。
 4. 执行 `docker compose run --rm app npm run db:migrate`。
 5. 通过受保护 stdin 执行 `npm run admin:bootstrap` 创建首个管理员，不要把密码写入命令行历史。
