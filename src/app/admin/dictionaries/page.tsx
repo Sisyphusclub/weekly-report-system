@@ -2,11 +2,12 @@ import { asc, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { category, deliverableUnit } from "@/lib/db/schema";
+import { category, deliverableUnit, dictionaryMerge } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { DictionaryForm } from "@/components/workspace/dictionary-form";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { DictionaryMergeForm } from "@/components/workspace/dictionary-merge-form";
+import { DictionaryMergeUndo } from "@/components/workspace/dictionary-merge-undo";
 export const metadata = { title: "分类与交付物单位" };
 export default async function DictionariesPage({
   searchParams,
@@ -30,6 +31,10 @@ export default async function DictionariesPage({
     .orderBy(asc(table.sortOrder), asc(table.id))
     .limit(21)
     .offset((page - 1) * 20);
+  const merges = await getDb()
+    .select()
+    .from(dictionaryMerge)
+    .where(eq(dictionaryMerge.organizationId, actor.organizationId));
   return (
     <WorkspaceShell actor={actor} selected="dictionaries">
       <h1 className="text-title-1-medium">分类与交付物单位</h1>
@@ -55,6 +60,20 @@ export default async function DictionariesPage({
         kind={kind}
         entries={rows.map((row) => ({ id: row.id, name: row.name }))}
       />
+      {merges
+        .filter(
+          (merge) =>
+            merge.kind === kind &&
+            !merge.undoneAt &&
+            merge.expiresAt >= new Date(),
+        )
+        .map((merge) => (
+          <DictionaryMergeUndo
+            key={merge.id}
+            id={merge.id}
+            undoUntil={merge.expiresAt.toISOString()}
+          />
+        ))}
       <section aria-label="已有资料" className="grid gap-4 md:grid-cols-2">
         {rows.slice(0, 20).map((row) => (
           <DictionaryForm

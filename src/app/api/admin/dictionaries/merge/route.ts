@@ -15,6 +15,27 @@ const input = z.object({
   sourceId: z.string().min(1),
   targetId: z.string().min(1),
 });
+export async function GET(request: Request) {
+  try {
+    const actor = await writeActor(request);
+    if (actor.role !== "ADMIN")
+      throw new BusinessError("仅管理员可查看合并记录", 403);
+    const items = await getDb()
+      .select()
+      .from(dictionaryMerge)
+      .where(
+        and(
+          eq(dictionaryMerge.organizationId, actor.organizationId),
+          isNull(dictionaryMerge.undoneAt),
+        ),
+      );
+    return Response.json({
+      items: items.filter((item) => item.expiresAt >= new Date()),
+    });
+  } catch (e) {
+    return apiError(e);
+  }
+}
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
