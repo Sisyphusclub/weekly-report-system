@@ -12,6 +12,7 @@ import {
 import { deadline, validateSubmission } from "@/lib/domain";
 import { dailyInput, shanghaiDate } from "@/lib/daily-input";
 import { apiError, BusinessError, writeActor } from "@/lib/api";
+import { DailyConflict } from "@/lib/daily-conflict";
 
 export async function POST(request: Request) {
   try {
@@ -96,13 +97,31 @@ export async function POST(request: Request) {
           ),
         )
         .limit(1);
-      if (existing?.status === "SUBMITTED")
-        throw new BusinessError("日报已提交，请通过修订流程修改", 409);
-      if ((existing?.version ?? 0) !== input.version)
-        throw new BusinessError(
-          "日报已在其他设备更新，请保留本地内容并刷新核对",
-          409,
-        );
+      if (
+        existing &&
+        (existing.status === "SUBMITTED" || existing.version !== input.version)
+      ) {
+        const links = await tx
+          .select({ taskId: reportTask.taskId })
+          .from(reportTask)
+          .where(
+            and(
+              eq(reportTask.organizationId, actor.organizationId),
+              eq(reportTask.reportId, existing.id),
+            ),
+          );
+        throw new DailyConflict({
+          id: existing.id,
+          version: existing.version,
+          status: existing.status,
+          summary: existing.summary ?? "",
+          noWorkReason: existing.noWorkReason ?? "",
+          noPlanReason: existing.noPlanReason ?? "",
+          taskIds: links.map((link) => link.taskId),
+        });
+      }
+      if (!existing && input.version !== 0)
+        throw new BusinessError("草稿不存在，请重新打开日报", 409);
       const [calendar] = await tx
         .select()
         .from(workCalendarDay)
@@ -187,6 +206,11 @@ export async function POST(request: Request) {
     });
     return Response.json(result);
   } catch (error) {
+    if (error instanceof DailyConflict)
+      return Response.json(
+        { error: error.message, remote: error.remote },
+        { status: 409 },
+      );
     return apiError(error);
   }
 }

@@ -1,9 +1,11 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Input } from "@/components/base/input/input";
 import { Textarea } from "@/components/base/textarea/textarea";
 import { Button, ButtonLink } from "@/components/base/buttons/button";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
+import { DailyDraftController } from "@/lib/daily-draft-controller";
+import { remoteDailyDraft, type RemoteDailyDraft } from "@/lib/daily-conflict";
 
 export function DailyForm({
   date,
@@ -28,67 +30,86 @@ export function DailyForm({
     status: string;
   }>;
 }) {
-  const [version, setVersion] = useState(draft?.version ?? 0);
-  const [submitted, setSubmitted] = useState(draft?.status === "SUBMITTED");
-  const [message, setMessage] = useState("");
-  const [pending, setPending] = useState(false);
-  const [selectedTaskIds, setSelectedTaskIds] = useState(initialTaskIds);
-  const [reportId, setReportId] = useState(draft?.id);
-  const busy = useRef(false);
-  const formRef = useRef<HTMLFormElement>(null);
-  async function save(submit: boolean) {
-    if (busy.current || submitted || !formRef.current) return;
-    busy.current = true;
-    setPending(true);
-    setMessage("");
-    const data = Object.fromEntries(new FormData(formRef.current));
-    try {
-      const response = await fetch("/api/reports/daily", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          taskIds: selectedTaskIds,
-          reportDate: date,
-          submit,
-          version,
-        }),
-      });
-      const result = await response.json();
-      if (!response.ok) {
-        setMessage(result.error ?? "保存失败，请保留内容并重试");
-        return;
-      }
-      setVersion(result.version);
-      setReportId(result.id);
-      setSubmitted(result.status === "SUBMITTED");
-      setMessage(submit ? "日报已提交" : "草稿已保存");
-    } catch {
-      setMessage(
-        "未能确认保存结果，输入内容已保留。请在另一页面核对报告后再试。",
-      );
-    } finally {
-      busy.current = false;
-      setPending(false);
-    }
-  }
+  const [remote, setRemote] = useState<RemoteDailyDraft | null>(null);
+  const [controller] = useState(
+    () =>
+      new DailyDraftController(
+        {
+          content: {
+            summary: draft?.summary ?? "",
+            noWorkReason: draft?.noWorkReason ?? "",
+            noPlanReason: draft?.noPlanReason ?? "",
+            taskIds: initialTaskIds,
+          },
+          version: draft?.version ?? 0,
+          id: draft?.id,
+          submitted: draft?.status === "SUBMITTED",
+        },
+        async (content, version, submit) => {
+          let response: Response;
+          try {
+            response = await fetch("/api/reports/daily", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                ...content,
+                reportDate: date,
+                version,
+                submit,
+              }),
+            });
+          } catch {
+            throw new Error(
+              "网络异常，自动保存已暂停。请保留内容并核对报告后重试。",
+            );
+          }
+          const result = await response.json();
+          if (response.status === 409) {
+            const conflict = remoteDailyDraft.safeParse(result.remote);
+            if (conflict.success) setRemote(conflict.data);
+          }
+          if (!response.ok)
+            throw new Error(result.error ?? "保存失败，自动保存已暂停，请重试");
+          return result;
+        },
+      ),
+  );
+  const state = useSyncExternalStore(
+    controller.subscribe,
+    controller.snapshot,
+    controller.snapshot,
+  );
+  const [preview, setPreview] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  useEffect(() => {
+    if (!state.dirty && !state.pending) return;
+    const protect = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = "";
+    };
+    window.addEventListener("beforeunload", protect);
+    return () => window.removeEventListener("beforeunload", protect);
+  }, [state.dirty, state.pending]);
+  const disabled = state.submitted || submitting;
+  const selected = tasks.filter((task) =>
+    state.content.taskIds.includes(task.id),
+  );
   return (
     <form
-      ref={formRef}
       onSubmit={(event) => {
         event.preventDefault();
-        void save(false);
+        void controller.save(false);
       }}
       className="flex max-w-2xl flex-col gap-5 rounded-3xl border border-border-button-default p-6"
     >
       <p className="text-headline-medium">
-        {date} · {submitted ? "已提交" : "草稿"}
+        {date} · {state.submitted ? "已提交" : "草稿"}
       </p>
       <Textarea
-        name="summary"
         label="工作总结"
-        defaultValue={draft?.summary ?? ""}
-        isDisabled={pending || submitted}
+        value={state.content.summary}
+        onChange={(summary) => controller.update({ summary })}
+        isDisabled={disabled}
         maxLength={10000}
       />
       {tasks.length > 0 && (
@@ -97,57 +118,200 @@ export function DailyForm({
           {tasks.map((task) => (
             <Checkbox
               key={task.id}
-              name="taskIds"
-              value={task.id}
-              isSelected={selectedTaskIds.includes(task.id)}
+              isSelected={state.content.taskIds.includes(task.id)}
               onChange={(checked) =>
-                setSelectedTaskIds((current) =>
-                  checked
-                    ? [...current, task.id]
-                    : current.filter((id) => id !== task.id),
-                )
+                controller.update({
+                  taskIds: checked
+                    ? [...state.content.taskIds, task.id]
+                    : state.content.taskIds.filter((id) => id !== task.id),
+                })
               }
-              isDisabled={pending || submitted}
+              isDisabled={disabled}
             >
-              {task.content} ({task.kind === "PLAN" ? "计划" : "实际"})
+              {task.content}（{task.kind === "PLAN" ? "计划" : "实际"}）
             </Checkbox>
           ))}
         </fieldset>
       )}
       <Input
-        name="noWorkReason"
         label="无实际任务时的原因"
-        defaultValue={draft?.noWorkReason ?? ""}
-        isDisabled={pending || submitted}
+        value={state.content.noWorkReason}
+        onChange={(noWorkReason) => controller.update({ noWorkReason })}
+        isDisabled={disabled}
         maxLength={200}
       />
       <Input
-        name="noPlanReason"
         label="无下一周期计划时的原因"
-        defaultValue={draft?.noPlanReason ?? ""}
-        isDisabled={pending || submitted}
+        value={state.content.noPlanReason}
+        onChange={(noPlanReason) => controller.update({ noPlanReason })}
+        isDisabled={disabled}
         maxLength={200}
       />
-      {!submitted && (
-        <div className="flex gap-3">
-          <Button type="submit" disabled={pending}>
-            保存草稿
+      {!state.submitted && (
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" variant="secondary" disabled={state.pending}>
+            {state.pending ? "正在保存…" : "保存草稿"}
           </Button>
           <Button
             type="button"
-            disabled={pending}
-            onClick={() => void save(true)}
+            disabled={state.pending}
+            onClick={() => setPreview(true)}
           >
-            提交日报
+            预览并提交
           </Button>
         </div>
       )}
-      {reportId && submitted && (
-        <ButtonLink href={`/reports/${reportId}`} variant="secondary">
+      {preview && !state.submitted && (
+        <section
+          aria-label="提交预览"
+          className="flex flex-col gap-4 rounded-2xl border border-border-button-default p-4"
+        >
+          <h2 className="text-title-2-medium">提交预览</h2>
+          <p className="whitespace-pre-wrap break-words">
+            {state.content.summary || "未填写总结"}
+          </p>
+          {(["ACTUAL", "PLAN"] as const).map((kind) => (
+            <section key={kind}>
+              <h3 className="text-body-medium">
+                {kind === "ACTUAL" ? "实际工作" : "下一周期计划"}
+              </h3>
+              <ul className="mt-2 flex flex-col gap-2">
+                {selected
+                  .filter((task) => task.kind === kind)
+                  .map((task) => (
+                    <li
+                      key={task.id}
+                      className="whitespace-pre-wrap break-words"
+                    >
+                      {task.content}
+                    </li>
+                  ))}
+              </ul>
+              {!selected.some((task) => task.kind === kind) && (
+                <p className="mt-2 text-text-secondary">
+                  {(kind === "ACTUAL"
+                    ? state.content.noWorkReason
+                    : state.content.noPlanReason) || "未填写，请补充任务或原因"}
+                </p>
+              )}
+            </section>
+          ))}
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              disabled={state.pending}
+              onClick={async () => {
+                setSubmitting(true);
+                await controller.save(true);
+                setSubmitting(false);
+              }}
+            >
+              确认提交
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={submitting}
+              onClick={() => setPreview(false)}
+            >
+              继续编辑
+            </Button>
+          </div>
+        </section>
+      )}
+      {state.id && state.submitted && (
+        <ButtonLink href={`/reports/${state.id}`} variant="secondary">
           查看报告
         </ButtonLink>
       )}
-      {message && <p role="status">{message}</p>}
+      {state.message && (
+        <p role="status" aria-live="polite">
+          {state.message}
+        </p>
+      )}
+      {remote && (
+        <section
+          aria-label="版本冲突"
+          className="flex flex-col gap-4 rounded-2xl border border-border-button-default p-4"
+        >
+          <h2 className="text-title-2-medium">远端已有更新</h2>
+          <p>上方保留本地内容，可编辑合并后重新保存。</p>
+          <div className="flex flex-col gap-2">
+            <h3 className="text-body-medium">远端内容</h3>
+            <p className="whitespace-pre-wrap break-words">
+              {remote.summary || "未填写总结"}
+            </p>
+            <p>无工作原因：{remote.noWorkReason || "未填写"}</p>
+            <p>无计划原因：{remote.noPlanReason || "未填写"}</p>
+            <ul>
+              {remote.taskIds.map((id) => (
+                <li key={id}>
+                  {tasks.find((task) => task.id === id)?.content ??
+                    `任务 ${id}`}
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              type="button"
+              variant="secondary"
+              disabled={state.pending}
+              onClick={() => {
+                if (controller.resolve(remote, false)) {
+                  setRemote(null);
+                  setPreview(false);
+                }
+              }}
+            >
+              使用远端内容
+            </Button>
+            {remote.status === "DRAFT" ? (
+              <Button
+                type="button"
+                disabled={state.pending}
+                onClick={() => {
+                  if (controller.resolve(remote, true)) {
+                    setRemote(null);
+                    void controller.save(false);
+                  }
+                }}
+              >
+                保存上方内容
+              </Button>
+            ) : (
+              <ButtonLink href={`/reports/${remote.id}`} variant="secondary">
+                查看已提交报告
+              </ButtonLink>
+            )}
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => {
+                const url = URL.createObjectURL(
+                  new Blob(
+                    [
+                      JSON.stringify(
+                        { reportDate: date, ...state.content },
+                        null,
+                        2,
+                      ),
+                    ],
+                    { type: "application/json" },
+                  ),
+                );
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = `日报草稿-${date}.json`;
+                link.click();
+                setTimeout(() => URL.revokeObjectURL(url), 1000);
+              }}
+            >
+              下载本地副本
+            </Button>
+          </div>
+        </section>
+      )}
     </form>
   );
 }

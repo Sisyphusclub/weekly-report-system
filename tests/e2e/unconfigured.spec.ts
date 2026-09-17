@@ -30,6 +30,7 @@ test("business routes require authentication", async ({ page }) => {
     "/dashboard",
     "/reports",
     "/reports/unknown",
+    "/reports/unknown/history",
     "/security",
     "/daily",
     "/weekly",
