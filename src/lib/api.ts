@@ -20,6 +20,11 @@ export function enforceRateLimit(
   windowMs: number,
   now = Date.now(),
 ) {
+  if (rateLimitEntries.size > 10_000) {
+    for (const [entryKey, entry] of rateLimitEntries) {
+      if (entry.resetAt <= now) rateLimitEntries.delete(entryKey);
+    }
+  }
   const current = rateLimitEntries.get(key);
   if (!current || current.resetAt <= now) {
     rateLimitEntries.set(key, { count: 1, resetAt: now + windowMs });
@@ -48,7 +53,13 @@ export async function writeActor(request: Request) {
 }
 export function apiError(error: unknown) {
   if (error instanceof BusinessError)
-    return Response.json({ error: error.message }, { status: error.status });
+    return Response.json(
+      { error: error.message },
+      {
+        status: error.status,
+        headers: error.status === 429 ? { "retry-after": "60" } : undefined,
+      },
+    );
   console.error("Business write failed", {
     name: error instanceof Error ? error.name : "UnknownError",
   });
