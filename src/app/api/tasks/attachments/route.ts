@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
     const body = await request.json().catch(() => null);
-    const parsed = input.safeParse(body);
+    const parsed = attachmentInput.safeParse(body);
     if (!parsed.success) throw new BusinessError("附件格式或大小无效");
     const taskId = typeof body?.taskId === "string" ? body.taskId : "";
     const [task] = await getDb()
