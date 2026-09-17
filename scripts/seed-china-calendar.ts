@@ -22,16 +22,14 @@ async function main() {
       .orderBy(desc(workCalendarDay.version))
       .limit(1);
     if (latest) continue;
-    await db
-      .insert(workCalendarDay)
-      .values({
-        id: crypto.randomUUID(),
-        organizationId,
-        date: day.date,
-        isWorkday: day.isWorkday,
-        description: day.description,
-        version: 1,
-      });
+    await db.insert(workCalendarDay).values({
+      id: crypto.randomUUID(),
+      organizationId,
+      date: day.date,
+      isWorkday: day.isWorkday,
+      description: day.description,
+      version: 1,
+    });
     inserted++;
   }
   console.log(`China calendar seed complete: ${inserted} dates inserted.`);
