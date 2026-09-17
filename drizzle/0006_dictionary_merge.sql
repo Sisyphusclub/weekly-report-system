@@ -1,0 +1,2 @@
+CREATE TABLE IF NOT EXISTS "dictionary_merge" ("id" text PRIMARY KEY NOT NULL, "organization_id" text NOT NULL, "kind" text NOT NULL, "source_id" text NOT NULL, "target_id" text NOT NULL, "expires_at" timestamp with time zone NOT NULL, "undone_at" timestamp with time zone, "created_at" timestamp with time zone DEFAULT now() NOT NULL);
+CREATE INDEX IF NOT EXISTS "dictionary_merge_org" ON "dictionary_merge" ("organization_id", "created_at");

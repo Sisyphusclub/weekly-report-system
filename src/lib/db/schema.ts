@@ -230,6 +230,22 @@ export const deliverableUnit = pgTable(
     uniqueIndex("unit_org_name").on(t.organizationId, t.name),
   ],
 );
+export const dictionaryMerge = pgTable(
+  "dictionary_merge",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    kind: text("kind").notNull(),
+    sourceId: text("source_id").notNull(),
+    targetId: text("target_id").notNull(),
+    expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+    undoneAt: timestamp("undone_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [index("dictionary_merge_org").on(t.organizationId, t.createdAt)],
+);
 export const taskKindEnum = pgEnum("task_kind", ["ACTUAL", "PLAN"]);
 export const workTask = pgTable(
   "work_task",
