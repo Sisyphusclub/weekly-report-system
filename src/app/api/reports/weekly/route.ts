@@ -1,5 +1,6 @@
 import { and, desc, eq, gte, lte, sql, inArray } from "drizzle-orm";
 import { weeklyTaskSnapshot } from "@/lib/weekly-task-snapshot";
+import { reportTiming } from "@/lib/report-timing";
 import { z } from "zod";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
@@ -151,9 +152,14 @@ export async function POST(request: Request) {
         status: value.submit ? ("SUBMITTED" as const) : ("DRAFT" as const),
         submittedAt: value.submit ? now : null,
         revisionNumber: value.submit ? 1 : 0,
-        version: (existing?.version ?? 1) + 1,
-        dueAt: new Date(`${snapshot.dueDate}T10:30:00.000Z`),
-        calendarVersion: 0,
+        version: value.version + 1,
+        ...reportTiming(
+          snapshot.dueDate,
+          Math.max(0, ...calendar.map((day) => day.version)),
+          value.submit,
+          now,
+          existing,
+        ),
         updatedAt: now,
       };
       if (existing)
@@ -178,15 +184,13 @@ export async function POST(request: Request) {
           ),
         );
       if (taskSnapshot.tasks.length)
-        await tx
-          .insert(reportTask)
-          .values(
-            taskSnapshot.tasks.map((task) => ({
-              ...task,
-              reportId: id,
-              organizationId: actor.organizationId,
-            })),
-          );
+        await tx.insert(reportTask).values(
+          taskSnapshot.tasks.map((task) => ({
+            ...task,
+            reportId: id,
+            organizationId: actor.organizationId,
+          })),
+        );
       if (value.submit)
         await tx.insert(reportRevision).values({
           id: crypto.randomUUID(),
