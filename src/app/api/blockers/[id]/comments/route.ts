@@ -45,6 +45,7 @@ export async function GET(
         id: blockerComment.id,
         body: blockerComment.body,
         authorName: user.name,
+        authorId: blockerComment.authorId,
         createdAt: blockerComment.createdAt,
         deletedAt: blockerComment.deletedAt,
       })
