@@ -6,14 +6,22 @@ type Item = {
   id: string;
   body: string;
   authorName: string;
+  authorId: string;
   createdAt: string;
   deletedAt: string | null;
 };
-export function BlockerCommentSection({ blockerId }: { blockerId: string }) {
+export function BlockerCommentSection({
+  blockerId,
+  actorId,
+}: {
+  blockerId: string;
+  actorId: string;
+}) {
   const [items, setItems] = useState<Item[]>([]);
   const [body, setBody] = useState("");
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
+  const [editing, setEditing] = useState<string | null>(null);
   async function load() {
     const r = await fetch(`/api/blockers/${blockerId}/comments`);
     const d = await r.json();
@@ -22,13 +30,11 @@ export function BlockerCommentSection({ blockerId }: { blockerId: string }) {
   }
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
-    void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    void load(); // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockerId]);
   async function submit() {
     if (!body.trim() || pending) return;
     setPending(true);
-    setMessage("");
     const r = await fetch(`/api/blockers/${blockerId}/comments`, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -39,6 +45,31 @@ export function BlockerCommentSection({ blockerId }: { blockerId: string }) {
       setBody("");
       await load();
     } else setMessage(d.error ?? "评论发布失败");
+    setPending(false);
+  }
+  async function update(id: string) {
+    setPending(true);
+    const r = await fetch(`/api/blockers/${blockerId}/comments/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ body }),
+    });
+    if (r.ok) {
+      setEditing(null);
+      setBody("");
+      await load();
+    } else setMessage("评论更新失败");
+    setPending(false);
+  }
+  async function remove(id: string) {
+    setPending(true);
+    const r = await fetch(`/api/blockers/${blockerId}/comments/${id}`, {
+      method: "PATCH",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ deleted: true }),
+    });
+    if (r.ok) await load();
+    else setMessage("评论删除失败");
     setPending(false);
   }
   return (
@@ -54,9 +85,59 @@ export function BlockerCommentSection({ blockerId }: { blockerId: string }) {
               <span className="ml-2 text-body-regular text-text-secondary">
                 {new Date(item.createdAt).toLocaleString("zh-CN")}
               </span>
-              <p className="mt-1 whitespace-pre-wrap break-words">
-                {item.body}
-              </p>
+              {editing === item.id ? (
+                <Textarea
+                  label="编辑评论"
+                  value={body}
+                  onChange={setBody}
+                  rows={3}
+                  isDisabled={pending}
+                />
+              ) : (
+                <p className="mt-1 whitespace-pre-wrap break-words">
+                  {item.body}
+                </p>
+              )}
+              {!item.deletedAt &&
+                item.authorId === actorId &&
+                (editing === item.id ? (
+                  <span className="flex gap-2">
+                    <Button
+                      onClick={() => void update(item.id)}
+                      disabled={pending || !body.trim()}
+                    >
+                      保存
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setEditing(null);
+                        setBody("");
+                      }}
+                    >
+                      取消
+                    </Button>
+                  </span>
+                ) : (
+                  <span className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      onClick={() => {
+                        setEditing(item.id);
+                        setBody(item.body);
+                      }}
+                    >
+                      编辑
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() => void remove(item.id)}
+                      disabled={pending}
+                    >
+                      删除
+                    </Button>
+                  </span>
+                ))}
             </li>
           ))}
         </ul>
@@ -65,13 +146,16 @@ export function BlockerCommentSection({ blockerId }: { blockerId: string }) {
       )}
       <Textarea
         label="评论内容"
-        value={body}
+        value={editing ? "" : body}
         onChange={setBody}
         maxLength={5000}
         rows={3}
-        isDisabled={pending}
+        isDisabled={pending || Boolean(editing)}
       />
-      <Button onClick={() => void submit()} disabled={pending || !body.trim()}>
+      <Button
+        onClick={() => void submit()}
+        disabled={pending || !body.trim() || Boolean(editing)}
+      >
         发布评论
       </Button>
       {message && <p role="alert">{message}</p>}
