@@ -1,7 +1,7 @@
 import { and, asc, eq, isNotNull } from "drizzle-orm";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
-import { taskAttachment, workTask } from "@/lib/db/schema";
+import { auditLog, taskAttachment, workTask } from "@/lib/db/schema";
 import {
   deleteObject,
   downloadUrl,
@@ -180,6 +180,15 @@ export async function DELETE(request: Request) {
       throw new BusinessError("无权删除任务附件", 403);
     await deleteObject(row.objectKey);
     await db.delete(taskAttachment).where(eq(taskAttachment.id, id));
+    await db.insert(auditLog).values({
+      id: crypto.randomUUID(),
+      organizationId: actor.organizationId,
+      actorId: actor.id,
+      action: "ATTACHMENT_DELETE",
+      resourceType: "TASK_ATTACHMENT",
+      resourceId: id,
+      result: "SUCCESS",
+    });
     return Response.json({ ok: true });
   } catch (e) {
     return apiError(e);
