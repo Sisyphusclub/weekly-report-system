@@ -18,7 +18,9 @@ describe("enforceRateLimit", () => {
   });
 
   it("exposes a retry hint for throttled requests", async () => {
-    const response = apiError(new BusinessError("操作过于频繁，请稍后重试", 429));
+    const response = apiError(
+      new BusinessError("操作过于频繁，请稍后重试", 429),
+    );
     expect(response.status).toBe(429);
     expect(response.headers.get("retry-after")).toBe("60");
   });

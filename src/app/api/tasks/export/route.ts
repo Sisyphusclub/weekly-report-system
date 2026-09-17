@@ -6,7 +6,11 @@ import ExcelJS from "exceljs";
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
-    enforceRateLimit(`task-export:${actor.organizationId}:${actor.id}`, 10, 60_000);
+    enforceRateLimit(
+      `task-export:${actor.organizationId}:${actor.id}`,
+      10,
+      60_000,
+    );
     const query = getDb()
       .select({
         projectId: workTask.projectId,

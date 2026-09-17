@@ -289,16 +289,14 @@ export async function DELETE(request: Request) {
               ),
             );
           if (row.sourceId && row.sourceQuantity)
-            await tx
-              .insert(deliverable)
-              .values({
-                id: row.sourceId,
-                organizationId: actor.organizationId,
-                taskId: row.taskId,
-                unitId: merge.sourceId,
-                unitName: row.sourceUnitName ?? "",
-                quantity: row.sourceQuantity,
-              });
+            await tx.insert(deliverable).values({
+              id: row.sourceId,
+              organizationId: actor.organizationId,
+              taskId: row.taskId,
+              unitId: merge.sourceId,
+              unitName: row.sourceUnitName ?? "",
+              quantity: row.sourceQuantity,
+            });
         }
       }
       await tx
