@@ -3,6 +3,10 @@ const config: NextConfig = {
   output: "standalone",
   poweredByHeader: false,
   async headers() {
+    const scriptPolicy =
+      process.env.NODE_ENV === "development"
+        ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'"
+        : "script-src 'self' 'unsafe-inline'";
     return [
       {
         source: "/(.*)",
@@ -17,7 +21,7 @@ const config: NextConfig = {
           {
             key: "Content-Security-Policy",
             value:
-              "default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'",
+              `default-src 'self'; img-src 'self' data: blob:; style-src 'self' 'unsafe-inline'; ${scriptPolicy}; connect-src 'self' https:; frame-ancestors 'none'; base-uri 'self'; form-action 'self'`,
           },
         ],
       },
