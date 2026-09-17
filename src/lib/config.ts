@@ -1,5 +1,8 @@
 import { z } from "zod";
 
+const optionalEnvironmentValue = <T extends z.ZodType>(value: T) =>
+  z.preprocess((input) => (input === "" ? undefined : input), value.optional());
+
 const schema = z
   .object({
     DATABASE_URL: z
@@ -9,13 +12,13 @@ const schema = z
     BETTER_AUTH_URL: z.string().url(),
     BETTER_AUTH_SECRET: z.string().min(32),
     APP_ENV: z.enum(["development", "staging", "production"]),
-    S3_ENDPOINT: z.string().url().optional(),
-    S3_REGION: z.string().min(1).optional(),
-    S3_BUCKET: z.string().min(1).optional(),
-    S3_ACCESS_KEY_ID: z.string().min(1).optional(),
-    S3_SECRET_ACCESS_KEY: z.string().min(1).optional(),
-    ATTACHMENT_SCANNER_URL: z.string().url().optional(),
-    ATTACHMENT_SCANNER_TOKEN: z.string().min(1).optional(),
+    S3_ENDPOINT: optionalEnvironmentValue(z.string().url()),
+    S3_REGION: optionalEnvironmentValue(z.string().min(1)),
+    S3_BUCKET: optionalEnvironmentValue(z.string().min(1)),
+    S3_ACCESS_KEY_ID: optionalEnvironmentValue(z.string().min(1)),
+    S3_SECRET_ACCESS_KEY: optionalEnvironmentValue(z.string().min(1)),
+    ATTACHMENT_SCANNER_URL: optionalEnvironmentValue(z.string().url()),
+    ATTACHMENT_SCANNER_TOKEN: optionalEnvironmentValue(z.string().min(1)),
   })
   .superRefine((env, context) => {
     if (
