@@ -12,6 +12,7 @@ import { z } from "zod";
 import { mentionedUsernames } from "@/lib/comment-input";
 const input = z.object({ body: z.string().trim().min(1).max(5000) });
 async function access(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any,
   id: string,
   actor: Awaited<ReturnType<typeof writeActor>>,

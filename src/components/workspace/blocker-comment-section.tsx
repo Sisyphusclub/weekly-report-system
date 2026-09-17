@@ -21,7 +21,9 @@ export function BlockerCommentSection({ blockerId }: { blockerId: string }) {
     else setMessage(d.error ?? "评论加载失败");
   }
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [blockerId]);
   async function submit() {
     if (!body.trim() || pending) return;

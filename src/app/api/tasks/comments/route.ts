@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull } from "drizzle-orm";
+import { and, asc, eq } from "drizzle-orm";
 import { apiError, BusinessError, writeActor } from "@/lib/api";
 import { mentionedUsernames } from "@/lib/comment-input";
 import { getDb } from "@/lib/db";
