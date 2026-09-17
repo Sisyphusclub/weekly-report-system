@@ -1,7 +1,7 @@
 import { randomBytes } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { and, eq } from "drizzle-orm";
-import { apiError, BusinessError, writeActor } from "@/lib/api";
+import { apiError, BusinessError, enforceRateLimit, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { account, auditLog, session, user } from "@/lib/db/schema";
 
@@ -14,6 +14,8 @@ export async function POST(
     if (actor.role !== "ADMIN")
       throw new BusinessError("仅管理员可重置密码", 403);
     const { id } = await params;
+    enforceRateLimit(`password-reset:user:${actor.organizationId}:${id}`, 5, 60_000);
+    enforceRateLimit(`password-reset:org:${actor.organizationId}`, 20, 60_000);
     if (id === actor.id)
       throw new BusinessError("不能通过此操作重置当前账号，请使用账号安全页面");
     const temporaryPassword = randomBytes(24).toString("base64url");

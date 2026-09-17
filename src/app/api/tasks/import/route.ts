@@ -1,5 +1,5 @@
 import { and, eq, ne } from "drizzle-orm";
-import { writeActor, BusinessError, apiError } from "@/lib/api";
+import { writeActor, BusinessError, apiError, enforceRateLimit } from "@/lib/api";
 import { taskImportBatch } from "@/lib/task-import-input";
 import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
@@ -7,6 +7,7 @@ import ExcelJS from "exceljs";
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
+    enforceRateLimit(`task-import:${actor.organizationId}:${actor.id}`, 5, 60_000);
     const contentType = request.headers.get("content-type") ?? "";
     const contentLength = Number(request.headers.get("content-length") ?? 0);
     const maxBody = contentType.includes("multipart/form-data")
