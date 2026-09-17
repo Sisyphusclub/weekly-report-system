@@ -101,17 +101,15 @@ export async function PATCH(request: Request) {
       .update(taskAttachment)
       .set({ verifiedAt: new Date(), updatedAt: new Date() })
       .where(eq(taskAttachment.id, id));
-    await db
-      .insert(auditLog)
-      .values({
-        id: crypto.randomUUID(),
-        organizationId: actor.organizationId,
-        actorId: actor.id,
-        action: "ATTACHMENT_VERIFY",
-        resourceType: "TASK_ATTACHMENT",
-        resourceId: id,
-        result: "SUCCESS",
-      });
+    await db.insert(auditLog).values({
+      id: crypto.randomUUID(),
+      organizationId: actor.organizationId,
+      actorId: actor.id,
+      action: "ATTACHMENT_VERIFY",
+      resourceType: "TASK_ATTACHMENT",
+      resourceId: id,
+      result: "SUCCESS",
+    });
     return Response.json({ ok: true });
   } catch (e) {
     return apiError(e);
@@ -145,9 +143,8 @@ export async function POST(request: Request) {
     const objectKey = `${actor.organizationId}/tasks/${taskId}/${id}-${safeName}`;
     const checksum = Buffer.from(parsed.data.sha256, "hex").toString("base64");
     const url = await uploadUrl(objectKey, parsed.data.contentType, checksum);
-    await getDb()
-      .insert(taskAttachment)
-      .values({
+    await getDb().transaction(async (tx) => {
+      await tx.insert(taskAttachment).values({
         id,
         organizationId: actor.organizationId,
         taskId,
@@ -155,9 +152,7 @@ export async function POST(request: Request) {
         ...parsed.data,
         objectKey,
       });
-    await getDb()
-      .insert(auditLog)
-      .values({
+      await tx.insert(auditLog).values({
         id: crypto.randomUUID(),
         organizationId: actor.organizationId,
         actorId: actor.id,
@@ -166,6 +161,7 @@ export async function POST(request: Request) {
         resourceId: id,
         result: "SUCCESS",
       });
+    });
     return Response.json({ id, uploadUrl: url });
   } catch (e) {
     return apiError(e);
