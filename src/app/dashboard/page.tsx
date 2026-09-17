@@ -5,7 +5,11 @@ import { project, user, category, deliverableUnit } from "@/lib/db/schema";
 import { listReports } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
-import { getDashboardMetrics, submissionRate } from "@/lib/metrics";
+import {
+  getDashboardBreakdown,
+  getDashboardMetrics,
+  submissionRate,
+} from "@/lib/metrics";
 
 export const metadata = { title: "工作看板" };
 export default async function DashboardPage() {
@@ -64,6 +68,7 @@ export default async function DashboardPage() {
   }
   const reports = await listReports(actor, "", 1);
   const metrics = await getDashboardMetrics(actor);
+  const breakdown = await getDashboardBreakdown(actor);
   return (
     <WorkspaceShell actor={actor} selected="dashboard">
       <header>
@@ -137,6 +142,61 @@ export default async function DashboardPage() {
           </div>
         )}
       </section>
+      <div className="grid gap-6 xl:grid-cols-2">
+        <section className="rounded-3xl border border-border-button-default p-6">
+          <h2 className="text-title-2-medium">成员视角</h2>
+          <ul className="mt-4 divide-y divide-separator-border">
+            {breakdown.members.map((member) => (
+              <li
+                key={member.id}
+                className="flex flex-wrap items-center justify-between gap-3 py-3"
+              >
+                <span>{member.name}</span>
+                <span className="text-text-secondary">
+                  日报 {member.submitted}/{member.due} · 完成 {member.completed}{" "}
+                  · 阻塞 {member.openBlockers}
+                </span>
+                <ButtonLink
+                  href={`/reports?query=${encodeURIComponent(member.name)}`}
+                  variant="ghost"
+                >
+                  查看报告
+                </ButtonLink>
+              </li>
+            ))}
+          </ul>
+        </section>
+        <section className="rounded-3xl border border-border-button-default p-6">
+          <h2 className="text-title-2-medium">项目视角</h2>
+          <ul className="mt-4 divide-y divide-separator-border">
+            {breakdown.projects.map((project) => (
+              <li key={project.id} className="flex flex-col gap-2 py-3">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <span>{project.name}</span>
+                  <ButtonLink
+                    href={`/tasks?project=${project.id}`}
+                    variant="ghost"
+                  >
+                    查看任务
+                  </ButtonLink>
+                </div>
+                <span className="text-text-secondary">
+                  完成 {project.completed} · 推进中 {project.inProgress} · 阻塞{" "}
+                  {project.blocked}
+                </span>
+                {project.deliverables.length > 0 && (
+                  <span className="text-text-secondary">
+                    交付物：
+                    {project.deliverables
+                      .map((item) => `${item.quantity} ${item.unitName}`)
+                      .join("、")}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
     </WorkspaceShell>
   );
 }

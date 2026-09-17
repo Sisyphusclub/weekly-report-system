@@ -20,12 +20,13 @@ export const metadata = { title: "任务管理" };
 export default async function TasksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string }>;
+  searchParams: Promise<{ page?: string; project?: string }>;
 }) {
   const actor = await requireUser();
   if (actor.role === "ADMIN") notFound();
   const params = await searchParams;
   const requestedPage = Number(params.page ?? 1);
+  const projectFilter = params.project;
   const page =
     Number.isSafeInteger(requestedPage) && requestedPage > 0
       ? Math.min(requestedPage, 50000)
@@ -86,6 +87,7 @@ export default async function TasksPage({
           actor.role === "EMPLOYEE"
             ? eq(workTask.primaryAssigneeId, actor.id)
             : undefined,
+          projectFilter ? eq(workTask.projectId, projectFilter) : undefined,
         ),
       )
       .orderBy(desc(workTask.updatedAt), desc(workTask.id))
