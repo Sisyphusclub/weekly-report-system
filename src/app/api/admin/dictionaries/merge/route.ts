@@ -59,16 +59,52 @@ export async function POST(request: Request) {
               eq(workTask.categoryId, v.sourceId),
             ),
           );
-      else
-        await tx
-          .update(deliverable)
-          .set({ unitId: v.targetId })
+      else {
+        const sourceRows = await tx
+          .select({
+            id: deliverable.id,
+            taskId: deliverable.taskId,
+            quantity: deliverable.quantity,
+          })
+          .from(deliverable)
           .where(
             and(
               eq(deliverable.organizationId, actor.organizationId),
               eq(deliverable.unitId, v.sourceId),
             ),
-          );
+          )
+          .for("update");
+        for (const row of sourceRows) {
+          const [targetRow] = await tx
+            .select({ id: deliverable.id, quantity: deliverable.quantity })
+            .from(deliverable)
+            .where(
+              and(
+                eq(deliverable.organizationId, actor.organizationId),
+                eq(deliverable.taskId, row.taskId),
+                eq(deliverable.unitId, v.targetId),
+              ),
+            )
+            .limit(1)
+            .for("update");
+          if (targetRow) {
+            await tx
+              .update(deliverable)
+              .set({
+                quantity: String(
+                  Number(targetRow.quantity) + Number(row.quantity),
+                ),
+                updatedAt: new Date(),
+              })
+              .where(eq(deliverable.id, targetRow.id));
+            await tx.delete(deliverable).where(eq(deliverable.id, row.id));
+          } else
+            await tx
+              .update(deliverable)
+              .set({ unitId: v.targetId, updatedAt: new Date() })
+              .where(eq(deliverable.id, row.id));
+        }
+      }
       await tx
         .update(table)
         .set({ enabled: false, updatedAt: new Date() })
@@ -79,27 +115,23 @@ export async function POST(request: Request) {
           ),
         );
       const id = crypto.randomUUID();
-      await tx
-        .insert(dictionaryMerge)
-        .values({
-          id,
-          organizationId: actor.organizationId,
-          kind: v.kind,
-          sourceId: v.sourceId,
-          targetId: v.targetId,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-        });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "DICTIONARY_MERGE",
-          resourceType: v.kind,
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(dictionaryMerge).values({
+        id,
+        organizationId: actor.organizationId,
+        kind: v.kind,
+        sourceId: v.sourceId,
+        targetId: v.targetId,
+        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+      });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "DICTIONARY_MERGE",
+        resourceType: v.kind,
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return {
         id,
         undoUntil: new Date(Date.now() + 15 * 60 * 1000).toISOString(),
@@ -146,17 +178,15 @@ export async function DELETE(request: Request) {
         .update(dictionaryMerge)
         .set({ undoneAt: new Date() })
         .where(eq(dictionaryMerge.id, id));
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "DICTIONARY_MERGE_UNDO",
-          resourceType: merge.kind,
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "DICTIONARY_MERGE_UNDO",
+        resourceType: merge.kind,
+        resourceId: id,
+        result: "SUCCESS",
+      });
     });
     return Response.json({ ok: true });
   } catch (e) {

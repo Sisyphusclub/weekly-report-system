@@ -6,6 +6,7 @@ import { category, deliverableUnit } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { DictionaryForm } from "@/components/workspace/dictionary-form";
 import { ButtonLink } from "@/components/base/buttons/button";
+import { DictionaryMergeForm } from "@/components/workspace/dictionary-merge-form";
 export const metadata = { title: "分类与交付物单位" };
 export default async function DictionariesPage({
   searchParams,
@@ -50,6 +51,10 @@ export default async function DictionariesPage({
         </ButtonLink>
       </nav>
       <DictionaryForm key={kind} kind={kind} />
+      <DictionaryMergeForm
+        kind={kind}
+        entries={rows.map((row) => ({ id: row.id, name: row.name }))}
+      />
       <section aria-label="已有资料" className="grid gap-4 md:grid-cols-2">
         {rows.slice(0, 20).map((row) => (
           <DictionaryForm
