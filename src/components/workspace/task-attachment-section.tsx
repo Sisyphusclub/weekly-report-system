@@ -17,7 +17,9 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
     if (response.ok) setItems((await response.json()).items);
   };
   useEffect(() => {
-    void load();
+    const timer = window.setTimeout(() => void load(), 0);
+    return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [taskId]);
   const upload = async (file: File) => {
     setMessage("上传中...");
