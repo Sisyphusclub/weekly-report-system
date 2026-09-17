@@ -46,6 +46,16 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
     setMessage(put.ok ? "上传完成" : "文件上传失败");
     if (put.ok) await load();
   };
+  const remove = async (id: string) => {
+    const response = await fetch(
+      `/api/tasks/attachments?id=${encodeURIComponent(id)}`,
+      { method: "DELETE" },
+    );
+    if (response.ok) {
+      setItems((current) => current.filter((item) => item.id !== id));
+      setMessage("附件已删除");
+    } else setMessage((await response.json()).error ?? "删除失败");
+  };
   return (
     <details className="w-full">
       <summary className="cursor-pointer text-body-medium">
@@ -76,6 +86,13 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
               >
                 {item.fileName}
               </a>
+              <button
+                type="button"
+                className="ml-2 text-text-secondary underline"
+                onClick={() => void remove(item.id)}
+              >
+                删除
+              </button>
             </li>
           ))}
         </ul>

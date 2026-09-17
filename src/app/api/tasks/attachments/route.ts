@@ -3,7 +3,7 @@ import { z } from "zod";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { taskAttachment, workTask } from "@/lib/db/schema";
-import { downloadUrl, uploadUrl } from "@/lib/storage";
+import { deleteObject, downloadUrl, uploadUrl } from "@/lib/storage";
 
 const input = z.object({
   fileName: z.string().trim().min(1).max(180),
@@ -96,6 +96,42 @@ export async function POST(request: Request) {
         objectKey,
       });
     return Response.json({ id, uploadUrl: url });
+  } catch (e) {
+    return apiError(e);
+  }
+}
+export async function DELETE(request: Request) {
+  try {
+    const actor = await writeActor(request);
+    const id = new URL(request.url).searchParams.get("id");
+    if (!id) throw new BusinessError("附件参数无效");
+    const db = getDb();
+    const [row] = await db
+      .select({
+        id: taskAttachment.id,
+        objectKey: taskAttachment.objectKey,
+        assignee: workTask.primaryAssigneeId,
+      })
+      .from(taskAttachment)
+      .innerJoin(
+        workTask,
+        and(
+          eq(workTask.organizationId, taskAttachment.organizationId),
+          eq(workTask.id, taskAttachment.taskId),
+        ),
+      )
+      .where(
+        and(
+          eq(taskAttachment.id, id),
+          eq(taskAttachment.organizationId, actor.organizationId),
+        ),
+      )
+      .limit(1);
+    if (!row || (actor.role === "EMPLOYEE" && row.assignee !== actor.id))
+      throw new BusinessError("无权删除任务附件", 403);
+    await deleteObject(row.objectKey);
+    await db.delete(taskAttachment).where(eq(taskAttachment.id, id));
+    return Response.json({ ok: true });
   } catch (e) {
     return apiError(e);
   }
