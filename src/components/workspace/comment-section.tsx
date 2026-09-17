@@ -30,7 +30,10 @@ export function CommentSection({ reportId }: { reportId: string }) {
     setLoading(false);
   }
   useEffect(() => {
+    // 评论列表与远端报告同步，加载结果需要落入本地状态。
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId]);
   async function submit() {
     if (!body.trim()) return;
