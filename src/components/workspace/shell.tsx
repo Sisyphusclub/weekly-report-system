@@ -19,7 +19,8 @@ export function WorkspaceShell({
     | "users"
     | "weekly"
     | "notifications"
-    | "tasks";
+    | "tasks"
+    | "calendar";
   children: React.ReactNode;
 }) {
   return (
@@ -69,6 +70,11 @@ export function WorkspaceShell({
                     key: "dictionaries",
                     label: "分类与单位",
                     href: "/admin/dictionaries",
+                  },
+                  {
+                    key: "calendar",
+                    label: "工作日历",
+                    href: "/admin/calendar",
                   },
                 ]
               : []),
