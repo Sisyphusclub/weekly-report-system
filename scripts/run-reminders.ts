@@ -97,6 +97,10 @@ async function main() {
           ),
         ),
     ]);
+  const period = weeklyPeriod(
+    shanghaiDate(now),
+    Object.fromEntries(calendar.map((day) => [day.date, day.isWorkday])),
+  );
   const weeklyReports = await db
     .select({
       authorId: report.authorId,
@@ -112,10 +116,6 @@ async function main() {
         eq(report.weekStart, period.weekStart),
       ),
     );
-  const period = weeklyPeriod(
-    shanghaiDate(now),
-    Object.fromEntries(calendar.map((day) => [day.date, day.isWorkday])),
-  );
   const reminders = [
     ...dueReminders({
       now,
