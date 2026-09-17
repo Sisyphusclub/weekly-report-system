@@ -29,6 +29,8 @@ PowerShell 执行 `scripts/backup-db.ps1 -OutputDirectory D:\backups\weekly`，�
 
 ## 发布与回滚
 
+合并到 `main` 或 `master` 前必须通过仓库 CI：依赖安装、类型检查、Lint、全量测试、生产构建和 high 级依赖审计。moderate 级依赖问题需在升级前评估兼容性，不使用 `npm audit fix --force` 绕过审查。
+
 每次发布使用明确 Git 提交构建不可变镜像；发布前备份并评估迁移。应用异常时回滚镜像，不自动执行破坏性数据库降级。
 
 本地没有真实服务器、域名、证书或备份目标时，不得声称已经完成公网部署或恢复演练。
