@@ -3,6 +3,7 @@ import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
 import { report } from "@/lib/db/schema";
 import { dateInput, shanghaiDate } from "@/lib/daily-input";
+import { weekDates } from "@/lib/domain";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { WeeklyForm } from "@/components/workspace/weekly-form";
 import { Input } from "@/components/base/input/input";
@@ -17,6 +18,7 @@ export default async function WeeklyPage({
   if (actor.role === "ADMIN") return null;
   const params = await searchParams;
   const date = dateInput.catch(shanghaiDate()).parse(params.date);
+  const weekStart = weekDates(date)[0];
   const [item] = await getDb()
     .select({
       id: report.id,
@@ -30,7 +32,7 @@ export default async function WeeklyPage({
         eq(report.organizationId, actor.organizationId),
         eq(report.authorId, actor.id),
         eq(report.type, "WEEKLY"),
-        eq(report.weekStart, date),
+        eq(report.weekStart, weekStart),
       ),
     )
     .limit(1);
