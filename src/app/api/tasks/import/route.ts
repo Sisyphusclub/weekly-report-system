@@ -13,13 +13,17 @@ export async function POST(request: Request) {
       const form = await request.formData();
       const file = form.get("file");
       if (!(file instanceof File)) throw new BusinessError("请选择 Excel 文件");
+      if (!file.name.toLowerCase().endsWith(".xlsx"))
+        throw new BusinessError("仅支持 .xlsx 文件");
       if (file.size > 10 * 1024 * 1024)
         throw new BusinessError("Excel 文件不能超过 10 MB");
       const workbook = XLSX.read(await file.arrayBuffer(), {
         type: "array",
         cellDates: false,
       });
-      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const sheetName = workbook.SheetNames[0];
+      if (!sheetName) throw new BusinessError("Excel 文件没有工作表");
+      const sheet = workbook.Sheets[sheetName];
       const rows = XLSX.utils.sheet_to_json<Record<string, unknown>>(sheet, {
         defval: null,
       });
