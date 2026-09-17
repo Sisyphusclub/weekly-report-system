@@ -7,6 +7,7 @@ import { blockerVisibility } from "@/lib/blockers";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { BlockerActions } from "@/components/workspace/blocker-actions";
+import { BlockerCommentSection } from "@/components/workspace/blocker-comment-section";
 export default async function BlockerPage({
   params,
 }: {
@@ -66,6 +67,7 @@ export default async function BlockerPage({
           coordinators={coordinators}
         />
       )}
+      <BlockerCommentSection blockerId={id} />
     </WorkspaceShell>
   );
 }
