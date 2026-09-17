@@ -9,6 +9,7 @@ import {
   workTask,
   deliverable,
   deliverableUnit,
+  externalLink,
 } from "@/lib/db/schema";
 import { DeliverableForm } from "@/components/workspace/deliverable-form";
 import { WorkspaceShell } from "@/components/workspace/shell";
@@ -16,6 +17,7 @@ import { TaskForm } from "@/components/workspace/task-form";
 import { RollPlanForm } from "@/components/workspace/roll-plan-form";
 import { TaskStatusForm } from "@/components/workspace/task-status-form";
 import { ButtonLink } from "@/components/base/buttons/button";
+import { ExternalLinkForm } from "@/components/workspace/external-link-form";
 export const metadata = { title: "任务管理" };
 export default async function TasksPage({
   searchParams,
@@ -104,6 +106,25 @@ export default async function TasksPage({
       )
       .orderBy(asc(deliverableUnit.sortOrder), asc(deliverableUnit.name)),
   ]);
+  const links = tasks.length
+    ? await db
+        .select({
+          taskId: externalLink.taskId,
+          id: externalLink.id,
+          title: externalLink.title,
+          url: externalLink.url,
+        })
+        .from(externalLink)
+        .where(
+          and(
+            eq(externalLink.organizationId, actor.organizationId),
+            inArray(
+              externalLink.taskId,
+              tasks.slice(0, 20).map((task) => task.id),
+            ),
+          ),
+        )
+    : [];
   const deliveries = tasks.length
     ? await db
         .select({
@@ -192,6 +213,31 @@ export default async function TasksPage({
                 units={units}
                 items={deliveries.filter((item) => item.taskId === task.id)}
               />
+              <details className="w-full">
+                <summary className="cursor-pointer text-body-medium">
+                  外部交付链接
+                  {links.filter((link) => link.taskId === task.id).length
+                    ? `（${links.filter((link) => link.taskId === task.id).length}）`
+                    : ""}
+                </summary>
+                <ul className="mt-2 flex flex-col gap-1">
+                  {links
+                    .filter((link) => link.taskId === task.id)
+                    .map((link) => (
+                      <li key={link.id}>
+                        <a
+                          href={link.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-blue-600 underline"
+                        >
+                          {link.title}
+                        </a>
+                      </li>
+                    ))}
+                </ul>
+                <ExternalLinkForm taskId={task.id} />
+              </details>
             </div>
           ))
         )}
