@@ -5,6 +5,8 @@ import { revisionInput } from "@/lib/revision-input";
 import { getDb } from "@/lib/db";
 import {
   auditLog,
+  notification,
+  user,
   report,
   reportRevision,
   revisionRequest,
@@ -55,28 +57,49 @@ export async function POST(request: Request) {
         if (pending)
           throw new BusinessError("已有待审核修订，请先处理该申请", 409);
         const id = crypto.randomUUID();
-        await tx
-          .insert(revisionRequest)
-          .values({
-            id,
-            organizationId: actor.organizationId,
-            reportId: item.id,
-            requesterId: actor.id,
-            baseVersion: item.version,
-            reason: input.reason,
-            proposedChanges: { summary: input.summary },
-          });
-        await tx
-          .insert(auditLog)
-          .values({
-            id: crypto.randomUUID(),
-            organizationId: actor.organizationId,
-            actorId: actor.id,
-            action: "REVISION_REQUEST_CREATE",
-            resourceType: "REVISION_REQUEST",
-            resourceId: id,
-            result: "SUCCESS",
-          });
+        await tx.insert(revisionRequest).values({
+          id,
+          organizationId: actor.organizationId,
+          reportId: item.id,
+          requesterId: actor.id,
+          baseVersion: item.version,
+          reason: input.reason,
+          proposedChanges: { summary: input.summary },
+        });
+        await tx.insert(auditLog).values({
+          id: crypto.randomUUID(),
+          organizationId: actor.organizationId,
+          actorId: actor.id,
+          action: "REVISION_REQUEST_CREATE",
+          resourceType: "REVISION_REQUEST",
+          resourceId: id,
+          result: "SUCCESS",
+        });
+        const reviewers = await tx
+          .select({ id: user.id })
+          .from(user)
+          .where(
+            and(
+              eq(user.organizationId, actor.organizationId),
+              eq(user.role, "BOSS"),
+              eq(user.status, "ACTIVE"),
+            ),
+          );
+        if (reviewers.length)
+          await tx
+            .insert(notification)
+            .values(
+              reviewers.map((reviewer) => ({
+                id: crypto.randomUUID(),
+                organizationId: actor.organizationId,
+                recipientId: reviewer.id,
+                dedupeKey: `revision-request:${id}:${reviewer.id}`,
+                type: "REVISION_REQUESTED",
+                title: "有报告修订申请待审核",
+                link: `/reports/${item.id}`,
+              })),
+            )
+            .onConflictDoNothing();
         return { id, status: "PENDING" };
       }
       const [previous] = await tx
@@ -98,23 +121,21 @@ export async function POST(request: Request) {
       )
         throw new BusinessError("历史快照缺失，无法安全修订", 409);
       const revisionNumber = item.revisionNumber + 1;
-      await tx
-        .insert(reportRevision)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          reportId: item.id,
+      await tx.insert(reportRevision).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        reportId: item.id,
+        revisionNumber,
+        editorId: actor.id,
+        reason: input.reason,
+        snapshot: {
+          ...previous.snapshot,
+          summary: input.summary,
           revisionNumber,
-          editorId: actor.id,
-          reason: input.reason,
-          snapshot: {
-            ...previous.snapshot,
-            summary: input.summary,
-            revisionNumber,
-            version: item.version + 1,
-          },
-          diff: { summary: [item.summary, input.summary] },
-        });
+          version: item.version + 1,
+        },
+        diff: { summary: [item.summary, input.summary] },
+      });
       await tx
         .update(report)
         .set({
@@ -124,17 +145,15 @@ export async function POST(request: Request) {
           updatedAt: now,
         })
         .where(eq(report.id, item.id));
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "REPORT_REVISE",
-          resourceType: "REPORT",
-          resourceId: item.id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "REPORT_REVISE",
+        resourceType: "REPORT",
+        resourceId: item.id,
+        result: "SUCCESS",
+      });
       return {
         id: item.id,
         status: "REVISED",

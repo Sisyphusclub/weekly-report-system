@@ -9,14 +9,22 @@ import { reportVisibility } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { RevisionForm } from "@/components/workspace/revision-form";
+import { RevisionRequests } from "@/components/workspace/revision-requests";
 
 export default async function ReportPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ requestsPage?: string }>;
 }) {
   const actor = await requireUser();
   const { id } = await params;
+  const requestedPage = Number((await searchParams).requestsPage ?? 1);
+  const requestsPage =
+    Number.isSafeInteger(requestedPage) && requestedPage > 0
+      ? Math.min(requestedPage, 100000)
+      : 1;
   const db = getDb();
   const [item] = await db
     .select()
@@ -201,6 +209,16 @@ export default async function ReportPage({
             reportId={item.id}
             version={item.version}
             initialSummary={item.summary ?? ""}
+          />
+        )}
+      {item.status === "SUBMITTED" &&
+        (item.authorId === actor.id || actor.role === "BOSS") && (
+          <RevisionRequests
+            actor={actor}
+            reportId={id}
+            authorId={item.authorId}
+            reportVersion={item.version}
+            page={requestsPage}
           />
         )}
     </WorkspaceShell>
