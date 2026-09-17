@@ -2,10 +2,11 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { currentUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { auditLog, blocker, notification } from "@/lib/db/schema";
+import { auditLog, blocker, notification, user } from "@/lib/db/schema";
 import { canReadBlocker } from "@/lib/domain";
 const input = z.object({
-  action: z.enum(["ACKNOWLEDGE", "RESOLVE"]),
+  action: z.enum(["ACKNOWLEDGE", "RESOLVE", "ASSIGN"]),
+  coordinatorId: z.string().min(1).nullable().optional(),
   resolution: z.string().trim().min(1).max(5000).optional(),
   version: z.number().int().positive(),
 });
@@ -33,6 +34,16 @@ export async function PATCH(
         .limit(1);
       if (!item || !canReadBlocker(actor, item)) throw new Error("NOT_FOUND");
       if (item.version !== parsed.data.version) throw new Error("CONFLICT");
+      if (parsed.data.action === "ASSIGN") {
+        if (actor.role !== "BOSS") throw new Error("FORBIDDEN");
+        if (!parsed.data.coordinatorId) throw new Error("COORDINATOR_REQUIRED");
+        const [coordinator] = await tx.select({ id: user.id }).from(user).where(and(eq(user.id, parsed.data.coordinatorId), eq(user.organizationId, actor.organizationId), eq(user.status, "ACTIVE"))).limit(1);
+        if (!coordinator) throw new Error("COORDINATOR_INVALID");
+        const [updated] = await tx.update(blocker).set({ coordinatorId: coordinator.id, version: item.version + 1, updatedAt: new Date() }).where(and(eq(blocker.id, id), eq(blocker.version, item.version))).returning({ version: blocker.version, status: blocker.status });
+        if (!updated) throw new Error("CONFLICT");
+        await tx.insert(auditLog).values({ id: crypto.randomUUID(), organizationId: actor.organizationId, actorId: actor.id, action: "BLOCKER_ASSIGN", resourceType: "BLOCKER", resourceId: id, result: "SUCCESS" });
+        return updated;
+      }
       if (parsed.data.action === "ACKNOWLEDGE" && actor.role !== "BOSS")
         throw new Error("FORBIDDEN");
       if (
@@ -101,6 +112,8 @@ export async function PATCH(
             ? "阻塞已被更新，请刷新后重试"
             : code === "RESOLUTION_REQUIRED"
               ? "请填写解决说明"
+              : code === "COORDINATOR_REQUIRED" || code === "COORDINATOR_INVALID"
+                ? "请选择有效的协调负责人"
               : "无法执行该操作",
       },
       { status },

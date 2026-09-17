@@ -34,16 +34,14 @@ export async function POST(request: Request) {
     const id = crypto.randomUUID();
     const db = getDb();
     await db.transaction(async (tx) => {
-      await tx
-        .insert(blocker)
-        .values({
-          id,
-          organizationId: actor.organizationId,
-          reporterId: actor.id,
-          severity: parsed.data.severity,
-          description: parsed.data.description,
-          isSensitive: parsed.data.isSensitive,
-        });
+      await tx.insert(blocker).values({
+        id,
+        organizationId: actor.organizationId,
+        reporterId: actor.id,
+        severity: parsed.data.severity,
+        description: parsed.data.description,
+        isSensitive: parsed.data.isSensitive,
+      });
       const bosses = await tx
         .select({ id: user.id })
         .from(user)
@@ -68,17 +66,15 @@ export async function POST(request: Request) {
               link: `/blockers/${id}`,
             })
             .onConflictDoNothing();
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
-          organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: "BLOCKER_CREATE",
-          resourceType: "blocker",
-          resourceId: id,
-          result: "SUCCESS",
-        });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "BLOCKER_CREATE",
+        resourceType: "blocker",
+        resourceId: id,
+        result: "SUCCESS",
+      });
     });
     return Response.json({ id }, { status: 201 });
   } catch {

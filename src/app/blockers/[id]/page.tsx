@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { blocker } from "@/lib/db/schema";
+import { blocker, user } from "@/lib/db/schema";
 import { blockerVisibility } from "@/lib/blockers";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
@@ -20,6 +20,7 @@ export default async function BlockerPage({
     .where(and(blockerVisibility(actor), eq(blocker.id, id)))
     .limit(1);
   if (!item) notFound();
+  const coordinators = actor.role === "BOSS" ? await getDb().select({ id: user.id, name: user.name }).from(user).where(and(eq(user.organizationId, actor.organizationId), eq(user.status, "ACTIVE"))) : [];
   return (
     <WorkspaceShell actor={actor} selected="blockers">
       <ButtonLink href="/blockers" variant="ghost">
@@ -46,6 +47,8 @@ export default async function BlockerPage({
           version={item.version}
           canAcknowledge={actor.role === "BOSS" && item.status === "OPEN"}
           canResolve={actor.role === "BOSS" || actor.id === item.reporterId}
+          canAssign={actor.role === "BOSS"}
+          coordinators={coordinators}
         />
       )}
     </WorkspaceShell>
