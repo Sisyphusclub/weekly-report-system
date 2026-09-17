@@ -1,6 +1,6 @@
 import { expect, it } from "vitest";
 import { dueReminders } from "@/lib/reminders";
-const now = new Date("2026-09-18T11:00:00+08:00");
+const now = new Date("2026-09-18T19:00:00+08:00");
 const member = {
   id: "u1",
   name: "小周",
