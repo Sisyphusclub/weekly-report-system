@@ -14,7 +14,8 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
-    "admin:bootstrap": "tsx --env-file-if-exists=.env.local scripts/bootstrap-admin.ts"
+    "admin:bootstrap": "tsx --env-file-if-exists=.env.local scripts/bootstrap-admin.ts",
+    "reminders:run": "tsx --env-file-if-exists=.env.local scripts/run-reminders.ts"
   },
   "keywords": [],
   "author": "",
