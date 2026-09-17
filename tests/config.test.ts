@@ -23,6 +23,19 @@ describe("runtime configuration", () => {
         BETTER_AUTH_URL: "https://reports.example",
       }).ready,
     ).toBe(false));
+  it("accepts complete production storage config", () =>
+    expect(
+      configurationStatus({
+        ...env,
+        APP_ENV: "production",
+        BETTER_AUTH_URL: "https://reports.example",
+        S3_ENDPOINT: "https://s3.example",
+        S3_REGION: "us-east-1",
+        S3_BUCKET: "weekly",
+        S3_ACCESS_KEY_ID: "access",
+        S3_SECRET_ACCESS_KEY: "secret",
+      }).ready,
+    ).toBe(true));
   it("rejects a non-PostgreSQL URL", () =>
     expect(
       configurationStatus({ ...env, DATABASE_URL: "https://example.com" })
