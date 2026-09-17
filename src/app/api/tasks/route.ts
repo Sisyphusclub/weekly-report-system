@@ -3,6 +3,45 @@ import { taskInput } from "@/lib/task-input";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
+import { desc } from "drizzle-orm";
+export async function GET(request: Request) {
+  const actor = await (async () => {
+    try {
+      return await writeActor(request);
+    } catch {
+      return null;
+    }
+  })();
+  if (!actor) return Response.json({ error: "请先登录" }, { status: 401 });
+  const url = new URL(request.url);
+  const limit = Math.min(
+    100,
+    Math.max(1, Number(url.searchParams.get("limit") || 50)),
+  );
+  const offset = Math.max(0, Number(url.searchParams.get("offset") || 0));
+  const conditions = [eq(workTask.organizationId, actor.organizationId)];
+  if (actor.role === "EMPLOYEE")
+    conditions.push(eq(workTask.primaryAssigneeId, actor.id));
+  const items = await getDb()
+    .select({
+      id: workTask.id,
+      content: workTask.content,
+      kind: workTask.kind,
+      status: workTask.status,
+      projectId: workTask.projectId,
+      categoryId: workTask.categoryId,
+      categoryName: workTask.categoryName,
+      workDate: workTask.workDate,
+      dueDate: workTask.dueDate,
+      version: workTask.version,
+    })
+    .from(workTask)
+    .where(and(...conditions))
+    .orderBy(desc(workTask.updatedAt), desc(workTask.id))
+    .limit(limit)
+    .offset(offset);
+  return Response.json({ items, limit, offset });
+}
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
@@ -68,25 +107,21 @@ export async function POST(request: Request) {
         if (!changed.length)
           throw new BusinessError("任务已被更新，请刷新后重试", 409);
       } else
-        await tx
-          .insert(workTask)
-          .values({
-            id,
-            organizationId: actor.organizationId,
-            createdById: actor.id,
-            ...values,
-          });
-      await tx
-        .insert(auditLog)
-        .values({
-          id: crypto.randomUUID(),
+        await tx.insert(workTask).values({
+          id,
           organizationId: actor.organizationId,
-          actorId: actor.id,
-          action: input.id ? "TASK_UPDATE" : "TASK_CREATE",
-          resourceType: "TASK",
-          resourceId: id,
-          result: "SUCCESS",
+          createdById: actor.id,
+          ...values,
         });
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: input.id ? "TASK_UPDATE" : "TASK_CREATE",
+        resourceType: "TASK",
+        resourceId: id,
+        result: "SUCCESS",
+      });
       return { id, version: values.version };
     });
     return Response.json(result);
