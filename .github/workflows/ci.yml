@@ -9,6 +9,23 @@ permissions:
   contents: read
 
 jobs:
+  containers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build operations image
+        run: docker build --target tools -t weekly-tools:ci .
+      - name: Check operations runtime
+        run: >-
+          docker run --rm --entrypoint node weekly-tools:ci -e
+          "const fs = require('node:fs');
+          for (const path of ['scripts/migrate.ts', 'scripts/bootstrap-admin.ts', 'drizzle/meta/_journal.json', 'src/lib/db/schema.ts']) fs.accessSync(path);
+          require.resolve('tsx/cli'); require.resolve('pg'); require.resolve('better-auth/crypto');
+          if (process.getuid() === 0) throw new Error('Operations container must not run as root');"
+      - name: Build web image
+        run: docker build --target runner -t weekly-app:ci .
   quality:
     runs-on: ubuntu-latest
     timeout-minutes: 15

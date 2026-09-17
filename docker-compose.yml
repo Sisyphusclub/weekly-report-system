@@ -14,12 +14,14 @@ services:
       timeout: 5s
       retries: 5
   app:
-    build: .
+    build:
+      context: .
+      target: runner
     restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
-    environment:
+    environment: &app-environment
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
       BETTER_AUTH_URL: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL}
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
@@ -43,5 +45,21 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+  tools:
+    profiles: [tools]
+    build:
+      context: .
+      target: tools
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-environment
+      REMINDER_ORGANIZATION_ID: ${REMINDER_ORGANIZATION_ID:-}
+      CALENDAR_YEAR: ${CALENDAR_YEAR:-2026}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
 volumes:
   postgres-data:

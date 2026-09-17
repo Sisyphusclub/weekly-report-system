@@ -11,18 +11,20 @@
 ## 首次部署
 
 1. 准备独立 production 环境变量，并确认域名、HTTPS 和反向代理。
-2. 执行 `docker compose build`。
+2. 执行 `docker compose --profile tools build`，同时构建应用和运维镜像。
    Compose 不内置对象存储；启动前应准备可访问的私有 S3 兼容桶，并设置上述 `S3_*` 变量。
    预发布和生产还必须设置 `ATTACHMENT_SCANNER_URL`，否则应用不会启动。
 3. 执行 `docker compose up -d db`，等待数据库健康检查通过。
-4. 执行 `docker compose run --rm app npm run db:migrate`。
-5. 通过受保护 stdin 执行 `npm run admin:bootstrap` 创建首个管理员，不要把密码写入命令行历史。
+4. 执行 `docker compose run --rm tools npm run db:migrate`。
+5. 通过受保护 stdin 执行 `docker compose run --rm -T tools npm run admin:bootstrap` 创建首个管理员，不要把密码写入命令行历史。
 6. 执行 `docker compose up -d app`。
 7. 检查 `GET /api/health` 和登录流程。
 
 ## 后台任务
 
 由外部 cron、CI 或任务平台调用，并传入 `REMINDER_ORGANIZATION_ID`：`npm run reminders:run`、`npm run weekly:drafts`、`npm run attachments:cleanup`。任务可重复执行，通知使用唯一键去重，周报草稿只在不存在时创建；附件清理任务删除超过 1 小时仍未完成确认的对象和元数据。
+
+容器部署使用 `docker compose run --rm -T tools npm run <任务名>` 执行上述任务，工作日历导入使用 `calendar:seed`。`tools` 镜像包含 TypeScript 执行器、脚本和迁移目录，以非 root 用户运行；它没有端口映射，通过 profile 排除在常规服务启动之外。应用的 standalone 镜像仅用于提供 Web 服务，不包含运维执行环境。
 
 ## 备份与恢复
 
