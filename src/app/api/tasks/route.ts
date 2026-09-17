@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { taskInput } from "@/lib/task-input";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
@@ -45,16 +45,32 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
+    if (actor.role === "ADMIN")
+      throw new BusinessError("管理员不能修改业务任务", 403);
     const parsed = taskInput.safeParse(await request.json().catch(() => null));
     if (!parsed.success) throw new BusinessError("任务内容、日期或版本无效");
     const input = parsed.data;
-    if (
-      input.id &&
-      actor.role !== "BOSS" &&
-      input.primaryAssigneeId !== actor.id
-    )
+    if (actor.role !== "BOSS" && input.primaryAssigneeId !== actor.id)
       throw new BusinessError("只能修改自己的任务", 403);
     const result = await getDb().transaction(async (tx) => {
+      if (input.id) {
+        const [existing] = await tx
+          .select()
+          .from(workTask)
+          .where(
+            and(
+              eq(workTask.id, input.id),
+              eq(workTask.organizationId, actor.organizationId),
+            ),
+          )
+          .limit(1)
+          .for("update");
+        if (!existing) throw new BusinessError("任务不存在", 404);
+        if (actor.role !== "BOSS" && existing.primaryAssigneeId !== actor.id)
+          throw new BusinessError("只能修改自己的任务", 403);
+        if (existing.version !== input.version)
+          throw new BusinessError("任务已被更新，请刷新后重试", 409);
+      }
       const [refs] = await tx
         .select({
           projectId: project.id,
@@ -69,10 +85,12 @@ export async function POST(request: Request) {
           and(
             eq(project.id, input.projectId),
             eq(project.organizationId, actor.organizationId),
+            ne(project.status, "ARCHIVED"),
             eq(category.id, input.categoryId),
             eq(category.enabled, true),
             eq(user.organizationId, actor.organizationId),
             eq(user.status, "ACTIVE"),
+            ne(user.role, "ADMIN"),
           ),
         )
         .limit(1);
