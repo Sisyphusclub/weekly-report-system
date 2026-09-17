@@ -8,6 +8,12 @@ export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
     const contentType = request.headers.get("content-type") ?? "";
+    const contentLength = Number(request.headers.get("content-length") ?? 0);
+    const maxBody = contentType.includes("multipart/form-data")
+      ? 12 * 1024 * 1024
+      : 2 * 1024 * 1024;
+    if (contentLength > maxBody)
+      throw new BusinessError("导入文件或请求体过大");
     let payload: unknown;
     if (contentType.includes("multipart/form-data")) {
       const form = await request.formData();
