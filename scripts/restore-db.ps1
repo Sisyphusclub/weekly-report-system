@@ -9,5 +9,6 @@ if (Test-Path -LiteralPath $checksumFile -PathType Leaf) {
   $actual = (Get-FileHash -Algorithm SHA256 -LiteralPath $InputFile).Hash
   if ($expected -ne $actual) { throw "备份文件校验和不匹配" }
 }
-pg_restore --clean --if-exists --no-owner --no-privileges --dbname=$env:DATABASE_URL $InputFile
+pg_restore --single-transaction --exit-on-error --clean --if-exists --no-owner --no-privileges --dbname=$env:DATABASE_URL $InputFile
+if ($LASTEXITCODE -ne 0) { throw "pg_restore failed (exit $LASTEXITCODE); restore was not completed" }
 Write-Output "Database restored from: $InputFile"

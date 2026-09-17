@@ -30,6 +30,8 @@ PowerShell 执行 `scripts/backup-db.ps1 -OutputDirectory D:\backups\weekly`，�
 
 ## 发布与回滚
 
+备份和恢复脚本会检查 PostgreSQL 客户端退出码，失败时终止并返回错误。恢复使用单个事务并在首个 SQL 错误处停止，防止部分恢复被误报为成功。可执行 `pwsh -NoProfile -File scripts/test-backup-restore.ps1` 检查脚本失败处理；此隔离测试使用替代命令，不代表真实数据库恢复演练通过。
+
 合并到 `main` 或 `master` 前必须通过仓库 CI：依赖安装、类型检查、Lint、全量测试、生产构建和 high 级依赖审计。moderate 级依赖问题需在升级前评估兼容性，不使用 `npm audit fix --force` 绕过审查。
 
 每次发布使用明确 Git 提交构建不可变镜像；发布前备份并评估迁移。应用异常时回滚镜像，不自动执行破坏性数据库降级。

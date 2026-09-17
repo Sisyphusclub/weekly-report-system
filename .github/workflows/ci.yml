@@ -32,6 +32,9 @@ jobs:
         run: npm run format:check
       - name: Unit tests
         run: npm test
+      - name: Backup and restore failure handling
+        shell: pwsh
+        run: ./scripts/test-backup-restore.ps1
       - name: End-to-end tests
         run: npm run test:e2e
       - name: Migration consistency
