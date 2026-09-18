@@ -20,6 +20,15 @@ try {
       throw "Scheduled job failed: $job (exit $LASTEXITCODE)"
     }
   }
+  if ($env:BACKUP_DIRECTORY) {
+    Write-Output "Checking database backups: $env:BACKUP_DIRECTORY"
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File (Join-Path $ProjectDirectory "scripts/check-backup.ps1") -BackupDirectory $env:BACKUP_DIRECTORY
+    if ($LASTEXITCODE -ne 0) {
+      throw "Backup health check failed (exit $LASTEXITCODE)"
+    }
+  } else {
+    Write-Output "Backup health check skipped: BACKUP_DIRECTORY is not set."
+  }
   Write-Output "Scheduled jobs completed."
 }
 finally {

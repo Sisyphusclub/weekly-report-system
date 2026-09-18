@@ -63,4 +63,6 @@ Get-Content .\bootstrap-admin.json -Raw | npm run admin:bootstrap
 - `npm run attachments:cleanup`
 - `scripts/run-scheduled-jobs.ps1`
 
+设置 `BACKUP_DIRECTORY` 后，统一调度入口还会检查最近备份的新鲜度和校验和；未设置时会明确跳过该检查。
+
 任务失败时检查数据库、对象存储和环境变量配置；不要忽略非零退出码。
