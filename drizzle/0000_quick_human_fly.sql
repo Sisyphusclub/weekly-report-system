@@ -244,7 +244,8 @@ CREATE TABLE "app_user" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "app_user_email_unique" UNIQUE("email"),
-	CONSTRAINT "app_user_username_unique" UNIQUE("username")
+	CONSTRAINT "app_user_username_unique" UNIQUE("username"),
+	CONSTRAINT "app_user_organization_id_id_unique" UNIQUE("organization_id","id")
 );
 --> statement-breakpoint
 CREATE TABLE "auth_verification" (
