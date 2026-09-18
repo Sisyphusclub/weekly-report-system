@@ -83,4 +83,15 @@ describe("runtime configuration", () => {
         configurationStatus({ ...env, BETTER_AUTH_SECRET: "private-value" }),
       ),
     ).not.toContain("private-value"));
+  it("reports missing field names without environment values", () => {
+    const result = configurationStatus({
+      DATABASE_URL: "postgresql://private-host/private-db",
+      BETTER_AUTH_SECRET: "private-secret-value",
+      APP_ENV: "production",
+    });
+    expect(result.ready).toBe(false);
+    expect(JSON.stringify(result)).not.toContain("private-host");
+    expect(JSON.stringify(result)).not.toContain("private-secret-value");
+    if (!result.ready) expect(result.fields).toContain("BETTER_AUTH_URL");
+  });
 });
