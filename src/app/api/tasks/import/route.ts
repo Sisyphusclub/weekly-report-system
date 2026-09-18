@@ -25,7 +25,9 @@ export async function POST(request: Request) {
     const body = await boundedBody(request, maxBody);
     let payload: unknown;
     if (contentType.includes("multipart/form-data")) {
-      const form = await body.formData();
+      const form = await body.formData().catch(() => {
+        throw new BusinessError("上传内容无效，请重新选择 Excel 文件");
+      });
       const file = form.get("file");
       if (!(file instanceof File)) throw new BusinessError("请选择 Excel 文件");
       if (!file.name.toLowerCase().endsWith(".xlsx"))
@@ -33,7 +35,11 @@ export async function POST(request: Request) {
       if (file.size > 10 * 1024 * 1024)
         throw new BusinessError("Excel 文件不能超过 10 MB");
       const workbook = new ExcelJS.Workbook();
-      await workbook.xlsx.load(await file.arrayBuffer());
+      try {
+        await workbook.xlsx.load(await file.arrayBuffer());
+      } catch {
+        throw new BusinessError("无法读取 Excel 文件，请确认文件完整且未加密");
+      }
       const sheet = workbook.worksheets[0];
       if (!sheet) throw new BusinessError("Excel 文件没有工作表");
       const headers = (sheet.getRow(1).values as unknown[])
@@ -42,6 +48,10 @@ export async function POST(request: Request) {
       const rows: Record<string, unknown>[] = [];
       sheet.eachRow((row, index) => {
         if (index > 1) {
+          if (rows.length >= 200)
+            throw new BusinessError(
+              "每次最多导入 200 条任务，请拆分文件后重试",
+            );
           const values = (row.values as unknown[]).slice(1);
           rows.push(
             Object.fromEntries(
