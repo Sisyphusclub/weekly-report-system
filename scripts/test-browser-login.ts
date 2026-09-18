@@ -174,6 +174,56 @@ async function main() {
           console.log(
             "PASS: weekly draft reload, submitted daily aggregation, immediate submit lock, persisted snapshot",
           );
+          const projectId = randomUUID(),
+            categoryId = randomUUID(),
+            planId = randomUUID();
+          await pool.query(
+            "INSERT INTO project(id,organization_id,name,owner_id) VALUES($1,$2,'滚动验收',$3)",
+            [projectId, org, id],
+          );
+          await pool.query(
+            "INSERT INTO category(id,organization_id,name) VALUES($1,$2,'开发')",
+            [categoryId, org],
+          );
+          await pool.query(
+            "INSERT INTO work_task(id,organization_id,created_by_id,primary_assignee_id,project_id,category_id,category_name,content,kind,status,due_date) VALUES($1,$2,$3,$3,$4,$5,'开发','未完成计划','PLAN','IN_PROGRESS','2026-09-17')",
+            [planId, org, id, projectId, categoryId],
+          );
+          const roll = () =>
+            context.request.post(`${origin}/api/tasks/roll`, {
+              headers: { origin },
+              data: { taskId: planId, version: 1, dueDate: "2026-09-18" },
+            });
+          const responses = await Promise.all([roll(), roll()]);
+          for (const response of responses)
+            assert.equal(response.status(), 200);
+          const results = await Promise.all(
+            responses.map((response) => response.json()),
+          );
+          assert.equal(results[0].id, results[1].id);
+          const rolled = await pool.query(
+            "SELECT id,status,source_task_id FROM work_task WHERE source_task_id=$1",
+            [planId],
+          );
+          assert.equal(rolled.rowCount, 1);
+          assert.equal(rolled.rows[0].status, "TODO");
+          assert.equal(rolled.rows[0].source_task_id, planId);
+          assert.equal(
+            (
+              await pool.query("SELECT status FROM work_task WHERE id=$1", [
+                planId,
+              ])
+            ).rows[0].status,
+            "IN_PROGRESS",
+          );
+          const stale = await context.request.post(`${origin}/api/tasks/roll`, {
+            headers: { origin },
+            data: { taskId: planId, version: 2, dueDate: "2026-09-19" },
+          });
+          assert.equal(stale.status(), 409);
+          console.log(
+            "PASS: authenticated plan rolling, source preservation, concurrent idempotency, stale version rejection",
+          );
         } else {
           await expect(
             page.getByLabel("工作总结", { exact: true }),
