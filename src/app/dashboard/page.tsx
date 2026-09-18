@@ -189,6 +189,34 @@ export default async function DashboardPage({
           </ul>
         </section>
         <section className="rounded-3xl border border-border-button-default p-6">
+          <h2 className="text-title-2-medium">成员交付物</h2>
+          {breakdown.memberDeliverables.length ? (
+            <ul className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {breakdown.memberDeliverables.map((item) => (
+                <li
+                  key={`${item.memberId}:${item.unitId}`}
+                  className="rounded-xl bg-background-secondary-default p-3"
+                >
+                  <p className="text-body-medium">{item.memberName}</p>
+                  <p className="text-body-regular text-text-secondary">
+                    {item.quantity} {item.unitName}
+                  </p>
+                  <ButtonLink
+                    href={`/tasks?assignee=${encodeURIComponent(item.memberId)}`}
+                    variant="ghost"
+                  >
+                    查看任务
+                  </ButtonLink>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mt-4 text-body-regular text-text-secondary">
+              本周暂无交付物
+            </p>
+          )}
+        </section>
+        <section className="rounded-3xl border border-border-button-default p-6">
           <h2 className="text-title-2-medium">项目视角</h2>
           <ul className="mt-4 divide-y divide-separator-border">
             {breakdown.projects.map((project) => (

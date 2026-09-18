@@ -49,6 +49,13 @@ export type DashboardBreakdown = {
   blockerTrend: Array<{ date: string; opened: number; resolved: number }>;
   blockerResolutionMedianHours: number | null;
   planFulfillment: { completed: number; due: number; rate: number | null };
+  memberDeliverables: Array<{
+    memberId: string;
+    memberName: string;
+    unitId: string;
+    unitName: string;
+    quantity: number;
+  }>;
 };
 
 export async function getDashboardBreakdown(
@@ -279,6 +286,27 @@ export async function getDashboardBreakdown(
       deliverables: [...totals.values()],
     };
   });
+  const memberNames = new Map(
+    data.members.map((member) => [member.id, member.name]),
+  );
+  const memberDeliverables = [
+    ...deliveries
+      .reduce((map, delivery) => {
+        const task = tasks.find((item) => item.id === delivery.taskId);
+        if (!task) return map;
+        const key = `${task.primaryAssigneeId}:${delivery.unitId}`;
+        const current = map.get(key);
+        map.set(key, {
+          memberId: task.primaryAssigneeId,
+          memberName: memberNames.get(task.primaryAssigneeId) ?? "未知成员",
+          unitId: delivery.unitId,
+          unitName: delivery.unitName,
+          quantity: (current?.quantity ?? 0) + Number(delivery.quantity),
+        });
+        return map;
+      }, new Map<string, { memberId: string; memberName: string; unitId: string; unitName: string; quantity: number }>())
+      .values(),
+  ];
   return {
     members: memberRows,
     projects: projectRows,
@@ -291,6 +319,7 @@ export async function getDashboardBreakdown(
         ? Math.round((completedPlans / duePlans.length) * 100)
         : null,
     },
+    memberDeliverables,
   };
 }
 
