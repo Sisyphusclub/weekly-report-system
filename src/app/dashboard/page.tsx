@@ -5,6 +5,8 @@ import { project, user, category, deliverableUnit } from "@/lib/db/schema";
 import { listReports } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
+import { DailySubmissions } from "@/components/workspace/daily-submissions";
+import { getSubmissionData } from "@/lib/submission-data";
 import {
   getDashboardBreakdown,
   getDashboardMetrics,
@@ -12,7 +14,11 @@ import {
 } from "@/lib/metrics";
 
 export const metadata = { title: "工作看板" };
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ submissionPage?: string }>;
+}) {
   const actor = await requireUser();
   const db = getDb();
   if (actor.role === "ADMIN") {
@@ -66,9 +72,19 @@ export default async function DashboardPage() {
       </WorkspaceShell>
     );
   }
-  const reports = await listReports(actor, "", 1);
-  const metrics = await getDashboardMetrics(actor);
-  const breakdown = await getDashboardBreakdown(actor);
+  const now = new Date();
+  const params = await searchParams;
+  const parsedPage = Number(params.submissionPage ?? 1);
+  const submissionPage =
+    Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const [reports, submissionData] = await Promise.all([
+    listReports(actor, "", 1),
+    getSubmissionData(actor, now),
+  ]);
+  const [metrics, breakdown] = await Promise.all([
+    getDashboardMetrics(actor, now, submissionData),
+    getDashboardBreakdown(actor, now, submissionData),
+  ]);
   return (
     <WorkspaceShell actor={actor} selected="dashboard">
       <header>
@@ -80,6 +96,12 @@ export default async function DashboardPage() {
           从工作记录中了解团队进展。
         </p>
       </header>
+      {actor.role === "BOSS" && (
+        <DailySubmissions
+          data={submissionData}
+          requestedPage={submissionPage}
+        />
+      )}
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
         {[
           [
@@ -153,8 +175,8 @@ export default async function DashboardPage() {
               >
                 <span>{member.name}</span>
                 <span className="text-text-secondary">
-                  日报 {member.submitted}/{member.due} · 完成 {member.completed}{" "}
-                  · 阻塞 {member.openBlockers}
+                  截至已到期日报 {member.submitted}/{member.due} · 完成{" "}
+                  {member.completed} · 阻塞 {member.openBlockers}
                 </span>
                 <ButtonLink
                   href={`/reports?member=${encodeURIComponent(member.id)}`}

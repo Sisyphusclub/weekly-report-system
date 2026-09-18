@@ -1,5 +1,8 @@
 import { expect, it } from "vitest";
-import { weeklySubmissionMetrics } from "../src/lib/submission-metrics";
+import {
+  weeklySubmissionMetrics,
+  dailySubmissionStatus,
+} from "../src/lib/submission-metrics";
 import { deadline } from "../src/lib/domain";
 const base = {
   now: new Date("2026-09-18T11:00:00Z"),
@@ -67,4 +70,131 @@ it("沿用报告保存的截止时间", () => {
       ],
     }).dueReports,
   ).toBe(4);
+});
+it("今日未提交在截止时间转为逾期，不区分无报告与草稿", () => {
+  const member = base.members[0];
+  const dueAt = deadline("2026-09-18");
+  const draft = {
+    authorId: "a",
+    reportDate: "2026-09-18",
+    status: "DRAFT",
+    submittedAt: null,
+    dueAt,
+  };
+  for (const reports of [[], [draft]]) {
+    expect(
+      dailySubmissionStatus(
+        { ...base, reports, now: new Date(dueAt.getTime() - 1) },
+        member,
+      ),
+    ).toBe("PENDING");
+    expect(
+      dailySubmissionStatus({ ...base, reports, now: dueAt }, member),
+    ).toBe("OVERDUE");
+  }
+});
+it("按上海日期判断休息、免报和入职边界", () => {
+  const member = base.members[0];
+  expect(
+    dailySubmissionStatus(
+      { ...base, now: new Date("2026-09-18T16:00:00Z") },
+      member,
+    ),
+  ).toBe("REST_DAY");
+  expect(
+    dailySubmissionStatus(
+      { ...base, overrides: { "2026-09-18": false } },
+      member,
+    ),
+  ).toBe("REST_DAY");
+  expect(
+    dailySubmissionStatus(
+      {
+        ...base,
+        exemptions: [
+          { userId: "a", startDate: "2026-09-18", endDate: "2026-09-18" },
+        ],
+      },
+      member,
+    ),
+  ).toBe("EXEMPT");
+  expect(
+    dailySubmissionStatus(base, {
+      ...member,
+      createdAt: new Date("2026-09-19T00:00:00Z"),
+    }),
+  ).toBe("NOT_STARTED");
+  expect(
+    dailySubmissionStatus(
+      {
+        ...base,
+        now: new Date("2026-09-19T11:00:00Z"),
+        overrides: { "2026-09-19": true },
+      },
+      member,
+    ),
+  ).toBe("OVERDUE");
+});
+it("按实际保存的截止时间区分准时与补交，未来提交不提前计入", () => {
+  const member = base.members[0];
+  const dueAt = deadline("2026-09-18");
+  for (const [offset, expected] of [
+    [0, "SUBMITTED"],
+    [1, "LATE"],
+    [3_600_000, "OVERDUE"],
+  ] as const) {
+    expect(
+      dailySubmissionStatus(
+        {
+          ...base,
+          reports: [
+            {
+              authorId: "a",
+              reportDate: "2026-09-18",
+              status: "SUBMITTED",
+              dueAt,
+              submittedAt: new Date(dueAt.getTime() + offset),
+            },
+          ],
+        },
+        member,
+      ),
+    ).toBe(expected);
+  }
+  expect(
+    dailySubmissionStatus(
+      {
+        ...base,
+        reports: [
+          {
+            authorId: "a",
+            reportDate: "2026-09-18",
+            status: "DRAFT",
+            dueAt: deadline("2026-09-19"),
+            submittedAt: null,
+          },
+        ],
+      },
+      member,
+    ),
+  ).toBe("PENDING");
+});
+it("成员分项与团队总量使用相同应交口径", () => {
+  const data = {
+    ...base,
+    members: [
+      ...base.members,
+      { id: "b", createdAt: new Date("2026-09-17T00:00:00Z") },
+    ],
+    exemptions: [
+      { userId: "a", startDate: "2026-09-18", endDate: "2026-09-18" },
+    ],
+  };
+  const members = data.members.map((member) =>
+    weeklySubmissionMetrics({ ...data, members: [member] }),
+  );
+  expect(members.reduce((sum, row) => sum + row.dueReports, 0)).toBe(
+    weeklySubmissionMetrics(data).dueReports,
+  );
+  expect(members.map((row) => row.dueReports)).toEqual([4, 2]);
 });

@@ -7,7 +7,7 @@ import {
 import { shanghaiDate } from "@/lib/daily-input";
 
 // Scope is current active reporting members, through elapsed deadlines this week.
-export function weeklySubmissionMetrics(input: {
+export type SubmissionInput = {
   now: Date;
   members: Array<{ id: string; createdAt: Date }>;
   reports: Array<{
@@ -19,7 +19,9 @@ export function weeklySubmissionMetrics(input: {
   }>;
   exemptions: Array<{ userId: string; startDate: string; endDate: string }>;
   overrides: CalendarOverrides;
-}) {
+};
+
+export function weeklySubmissionMetrics(input: SubmissionInput) {
   let dueReports = 0;
   let submittedReports = 0;
   let onTimeReports = 0;
@@ -58,4 +60,43 @@ export function weeklySubmissionMetrics(input: {
     }
   }
   return { dueReports, submittedReports, onTimeReports };
+}
+
+export type DailySubmissionStatus =
+  | "SUBMITTED"
+  | "LATE"
+  | "PENDING"
+  | "OVERDUE"
+  | "EXEMPT"
+  | "REST_DAY"
+  | "NOT_STARTED";
+
+export function dailySubmissionStatus(
+  input: SubmissionInput,
+  member: SubmissionInput["members"][number],
+): DailySubmissionStatus {
+  const date = shanghaiDate(input.now);
+  if (date < shanghaiDate(member.createdAt)) return "NOT_STARTED";
+  if (!isWorkday(date, input.overrides)) return "REST_DAY";
+  if (
+    input.exemptions.some(
+      (item) =>
+        item.userId === member.id &&
+        item.startDate <= date &&
+        item.endDate >= date,
+    )
+  )
+    return "EXEMPT";
+  const report = input.reports.find(
+    (item) => item.authorId === member.id && item.reportDate === date,
+  );
+  const dueAt = report?.dueAt ?? deadline(date);
+  if (
+    report?.status === "SUBMITTED" &&
+    report.submittedAt &&
+    report.submittedAt <= input.now
+  ) {
+    return report.submittedAt <= dueAt ? "SUBMITTED" : "LATE";
+  }
+  return input.now >= dueAt ? "OVERDUE" : "PENDING";
 }
