@@ -206,6 +206,20 @@ export default async function DashboardPage({
                   完成 {project.completed} · 推进中 {project.inProgress} · 阻塞{" "}
                   {project.blocked}
                 </span>
+                <span className="text-text-secondary">
+                  负责人：{project.owner?.name ?? "未设置"} · 参与成员：
+                  {project.members.map((member) => member.name).join("、") ||
+                    "暂无"}
+                </span>
+                {project.nextPlans.length > 0 && (
+                  <span className="text-text-secondary">
+                    下周计划：
+                    {project.nextPlans
+                      .slice(0, 3)
+                      .map((plan) => plan.content)
+                      .join("、")}
+                  </span>
+                )}
                 {project.deliverables.length > 0 && (
                   <span className="text-text-secondary">
                     交付物：

@@ -1,4 +1,4 @@
-import { and, count, eq, gte, lte, ne } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, lte, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import {
   blocker,
@@ -6,6 +6,8 @@ import {
   deliverable,
   deliverableUnit,
   project,
+  projectMember,
+  user,
 } from "@/lib/db/schema";
 import { weekDates, type Actor } from "@/lib/domain";
 import { shanghaiDate } from "@/lib/daily-input";
@@ -38,6 +40,9 @@ export type DashboardBreakdown = {
     completed: number;
     inProgress: number;
     blocked: number;
+    owner: { id: string; name: string } | null;
+    members: Array<{ id: string; name: string }>;
+    nextPlans: Array<{ id: string; content: string; assigneeId: string }>;
     deliverables: Array<{ unitId: string; unitName: string; quantity: number }>;
   }>;
 };
@@ -75,7 +80,7 @@ export async function getDashboardBreakdown(
       .from(blocker)
       .where(and(blockerVisibility(actor), ne(blocker.status, "RESOLVED"))),
     db
-      .select({ id: project.id, name: project.name })
+      .select({ id: project.id, name: project.name, ownerId: project.ownerId })
       .from(project)
       .where(
         and(
@@ -100,6 +105,60 @@ export async function getDashboardBreakdown(
       )
       .where(eq(deliverable.organizationId, actor.organizationId)),
   ]);
+  const projectIds = projects.map((item) => item.id);
+  const [projectPeople, owners, nextPlans] = await Promise.all([
+    projectIds.length
+      ? db
+          .select({
+            projectId: projectMember.projectId,
+            id: user.id,
+            name: user.name,
+          })
+          .from(projectMember)
+          .innerJoin(user, eq(user.id, projectMember.userId))
+          .where(
+            and(
+              eq(projectMember.organizationId, actor.organizationId),
+              inArray(projectMember.projectId, projectIds),
+            ),
+          )
+      : [],
+    projectIds.length
+      ? db
+          .select({ id: user.id, name: user.name })
+          .from(user)
+          .where(
+            and(
+              eq(user.organizationId, actor.organizationId),
+              inArray(
+                user.id,
+                projects.map((item) => item.ownerId),
+              ),
+            ),
+          )
+      : [],
+    projectIds.length
+      ? db
+          .select({
+            id: workTask.id,
+            projectId: workTask.projectId,
+            content: workTask.content,
+            assigneeId: workTask.primaryAssigneeId,
+          })
+          .from(workTask)
+          .where(
+            and(
+              eq(workTask.organizationId, actor.organizationId),
+              inArray(workTask.projectId, projectIds),
+              eq(workTask.kind, "PLAN"),
+              gte(workTask.dueDate, dates[0]),
+              lte(workTask.dueDate, dates[6]),
+            ),
+          )
+          .orderBy(asc(workTask.dueDate), asc(workTask.id))
+      : [],
+  ]);
+  const ownerById = new Map(owners.map((item) => [item.id, item]));
   const memberRows = data.members.map((member) => {
     const submissions = weeklySubmissionMetrics({ ...data, members: [member] });
     return {
@@ -140,6 +199,11 @@ export async function getDashboardBreakdown(
       inProgress: projectTasks.filter((task) => task.status === "IN_PROGRESS")
         .length,
       blocked: projectTasks.filter((task) => task.status === "BLOCKED").length,
+      owner: ownerById.get(item.ownerId) ?? null,
+      members: projectPeople
+        .filter((person) => person.projectId === item.id)
+        .map(({ id, name }) => ({ id, name })),
+      nextPlans: nextPlans.filter((plan) => plan.projectId === item.id),
       deliverables: [...totals.values()],
     };
   });
