@@ -30,10 +30,10 @@ export function reportSearchConditions(
     dates.status ? eq(report.status, dates.status) : undefined,
     dates.type ? eq(report.type, dates.type) : undefined,
     dates.project
-      ? sql`exists (select 1 from report_task rt where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and rt.snapshot->>'projectId' = ${dates.project})`
+      ? sql`exists (select 1 from report_task rt inner join work_task wt on wt.organization_id = rt.organization_id and wt.id = rt.task_id where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and wt.project_id = ${dates.project})`
       : undefined,
     dates.category
-      ? sql`exists (select 1 from report_task rt where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and rt.snapshot->>'categoryId' = ${dates.category})`
+      ? sql`exists (select 1 from report_task rt inner join work_task wt on wt.organization_id = rt.organization_id and wt.id = rt.task_id where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and wt.category_id = ${dates.category})`
       : undefined,
     dates.taskStatus
       ? sql`exists (select 1 from report_task rt where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and rt.snapshot->>'status' = ${dates.taskStatus})`
