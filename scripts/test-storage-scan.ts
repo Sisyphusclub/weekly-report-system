@@ -86,6 +86,17 @@ async function main() {
         assert.equal((await mismatch.json()).clean, false);
       }
     }
+    const missing = await getSignedUrl(
+      client,
+      new GetObjectCommand({
+        Bucket: env.S3_BUCKET,
+        Key: `${prefix}/missing.txt`,
+      }),
+      { expiresIn: 120 },
+    );
+    const missingResponse = await scan(missing, 1);
+    assert.equal(missingResponse.status, 503);
+    assert.equal((await missingResponse.json()).clean, false);
   } finally {
     for (const Key of uploaded) {
       await client.send(

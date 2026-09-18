@@ -11,6 +11,15 @@ function fail(message: string, status = 503) {
 async function scanWithClamd(url: string, contentLength?: number) {
   const target = new URL(getConfig().CLAMAV_URL!);
   if (target.protocol !== "tcp:") throw new Error("CLAMAV_URL must use tcp://");
+  const body = await fetch(url, {
+    redirect: "error",
+    signal: AbortSignal.timeout(15_000),
+  });
+  if (!body.ok || !body.body) {
+    await body.body?.cancel();
+    throw new Error("无法读取待扫描对象");
+  }
+  const reader = body.body.getReader();
   const socket = net.createConnection({
     host: target.hostname,
     port: Number(target.port || 3310),
@@ -30,16 +39,17 @@ async function scanWithClamd(url: string, contentLength?: number) {
     });
     socket.on("error", reject);
     socket.on("end", () => resolve(output));
-    socket.on("connect", () => socket.write("zINSTREAM\0"));
+    socket.on("close", () => reject(new Error("ClamAV connection closed")));
   });
-  const body = await fetch(url, {
-    redirect: "error",
-    signal: AbortSignal.timeout(15_000),
-  });
-  if (!body.ok || !body.body) throw new Error("无法读取待扫描对象");
-  const reader = body.body.getReader();
+  // Observe failures immediately, even while the download is being consumed.
+  void result.catch(() => {});
+  const write = (chunk: Buffer | string) =>
+    new Promise<void>((resolve, reject) => {
+      socket.write(chunk, (error) => (error ? reject(error) : resolve()));
+    });
   let total = 0;
   try {
+    await write("zINSTREAM\0");
     while (true) {
       const part = await reader.read();
       if (part.done) break;
@@ -47,18 +57,19 @@ async function scanWithClamd(url: string, contentLength?: number) {
       if (total > 25 * 1024 * 1024) throw new Error("附件超过扫描上限");
       const header = Buffer.alloc(4);
       header.writeUInt32BE(part.value.byteLength);
-      if (!socket.write(Buffer.concat([header, Buffer.from(part.value)])))
-        await new Promise<void>((resolve) => socket.once("drain", resolve));
+      await write(Buffer.concat([header, Buffer.from(part.value)]));
     }
-    socket.write(Buffer.alloc(4));
+    await write(Buffer.alloc(4));
     const verdict = await result;
-    if (!verdict.includes("stream: OK")) return { clean: false };
+    if (verdict.trim().replace(/\0$/, "") !== "stream: OK")
+      return { clean: false };
     if (contentLength !== undefined && total !== contentLength)
       throw new Error("扫描对象大小发生变化");
     return { clean: true };
   } finally {
-    reader.releaseLock();
     socket.destroy();
+    await reader.cancel().catch(() => {});
+    reader.releaseLock();
   }
 }
 
