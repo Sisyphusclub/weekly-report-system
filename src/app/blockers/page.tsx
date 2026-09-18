@@ -24,7 +24,7 @@ export const metadata = { title: "阻塞中心" };
 export default async function BlockersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; status?: string }>;
+  searchParams: Promise<{ page?: string; status?: string; severity?: string }>;
 }) {
   const params = await searchParams;
   const page = Math.min(
@@ -42,6 +42,11 @@ export default async function BlockersPage({
       : params.status === "all"
         ? "all"
         : "active";
+  const severity = ["NORMAL", "IMPORTANT", "URGENT"].includes(
+    params.severity ?? "",
+  )
+    ? (params.severity as "NORMAL" | "IMPORTANT" | "URGENT")
+    : undefined;
   const coordinator = alias(user, "coordinator");
   const rows = await getDb()
     .select({
@@ -68,6 +73,7 @@ export default async function BlockersPage({
           : status === "resolved"
             ? eq(blocker.status, "RESOLVED")
             : undefined,
+        severity ? eq(blocker.severity, severity) : undefined,
       ),
     )
     .orderBy(
@@ -90,7 +96,7 @@ export default async function BlockersPage({
         </p>
       </header>
       <BlockerForm />
-      <nav aria-label="阻塞状态筛选" className="flex flex-wrap gap-3">
+      <nav aria-label="阻塞筛选" className="flex flex-wrap gap-3">
         {(
           [
             { value: "active", label: "待处理" },
@@ -100,11 +106,24 @@ export default async function BlockersPage({
         ).map((item) => (
           <ButtonLink
             key={item.value}
-            href={`/blockers?status=${item.value}`}
+            href={`/blockers?status=${item.value}${severity ? `&severity=${severity}` : ""}`}
             variant={status === item.value ? "secondary" : "ghost"}
             aria-current={status === item.value ? "page" : undefined}
           >
             {item.label}
+          </ButtonLink>
+        ))}
+        {(["ALL", "NORMAL", "IMPORTANT", "URGENT"] as const).map((value) => (
+          <ButtonLink
+            key={value}
+            href={`/blockers?status=${status}${value === "ALL" ? "" : `&severity=${value}`}`}
+            variant={
+              (value === "ALL" ? !severity : severity === value)
+                ? "secondary"
+                : "ghost"
+            }
+          >
+            {value === "ALL" ? "全部级别" : severityLabel[value]}
           </ButtonLink>
         ))}
       </nav>
@@ -169,7 +188,7 @@ export default async function BlockersPage({
       <footer className="flex gap-3">
         {page > 1 && (
           <ButtonLink
-            href={`/blockers?status=${status}&page=${page - 1}`}
+            href={`/blockers?status=${status}${severity ? `&severity=${severity}` : ""}&page=${page - 1}`}
             variant="secondary"
           >
             上一页
@@ -178,7 +197,7 @@ export default async function BlockersPage({
         <span>第 {page} 页</span>
         {rows.length > 20 && (
           <ButtonLink
-            href={`/blockers?status=${status}&page=${page + 1}`}
+            href={`/blockers?status=${status}${severity ? `&severity=${severity}` : ""}&page=${page + 1}`}
             variant="secondary"
           >
             下一页
