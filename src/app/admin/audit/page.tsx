@@ -6,6 +6,7 @@ import { auditLog, user } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { Input } from "@/components/base/input/input";
 import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { auditActionLabel, auditReasonDetails } from "@/lib/audit-display";
 
 export const metadata = { title: "审计日志" };
 export default async function AuditPage({
@@ -68,12 +69,31 @@ export default async function AuditPage({
           {rows.slice(0, 20).map(({ item, name }) => (
             <li key={item.id} className="flex flex-col gap-2 p-5">
               <p className="text-body-medium">
-                {name} · {item.action} ·{" "}
+                {name} · {auditActionLabel(item.action)} ·{" "}
                 {item.result === "SUCCESS" ? "成功" : item.result}
               </p>
               <p className="break-all text-body-regular text-text-secondary">
                 {item.resourceType} · {item.resourceId}
               </p>
+              {item.reason && (
+                <dl className="flex flex-col gap-2 text-body-regular">
+                  {auditReasonDetails(item.action, item.reason).map(
+                    (detail) => (
+                      <div
+                        key={detail.label}
+                        className="flex flex-col gap-1 sm:flex-row sm:gap-3"
+                      >
+                        <dt className="shrink-0 text-text-secondary">
+                          {detail.label}
+                        </dt>
+                        <dd className="whitespace-pre-wrap break-all">
+                          {detail.value}
+                        </dd>
+                      </div>
+                    ),
+                  )}
+                </dl>
+              )}
               <time
                 dateTime={item.createdAt.toISOString()}
                 className="text-body-regular text-text-secondary"
