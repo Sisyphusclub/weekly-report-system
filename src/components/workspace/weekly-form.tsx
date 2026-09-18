@@ -6,8 +6,8 @@ export function WeeklyForm({
   date,
   version,
   initialSummary,
-  submitted,
-  reportId,
+  submitted: initialSubmitted,
+  reportId: initialReportId,
 }: {
   date: string;
   version: number;
@@ -16,6 +16,8 @@ export function WeeklyForm({
   reportId?: string;
 }) {
   const [summary, setSummary] = useState(initialSummary);
+  const [submitted, setSubmitted] = useState(initialSubmitted);
+  const [reportId, setReportId] = useState(initialReportId);
   const [currentVersion, setVersion] = useState(version);
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
@@ -40,6 +42,8 @@ export function WeeklyForm({
         return;
       }
       setVersion(result.version);
+      setSubmitted(result.status === "SUBMITTED");
+      setReportId(result.id);
       setMessage(submit ? "周报已提交" : "周报草稿已保存");
     } catch {
       setMessage("未能确认保存结果，内容已保留，请刷新核对后重试");

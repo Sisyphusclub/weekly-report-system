@@ -123,6 +123,57 @@ async function main() {
           console.log(
             "PASS: daily draft persistence, reload, submission preview, database submission, submitted form lock",
           );
+          // A fixed past week makes submission independent of today's weekday.
+          for (const date of [
+            "2026-09-07",
+            "2026-09-08",
+            "2026-09-09",
+            "2026-09-10",
+            "2026-09-11",
+          ]) {
+            await pool.query(
+              "INSERT INTO report(id,organization_id,author_id,type,status,report_date,due_at,submitted_at,calendar_version,summary) VALUES($1,$2,$3,'DAILY','SUBMITTED',$4,$4::date + interval '18 hours',now(),0,$5)",
+              [randomUUID(), org, id, date, `日报来源 ${date}`],
+            );
+          }
+          await page.goto(`${origin}/weekly?date=2026-09-11`);
+          await page
+            .getByLabel("本周总结", { exact: true })
+            .fill("周报快照验收");
+          await page
+            .getByRole("button", { name: "保存草稿", exact: true })
+            .click();
+          await expect(page.getByRole("status")).toHaveText("周报草稿已保存");
+          await page.reload();
+          await expect(
+            page.getByLabel("本周总结", { exact: true }),
+          ).toHaveValue("周报快照验收");
+          await page
+            .getByRole("button", { name: "提交周报", exact: true })
+            .click();
+          await expect(
+            page.getByLabel("本周总结", { exact: true }),
+          ).toBeDisabled();
+          await expect(
+            page.getByRole("link", { name: "查看已提交周报" }),
+          ).toBeVisible();
+          const weekly = await pool.query(
+            "SELECT id,status FROM report WHERE author_id=$1 AND type='WEEKLY'",
+            [id],
+          );
+          assert.equal(weekly.rows[0].status, "SUBMITTED");
+          const revisions = await pool.query(
+            "SELECT snapshot FROM report_revision WHERE report_id=$1 ORDER BY revision_number DESC LIMIT 1",
+            [weekly.rows[0].id],
+          );
+          assert.equal(revisions.rows[0].snapshot.summaries.length, 5);
+          await page.reload();
+          await expect(
+            page.getByLabel("本周总结", { exact: true }),
+          ).toBeDisabled();
+          console.log(
+            "PASS: weekly draft reload, submitted daily aggregation, immediate submit lock, persisted snapshot",
+          );
         } else {
           await expect(
             page.getByLabel("工作总结", { exact: true }),
