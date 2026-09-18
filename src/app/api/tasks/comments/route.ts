@@ -45,7 +45,13 @@ export async function GET(request: Request) {
         parentId: taskComment.parentId,
       })
       .from(taskComment)
-      .innerJoin(user, eq(taskComment.authorId, user.id))
+      .innerJoin(
+        user,
+        and(
+          eq(taskComment.authorId, user.id),
+          eq(taskComment.organizationId, user.organizationId),
+        ),
+      )
       .where(
         and(
           eq(taskComment.organizationId, actor.organizationId),

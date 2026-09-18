@@ -31,7 +31,13 @@ export async function GET(request: Request) {
         authorUsername: user.username,
       })
       .from(comment)
-      .innerJoin(user, eq(comment.authorId, user.id))
+      .innerJoin(
+        user,
+        and(
+          eq(comment.authorId, user.id),
+          eq(comment.organizationId, user.organizationId),
+        ),
+      )
       .where(
         and(
           eq(comment.organizationId, actor.organizationId),
