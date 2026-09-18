@@ -455,8 +455,17 @@ async function main() {
               ).status(),
               409,
             );
+            const bossPage = await bossContext.newPage();
+            await bossPage.goto(`${origin}/dashboard`);
+            await expect(
+              bossPage.getByRole("heading", { name: "工作看板" }),
+            ).toBeVisible();
+            await bossPage.goto(`${origin}/blockers`);
+            await expect(
+              bossPage.getByRole("heading", { name: "阻塞中心" }),
+            ).toBeVisible();
             console.log(
-              "PASS: boss MFA enrollment, revision approval and rejection, version guard, reviewer identity, notification deduplication, repeated review denial",
+              "PASS: boss MFA enrollment, revision approval and rejection, dashboard and blocker center access, version guard, reviewer identity, notification deduplication, repeated review denial",
             );
           } finally {
             await bossContext.close();
