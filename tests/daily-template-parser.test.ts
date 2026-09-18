@@ -36,3 +36,33 @@ it("兼容英文句点和计划别名", () => {
   );
   expect(result.reporters[0].plans).toHaveLength(1);
 });
+
+it("显式类型优先于正文关键词", () => {
+  const result = parseDailyTemplate(
+    "## 2026-09-18\n汇报人：张三\n1、接口压测记录整理（已完成）｜类型：需求",
+  );
+  expect(result.reporters[0].items[0].type).toBe("需求");
+});
+
+it("同分时按类型约定顺序归类", () => {
+  const result = parseDailyTemplate(
+    "## 2026-09-18\n汇报人：张三\n1、需求测试方案（已完成）",
+  );
+  expect(result.reporters[0].items[0].type).toBe("需求");
+});
+
+it("拒绝不存在的日期", () => {
+  expect(() =>
+    parseDailyTemplate("## 2026-02-30\n汇报人：张三\n1、日报整理（已完成）"),
+  ).toThrow("日报日期无效");
+});
+
+it("解析小数和多种产出单位", () => {
+  const result = parseDailyTemplate(
+    "## 2026-09-18\n汇报人：张三\n1、方案整理（已完成）｜产出：方案1.5套 文档2份",
+  );
+  expect(result.reporters[0].items[0].outputs).toEqual([
+    { label: "方案", quantity: 1.5, unit: "套" },
+    { label: "文档", quantity: 2, unit: "份" },
+  ]);
+});

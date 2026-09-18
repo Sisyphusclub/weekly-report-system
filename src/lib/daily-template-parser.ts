@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dateInput } from "@/lib/daily-input";
 
 export const dailyWorkType = z.enum([
   "计划",
@@ -266,6 +267,7 @@ export function parseDailyTemplate(input: string): DailyParsedDocument {
     .find((line) => /^##\s+\d{4}-\d{2}-\d{2}$/.test(line))
     ?.slice(3);
   if (!date) throw new Error("缺少日报日期");
+  if (!dateInput.safeParse(date).success) throw new Error("日报日期无效");
   const reporters: DailyParsedReporter[] = [];
   let current: DailyParsedReporter | undefined;
   let inPlans = false;
@@ -281,7 +283,8 @@ export function parseDailyTemplate(input: string): DailyParsedDocument {
       inPlans = true;
       continue;
     }
-    const item = current && parseItem(line);
+    if (!current) continue;
+    const item = parseItem(line);
     if (item) (inPlans ? current.plans : current.items).push(item);
   }
   if (!reporters.length) throw new Error("缺少汇报人");
