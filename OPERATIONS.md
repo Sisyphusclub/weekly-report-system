@@ -44,5 +44,7 @@ PowerShell 执行 `scripts/backup-db.ps1 -OutputDirectory D:\backups\weekly`，�
 
 # 迁移执行约束
 
+CI 的 `database` 作业使用独立 PostgreSQL 16 服务执行 `npm run test:database`，检查全量迁移、重复迁移、schema 列可读性、组织外键隔离及两个连接竞争同一任务版本。手动运行时必须显式设置 `TEST_DATABASE_URL`，数据库名称须以 `_test` 结尾，禁止使用生产数据库；脚本不读取应用的 `DATABASE_URL`，只清理本次生成的 UUID 测试记录。新增工作流不代表测试已经执行通过，发布时应查看该作业的实际结果。
+
 数据库迁移由 `npm run db:migrate` 按 Drizzle journal 顺序执行。不要直接重复运行已标记完成的 SQL，也不要修改已经在任一环境执行过的迁移文件；线上修复必须新增迁移并先在预发布数据库演练。
 当前历史迁移包含人工登记的增量 SQL，生成器快照并不覆盖全部历史版本；不要直接提交自动生成的全量校正迁移。修改 schema 后应人工编写下一条幂等 SQL、登记 journal，并在隔离数据库验证升级路径。

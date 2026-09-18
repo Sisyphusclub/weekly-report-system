@@ -12,6 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:e2e": "playwright test",
+    "test:database": "tsx scripts/test-database.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
     "admin:bootstrap": "tsx --env-file-if-exists=.env.local scripts/bootstrap-admin.ts",
