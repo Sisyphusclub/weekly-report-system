@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
-import { chromium } from "@playwright/test";
+import { chromium, expect } from "@playwright/test";
 import { Pool } from "pg";
 import { hashPassword } from "better-auth/crypto";
 
@@ -69,6 +69,65 @@ async function main() {
         await page.goto(`${origin}/daily`);
         assert.equal(new URL(page.url()).pathname, "/daily");
         assert.ok(await page.locator("main").isVisible());
+        if (viewport.width === 1440) {
+          const summary = `日报验收 ${randomUUID()}`;
+          await page.getByLabel("工作总结", { exact: true }).fill(summary);
+          await page
+            .getByLabel("无实际任务时的原因", { exact: true })
+            .fill("当日培训，无项目任务");
+          await page
+            .getByLabel("无下一周期计划时的原因", { exact: true })
+            .fill("等待下一周期安排");
+          await page
+            .getByRole("button", { name: "保存草稿", exact: true })
+            .click();
+          await expect
+            .poll(
+              async () =>
+                (
+                  await pool.query(
+                    "SELECT summary FROM report WHERE author_id=$1 AND type='DAILY'",
+                    [id],
+                  )
+                ).rows[0]?.summary,
+            )
+            .toBe(summary);
+          await page.reload();
+          await expect(
+            page.getByLabel("工作总结", { exact: true }),
+          ).toHaveValue(summary);
+          await page
+            .getByRole("button", { name: "预览并提交", exact: true })
+            .click();
+          await expect(
+            page.getByRole("region", { name: "提交预览", exact: true }),
+          ).toBeVisible();
+          await page
+            .getByRole("button", { name: "确认提交", exact: true })
+            .click();
+          await expect
+            .poll(
+              async () =>
+                (
+                  await pool.query(
+                    "SELECT status FROM report WHERE author_id=$1 AND type='DAILY'",
+                    [id],
+                  )
+                ).rows[0]?.status,
+            )
+            .toBe("SUBMITTED");
+          await page.reload();
+          await expect(
+            page.getByLabel("工作总结", { exact: true }),
+          ).toBeDisabled();
+          console.log(
+            "PASS: daily draft persistence, reload, submission preview, database submission, submitted form lock",
+          );
+        } else {
+          await expect(
+            page.getByLabel("工作总结", { exact: true }),
+          ).toBeDisabled();
+        }
         assert.equal(
           (
             await context.request.post(`${origin}/api/auth/sign-out`, {
