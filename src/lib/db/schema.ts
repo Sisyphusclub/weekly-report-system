@@ -756,6 +756,7 @@ export const auditLog = pgTable(
     resourceType: text("resource_type").notNull(),
     resourceId: text("resource_id").notNull(),
     result: text("result").notNull(),
+    reason: text("reason"),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),

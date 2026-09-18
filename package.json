@@ -16,6 +16,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
     "admin:bootstrap": "tsx --env-file-if-exists=.env.local scripts/bootstrap-admin.ts",
+    "security:reset-totp": "tsx --env-file-if-exists=.env.local scripts/reset-totp.ts",
     "reminders:run": "tsx --env-file-if-exists=.env.local scripts/run-reminders.ts",
     "attachments:cleanup": "tsx --env-file-if-exists=.env.local scripts/cleanup-attachments.ts",
     "weekly:drafts": "tsx --env-file-if-exists=.env.local scripts/generate-weekly-drafts.ts",

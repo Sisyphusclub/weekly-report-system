@@ -20,6 +20,12 @@
 6. 执行 `docker compose up -d app`。
 7. 检查 `GET /api/health` 和登录流程。
 
+## TOTP 恢复
+
+账号丢失认证设备且无恢复码时，服务器运维人员核实身份后，通过受保护 stdin 向 `npm run security:reset-totp` 输入 JSON；容器中使用 `docker compose run --rm -T tools npm run security:reset-totp`。需先执行新增迁移。输入字段为 `organizationId`、`operatorUsername`（同组织未停用的管理员审计账号）、`targetUsername`、`reason`（10–500 字符）以及固定确认值 `confirm: "RESET_TOTP"`。不要在原因中填写密码、TOTP 密钥或恢复码。
+
+此命令的权限来自服务器控制台和数据库访问权，输入的操作人账号用于归属审计，不替代运维人员身份核验。它在同一事务中删除目标 TOTP 密钥与恢复码、撤销全部会话、要求修改密码，并写入含操作人与原因的 `OPS_TOTP_RESET` 审计。停用账号不会被启用；老板和管理员必须重新绑定 TOTP 才可进入业务页面，员工仍遵循可选绑定规则。命令不生成密码、不打印密钥，也不提供网页调用入口。数据库权限应仅授予受信任运维人员。
+
 ## 后台任务
 
 Excel 导入在独立 Node.js 子进程中解析，不继承应用密钥。每个应用进程最多同时运行 2 个解析任务，单次限时 15 秒，V8 老生代堆上限 128 MB；超时或子进程异常退出会拒绝导入。上传文件上限 10 MB，任务上限 200 条、工作表列数上限 32。V8 堆限制不覆盖 Buffer 等原生内存，部署时仍需根据应用和子进程的实测峰值设置容器总内存限制。解析脚本随 standalone 构建产物发布。
