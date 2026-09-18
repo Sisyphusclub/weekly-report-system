@@ -82,7 +82,8 @@ CREATE TABLE "deliverable_unit" (
 	"enabled" boolean DEFAULT true NOT NULL,
 	"sort_order" integer DEFAULT 0 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "deliverable_unit_organization_id_id_unique" UNIQUE("organization_id","id")
 );
 --> statement-breakpoint
 CREATE TABLE "notification" (
@@ -118,7 +119,8 @@ CREATE TABLE "project" (
 	"target_end_date" date,
 	"version" integer DEFAULT 1 NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "project_organization_id_id_unique" UNIQUE("organization_id","id")
 );
 --> statement-breakpoint
 CREATE TABLE "project_member" (
@@ -159,7 +161,8 @@ CREATE TABLE "report" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "report_period" CHECK (("report"."type" = 'DAILY' AND "report"."report_date" IS NOT NULL AND "report"."week_start" IS NULL AND "report"."week_end" IS NULL AND "report"."week_label" IS NULL) OR ("report"."type" = 'WEEKLY' AND "report"."report_date" IS NULL AND "report"."week_start" IS NOT NULL AND "report"."week_end" = "report"."week_start" + 6 AND "report"."week_label" = "report"."week_start" + 4 AND EXTRACT(ISODOW FROM "report"."week_start") = 1)),
-	CONSTRAINT "report_submission" CHECK (("report"."status" = 'DRAFT' AND "report"."submitted_at" IS NULL) OR ("report"."status" = 'SUBMITTED' AND "report"."submitted_at" IS NOT NULL))
+	CONSTRAINT "report_submission" CHECK (("report"."status" = 'DRAFT' AND "report"."submitted_at" IS NULL) OR ("report"."status" = 'SUBMITTED' AND "report"."submitted_at" IS NOT NULL)),
+	CONSTRAINT "report_organization_id_id_unique" UNIQUE("organization_id","id")
 );
 --> statement-breakpoint
 CREATE TABLE "report_revision" (
@@ -286,7 +289,8 @@ CREATE TABLE "work_task" (
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "task_version_positive" CHECK ("work_task"."version" > 0),
-	CONSTRAINT "plan_due_date_required" CHECK ("work_task"."kind" <> 'PLAN' OR "work_task"."due_date" IS NOT NULL)
+	CONSTRAINT "plan_due_date_required" CHECK ("work_task"."kind" <> 'PLAN' OR "work_task"."due_date" IS NOT NULL),
+	CONSTRAINT "work_task_organization_id_id_unique" UNIQUE("organization_id","id")
 );
 --> statement-breakpoint
 ALTER TABLE "auth_account" ADD CONSTRAINT "auth_account_user_id_app_user_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."app_user"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
