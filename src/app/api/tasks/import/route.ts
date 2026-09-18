@@ -9,6 +9,7 @@ import { taskImportBatch } from "@/lib/task-import-input";
 import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
 import ExcelJS from "exceljs";
+import { boundedBody } from "@/lib/request-body";
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
@@ -18,15 +19,13 @@ export async function POST(request: Request) {
       60_000,
     );
     const contentType = request.headers.get("content-type") ?? "";
-    const contentLength = Number(request.headers.get("content-length") ?? 0);
     const maxBody = contentType.includes("multipart/form-data")
       ? 12 * 1024 * 1024
       : 2 * 1024 * 1024;
-    if (contentLength > maxBody)
-      throw new BusinessError("导入文件或请求体过大");
+    const body = await boundedBody(request, maxBody);
     let payload: unknown;
     if (contentType.includes("multipart/form-data")) {
-      const form = await request.formData();
+      const form = await body.formData();
       const file = form.get("file");
       if (!(file instanceof File)) throw new BusinessError("请选择 Excel 文件");
       if (!file.name.toLowerCase().endsWith(".xlsx"))
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
           dueDate: row.dueDate ?? row["截止日期"] ?? null,
         })),
       };
-    } else payload = await request.json().catch(() => null);
+    } else payload = await body.json().catch(() => null);
     const parsed = taskImportBatch.safeParse(payload);
     if (!parsed.success) throw new BusinessError("导入任务格式无效");
     const result = await getDb().transaction(async (tx) => {
