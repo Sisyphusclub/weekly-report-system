@@ -574,6 +574,136 @@ async function main() {
         await context.close();
       }
     }
+    const adminId = randomUUID();
+    const adminName = `admin_${adminId.replaceAll("-", "").slice(0, 16)}`;
+    const adminPassword = randomUUID();
+    await pool.query(
+      "INSERT INTO app_user(id,organization_id,name,email,username,role,status,must_change_password,two_factor_enabled) VALUES($1,$2,'管理员验收',$3,$4,'ADMIN','ACTIVE',false,false)",
+      [adminId, org, `${adminId}@test.invalid`, adminName],
+    );
+    await pool.query(
+      "INSERT INTO auth_account(id,account_id,provider_id,user_id,password) VALUES($1,$1,'credential',$1,$2)",
+      [adminId, await hashPassword(adminPassword)],
+    );
+    const adminContext = await browser.newContext({
+      viewport: { width: 1440, height: 900 },
+    });
+    try {
+      const adminPost = (path: string, data: object) =>
+        adminContext.request.post(`${origin}${path}`, {
+          headers: { origin },
+          data,
+        });
+      const adminPatch = (path: string, data: object) =>
+        adminContext.request.patch(`${origin}${path}`, {
+          headers: { origin },
+          data,
+        });
+      assert.equal(
+        (
+          await adminPost("/api/auth/sign-in/username", {
+            username: adminName,
+            password: adminPassword,
+          })
+        ).status(),
+        200,
+      );
+      const adminSetup = await adminPost("/api/auth/two-factor/enable", {
+        password: adminPassword,
+      });
+      assert.equal(adminSetup.status(), 200);
+      const adminSecret = new TextDecoder().decode(
+        base32.decode(
+          new URL((await adminSetup.json()).totpURI).searchParams.get(
+            "secret",
+          )!,
+        ),
+      );
+      assert.equal(
+        (
+          await adminPost("/api/auth/two-factor/verify-totp", {
+            code: await createOTP(adminSecret).totp(),
+          })
+        ).status(),
+        200,
+      );
+      const created = await adminPost("/api/admin/users", {
+        username: `new_${randomUUID().replaceAll("-", "").slice(0, 12)}`,
+        name: "新员工验收",
+        title: "测试岗位",
+        role: "EMPLOYEE",
+      });
+      assert.equal(created.status(), 201, `admin create status ${created.status()}`);
+      const credential = await created.json();
+      assert.ok(credential.temporaryPassword.length >= 12);
+      const createdRow = (
+        await pool.query(
+          "SELECT id,status,must_change_password FROM app_user WHERE username=$1",
+          [credential.username],
+        )
+      ).rows[0];
+      assert.equal(createdRow.status, "PENDING");
+      assert.equal(createdRow.must_change_password, true);
+      const employeeContext = await browser.newContext({
+        viewport: { width: 390, height: 844 },
+      });
+      try {
+        const employeeLogin = await employeeContext.request.post(
+          `${origin}/api/auth/sign-in/username`,
+          {
+            headers: { origin },
+            data: {
+              username: credential.username,
+              password: credential.temporaryPassword,
+            },
+          },
+        );
+        assert.equal(employeeLogin.status(), 200);
+        const employeePage = await employeeContext.newPage();
+        await employeePage.goto(`${origin}/dashboard`);
+        await employeePage.waitForURL("**/security");
+        await expect(
+          employeePage.getByRole("heading", { name: "账号安全" }),
+        ).toBeVisible();
+        const newPassword = `New-${randomUUID()}-secure`;
+        await employeePage.getByLabel("当前临时密码").fill(credential.temporaryPassword);
+        await employeePage.getByLabel("新密码").fill(newPassword);
+        await employeePage.getByRole("button", { name: "更新密码" }).click();
+        await expect(employeePage.getByRole("status")).toHaveText(
+          "密码已更新，其他设备会话已撤销。",
+        );
+        await expect
+          .poll(
+            async () =>
+              (
+                await pool.query(
+                  "SELECT status,must_change_password FROM app_user WHERE id=$1",
+                  [createdRow.id],
+                )
+              ).rows[0],
+          )
+          .toEqual({ status: "ACTIVE", must_change_password: false });
+        const disabled = await adminPatch(`/api/admin/users/${createdRow.id}`, {
+          status: "DISABLED",
+        });
+        assert.equal(disabled.status(), 200);
+        assert.equal(
+          (
+            await employeeContext.request.get(`${origin}/api/auth/get-session`)
+          ).status(),
+          200,
+        );
+        await employeePage.goto(`${origin}/daily`);
+        await employeePage.waitForURL("**/login");
+        console.log(
+          "PASS: admin login, employee creation with temporary password, first-login password change, disable isolation",
+        );
+      } finally {
+        await employeeContext.close();
+      }
+    } finally {
+      await adminContext.close();
+    }
   } finally {
     await browser.close();
     await pool.end();
