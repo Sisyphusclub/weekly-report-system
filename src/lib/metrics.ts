@@ -46,6 +46,7 @@ export type DashboardBreakdown = {
     deliverables: Array<{ unitId: string; unitName: string; quantity: number }>;
   }>;
   blockerTrend: Array<{ date: string; opened: number; resolved: number }>;
+  blockerResolutionMedianHours: number | null;
 };
 
 export async function getDashboardBreakdown(
@@ -77,11 +78,12 @@ export async function getDashboardBreakdown(
       .select({
         reporterId: blocker.reporterId,
         coordinatorId: blocker.coordinatorId,
+        status: blocker.status,
         createdAt: blocker.createdAt,
         resolvedAt: blocker.resolvedAt,
       })
       .from(blocker)
-      .where(and(blockerVisibility(actor), ne(blocker.status, "RESOLVED"))),
+      .where(blockerVisibility(actor)),
     db
       .select({ id: project.id, name: project.name, ownerId: project.ownerId })
       .from(project)
@@ -171,7 +173,8 @@ export async function getDashboardBreakdown(
       submitted: submissions.submittedReports,
       openBlockers: blockers.filter(
         (row) =>
-          row.reporterId === member.id || row.coordinatorId === member.id,
+          row.status !== "RESOLVED" &&
+          (row.reporterId === member.id || row.coordinatorId === member.id),
       ).length,
       completed: tasks.filter(
         (task) =>
@@ -187,6 +190,23 @@ export async function getDashboardBreakdown(
       (item) => item.resolvedAt && shanghaiDate(item.resolvedAt) === date,
     ).length,
   }));
+  const resolutionDurations = blockers
+    .filter((item) => item.resolvedAt)
+    .map(
+      (item) =>
+        (item.resolvedAt!.getTime() - item.createdAt.getTime()) / 3_600_000,
+    )
+    .filter((hours) => hours >= 0)
+    .sort((a, b) => a - b);
+  const middle = Math.floor(resolutionDurations.length / 2);
+  const blockerResolutionMedianHours = resolutionDurations.length
+    ? Number(
+        (resolutionDurations.length % 2
+          ? resolutionDurations[middle]
+          : (resolutionDurations[middle - 1] + resolutionDurations[middle]) / 2
+        ).toFixed(1),
+      )
+    : null;
   const projectRows = projects.map((item) => {
     const projectTasks = tasks.filter((task) => task.projectId === item.id);
     const totals = new Map<
@@ -218,7 +238,12 @@ export async function getDashboardBreakdown(
       deliverables: [...totals.values()],
     };
   });
-  return { members: memberRows, projects: projectRows, blockerTrend };
+  return {
+    members: memberRows,
+    projects: projectRows,
+    blockerTrend,
+    blockerResolutionMedianHours,
+  };
 }
 
 export function submissionRate(submitted: number, due: number) {

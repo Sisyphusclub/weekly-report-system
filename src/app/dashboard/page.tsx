@@ -234,6 +234,12 @@ export default async function DashboardPage({
         </section>
         <section className="rounded-3xl border border-border-button-default p-6">
           <h2 className="text-title-2-medium">本周阻塞趋势</h2>
+          <p className="mt-2 text-body-regular text-text-secondary">
+            已解决阻塞中位时长：
+            {breakdown.blockerResolutionMedianHours === null
+              ? "暂无数据"
+              : `${breakdown.blockerResolutionMedianHours} 小时`}
+          </p>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
             {breakdown.blockerTrend.map((day) => (
               <div
