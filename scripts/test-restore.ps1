@@ -40,7 +40,9 @@ try {
   if ($LASTEXITCODE -ne 0 -or -not $originalJournal) { throw 'Source migration journal missing' }
   $restoredJournal = & $DockerCommand exec $container psql -U weekly -d $destination -At -c $journalQuery
   if ($LASTEXITCODE -ne 0 -or (Compare-Object $originalJournal $restoredJournal)) { throw 'Restored migration journal mismatch' }
-  Write-Output 'PASS: custom archive, checksum, transactional restore, schema inventory, migration journal, Unicode data'
+  & node --env-file=.env.local scripts/verify-restored-database.mjs $destination
+  if ($LASTEXITCODE -ne 0) { throw 'Restored database business verification failed' }
+  Write-Output 'PASS: custom archive, checksum, transactional restore, schema inventory, migration journal, Unicode data, restored business invariants'
 } finally {
   if ($targetCreated) { Invoke-Docker @('exec', $container, 'dropdb', '-U', 'weekly', $destination) }
   if ($sourceCreated) { Invoke-Docker @('exec', $container, 'dropdb', '-U', 'weekly', $source) }

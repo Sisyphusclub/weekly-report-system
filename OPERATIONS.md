@@ -71,6 +71,22 @@ npm run backup:check -- -BackupDirectory .\backups
 
 ## 初始管理员
 
+### 本地恢复验收
+
+开发容器运行且 `weekly` 已完成迁移后，在仓库根目录执行：
+
+```powershell
+./scripts/test-restore.ps1
+# 当前终端尚未刷新 Docker 的 PATH 时：
+./scripts/test-restore.ps1 -DockerCommand 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
+```
+
+该命令固定连接本项目开发容器，创建随机命名的源库和恢复库，验证备份校验和、中文数据、表清单、迁移记录及恢复后的数据库业务约束。业务测试使用 `.env.local` 中的开发数据库密码，通过 `127.0.0.1:55432` 连接恢复库。演练结束后删除本次临时数据库和归档，不覆盖业务数据库。
+
+这项检查不替代生产备份、异地存储或恢复时间验收。
+
+### 创建管理员
+
 在空数据库中准备一次性 JSON，通过标准输入执行：
 
 ```powershell
