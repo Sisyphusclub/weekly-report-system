@@ -228,6 +228,85 @@ async function main() {
           console.log(
             "PASS: revision reason required, old snapshot preserved, source summaries preserved, stale write rejected, history page rendered",
           );
+          // Only this isolated fixture is aged; application clocks stay real.
+          await pool.query(
+            "UPDATE report SET submitted_at=now()-interval '8 days' WHERE id=$1",
+            [beforeRevision.id],
+          );
+          const approvedState = (
+            await pool.query(
+              "SELECT summary,version,revision_number FROM report WHERE id=$1",
+              [beforeRevision.id],
+            )
+          ).rows[0];
+          const approvalInput = {
+            reportId: beforeRevision.id,
+            version: approvedState.version,
+            summary: "待审核的修订内容",
+            reason: "补充逾期更正",
+          };
+          const pending = await context.request.post(
+            `${origin}/api/reports/revisions`,
+            { headers: { origin }, data: approvalInput },
+          );
+          assert.equal(pending.status(), 200);
+          const pendingResult = await pending.json();
+          assert.equal(pendingResult.status, "PENDING");
+          const selfReview = await context.request.post(
+            `${origin}/api/reports/revisions/review`,
+            {
+              headers: { origin },
+              data: {
+                requestId: pendingResult.id,
+                version: 1,
+                decision: "APPROVED",
+                reason: "尝试自行审核",
+              },
+            },
+          );
+          assert.equal(selfReview.status(), 403);
+          assert.equal(
+            (
+              await context.request.post(`${origin}/api/reports/revisions`, {
+                headers: { origin },
+                data: approvalInput,
+              })
+            ).status(),
+            409,
+          );
+          assert.deepEqual(
+            (
+              await pool.query(
+                "SELECT summary,version,revision_number FROM report WHERE id=$1",
+                [beforeRevision.id],
+              )
+            ).rows[0],
+            approvedState,
+          );
+          assert.equal(
+            (
+              await pool.query(
+                "SELECT count(*)::int AS count FROM report_revision WHERE report_id=$1",
+                [beforeRevision.id],
+              )
+            ).rows[0].count,
+            historyAfter.length,
+          );
+          const savedRequest = (
+            await pool.query(
+              "SELECT status,reason,proposed_changes FROM revision_request WHERE id=$1",
+              [pendingResult.id],
+            )
+          ).rows[0];
+          assert.equal(savedRequest.status, "PENDING");
+          assert.equal(savedRequest.reason, approvalInput.reason);
+          assert.equal(
+            savedRequest.proposed_changes.summary,
+            approvalInput.summary,
+          );
+          console.log(
+            "PASS: expired revision creates one pending request without altering published report or historical snapshots",
+          );
           const projectId = randomUUID(),
             categoryId = randomUUID(),
             planId = randomUUID();
