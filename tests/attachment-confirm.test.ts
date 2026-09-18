@@ -72,6 +72,29 @@ it("checks permission even when the attachment was already verified", async () =
   expect((await PATCH(request())).status).toBe(403);
   expect(mocks.scanObject).not.toHaveBeenCalled();
 });
+it.each([true, false])(
+  "commits confirmation and audit together when changed=%s",
+  async (changed) => {
+    const db = database(null);
+    const audit = vi.fn().mockResolvedValue(undefined);
+    const returning = vi
+      .fn()
+      .mockResolvedValue(changed ? [{ id: "attachment" }] : []);
+    const tx = {
+      update: () => ({ set: () => ({ where: () => ({ returning }) }) }),
+      insert: () => ({ values: audit }),
+    };
+    const transaction = vi.fn(
+      async (action: (value: typeof tx) => Promise<void>) => action(tx),
+    );
+    mocks.getDb.mockReturnValue({ ...db, transaction });
+    expect((await PATCH(request())).status).toBe(changed ? 200 : 409);
+    expect(transaction).toHaveBeenCalledOnce();
+    expect(audit).toHaveBeenCalledTimes(changed ? 1 : 0);
+    expect(db.update).not.toHaveBeenCalled();
+    expect(db.insert).not.toHaveBeenCalled();
+  },
+);
 it("keeps an unverified attachment for retry when the scanner is unavailable", async () => {
   const db = database(null);
   mocks.verifyObject.mockResolvedValue(undefined);

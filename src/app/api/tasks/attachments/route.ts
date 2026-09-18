@@ -1,4 +1,4 @@
-import { and, asc, eq, isNotNull } from "drizzle-orm";
+import { and, asc, eq, isNotNull, isNull } from "drizzle-orm";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, taskAttachment, workTask } from "@/lib/db/schema";
@@ -102,18 +102,29 @@ export async function PATCH(request: Request) {
       sizeBytes: row.sizeBytes,
       sha256: row.sha256,
     });
-    await db
-      .update(taskAttachment)
-      .set({ verifiedAt: new Date(), updatedAt: new Date() })
-      .where(eq(taskAttachment.id, id));
-    await db.insert(auditLog).values({
-      id: crypto.randomUUID(),
-      organizationId: actor.organizationId,
-      actorId: actor.id,
-      action: "ATTACHMENT_VERIFY",
-      resourceType: "TASK_ATTACHMENT",
-      resourceId: id,
-      result: "SUCCESS",
+    await db.transaction(async (tx) => {
+      const changed = await tx
+        .update(taskAttachment)
+        .set({ verifiedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            eq(taskAttachment.id, id),
+            eq(taskAttachment.organizationId, actor.organizationId),
+            isNull(taskAttachment.verifiedAt),
+          ),
+        )
+        .returning({ id: taskAttachment.id });
+      if (!changed.length)
+        throw new BusinessError("附件状态已变化，请刷新后重试", 409);
+      await tx.insert(auditLog).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        actorId: actor.id,
+        action: "ATTACHMENT_VERIFY",
+        resourceType: "TASK_ATTACHMENT",
+        resourceId: id,
+        result: "SUCCESS",
+      });
     });
     return Response.json({ ok: true });
   } catch (e) {
