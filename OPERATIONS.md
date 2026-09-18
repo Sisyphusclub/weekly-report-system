@@ -20,6 +20,10 @@
 6. 执行 `docker compose up -d app`。
 7. 检查 `GET /api/health` 和登录流程。
 
+## 账号停用与任务交接
+
+管理员可在“任务数据”页选择原负责人和接收人，填写原因并确认数量后批量转交任务。原账号可为停用状态；接收人必须是本组织已启用的员工或老板账号。每批最多 200 条，仅包含待开始、进行中、阻塞任务，超过时可在刷新后继续下一批。转交会递增任务版本、逐条记录原负责人/接收人/原因，并通知接收人；已完成与已取消任务、历史报告署名和报告快照保持不变。数量发生变化时需刷新后重新确认，网络结果不确定时先核对再操作。
+
 ## TOTP 恢复
 
 账号丢失认证设备且无恢复码时，服务器运维人员核实身份后，通过受保护 stdin 向 `npm run security:reset-totp` 输入 JSON；容器中使用 `docker compose run --rm -T tools npm run security:reset-totp`。需先执行新增迁移。输入字段为 `organizationId`、`operatorUsername`（同组织未停用的管理员审计账号）、`targetUsername`、`reason`（10–500 字符）以及固定确认值 `confirm: "RESET_TOTP"`。不要在原因中填写密码、TOTP 密钥或恢复码。
