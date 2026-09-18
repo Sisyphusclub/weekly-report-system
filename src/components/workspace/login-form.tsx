@@ -93,7 +93,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
             value={username}
             onChange={setUsername}
             autoComplete="username"
-            placeholder="请输入管理员分配的用户名"
+            placeholder="输入用户名"
             leadingIcon={RiUserLine}
             isRequired
             isDisabled={!configured || busy}
@@ -123,7 +123,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
         trailingIcon={RiArrowRightLine}
         className="h-11 w-full"
       >
-        {busy ? "正在验证…" : secondFactor ? "验证并继续" : "登录工作台"}
+        {busy ? "登录中…" : secondFactor ? "验证并继续" : "登录"}
       </Button>
       {secondFactor && (
         <Button
@@ -140,7 +140,7 @@ export function LoginForm({ configured }: { configured: boolean }) {
         </Button>
       )}
       <p className="text-caption-1-regular text-text-tertiary">
-        账号由管理员统一管理。忘记密码或账号停用时，请联系管理员重置。
+        账号由管理员统一管理。忘记密码请联系管理员。
       </p>
     </form>
   );

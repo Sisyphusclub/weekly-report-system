@@ -1,9 +1,4 @@
-import {
-  RiBarChartBoxLine,
-  RiFileList3Line,
-  RiTeamLine,
-  RiShieldCheckLine,
-} from "@remixicon/react";
+import { RiBarChartBoxLine, RiShieldCheckLine } from "@remixicon/react";
 import { LoginForm } from "@/components/workspace/login-form";
 import { configurationStatus } from "@/lib/config";
 
@@ -21,51 +16,27 @@ export default function LoginPage() {
           </span>
           <span className="text-headline-medium">市场部工作看板</span>
         </div>
-        <div className="hidden max-w-lg flex-col gap-8 py-12 lg:flex">
-          <div className="flex flex-col gap-4">
+        <div className="hidden max-w-lg flex-col gap-10 py-12 lg:flex">
+          <div className="flex flex-col gap-5">
             <p className="text-caption-1-semibold text-text-tertiary">
-              记录工作 · 看见进展 · 协同推进
+              MARKETING · WORKSPACE
             </p>
-            <h2 className="text-large-title-medium text-text-primary">
-              让每一次推进，
+            <h2 className="max-w-md text-large-title-medium text-text-primary">
+              把每天的工作，
               <br />
-              都有清晰的记录。
+              留在同一处。
             </h2>
-            <p className="text-body-regular text-text-secondary">
-              连接每日工作与团队目标，在同一处整理日报、追踪计划、协调项目阻塞。
+            <p className="max-w-md text-body-regular leading-7 text-text-secondary">
+              日报、计划、项目进展与协作事项，按团队的节奏持续更新。
             </p>
           </div>
-          <div className="flex flex-col gap-5">
-            {[
-              {
-                icon: RiFileList3Line,
-                title: "从日报到周报",
-                text: "工作事实可追溯，计划衔接有依据。",
-              },
-              {
-                icon: RiTeamLine,
-                title: "成员与项目，双向看进展",
-                text: "关注交付和协作，让需要支持的事项被看见。",
-              },
-              {
-                icon: RiShieldCheckLine,
-                title: "明确的权限边界",
-                text: "草稿仅本人可见，角色分离，保留修订历史。",
-              },
-            ].map((item) => (
-              <div key={item.title} className="flex items-start gap-4">
-                <item.icon
-                  className="mt-1 size-5 shrink-0 text-foreground-icon-secondary"
-                  aria-hidden
-                />
-                <div>
-                  <h2 className="text-body-medium">{item.title}</h2>
-                  <p className="mt-1 text-body-regular text-text-secondary">
-                    {item.text}
-                  </p>
-                </div>
-              </div>
-            ))}
+          <div className="border-l-2 border-accent-600 pl-5">
+            <p className="text-body-medium text-text-primary">
+              工作记录与项目协同
+            </p>
+            <p className="mt-1 text-body-regular text-text-secondary">
+              Asia/Shanghai · 内部使用
+            </p>
           </div>
         </div>
         <p className="hidden text-caption-1-regular text-text-tertiary lg:block">
@@ -76,12 +47,9 @@ export default function LoginPage() {
         <div className="flex w-full max-w-sm flex-col gap-8">
           <header>
             <p className="mb-3 text-caption-1-semibold text-text-tertiary">
-              欢迎回来
+              WORKSPACE
             </p>
-            <h1 className="text-title-1-medium">登录你的工作台</h1>
-            <p className="mt-3 text-body-regular text-text-secondary">
-              使用公司分配的用户名和密码。
-            </p>
+            <h1 className="text-title-1-medium">登录</h1>
           </header>
           {!configured && (
             <div
@@ -90,7 +58,7 @@ export default function LoginPage() {
             >
               <p className="text-body-medium">系统正在初始化</p>
               <p className="mt-2 text-body-regular text-text-secondary">
-                数据库与认证服务尚未配置，暂时无法登录。请联系系统管理员完成初始化。
+                当前环境尚未完成初始化，请联系管理员。
               </p>
             </div>
           )}
