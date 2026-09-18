@@ -39,5 +39,6 @@
 - 新增 `npm run verify` 统一执行类型、Lint、格式、单元测试、迁移检查和生产构建门禁。
 - 新增 `npm run verify:e2e`，在核心门禁通过后追加 Playwright 验收。
 - 最近一次 `npm run verify:e2e` 已通过核心门禁、274 个单元测试和 6 项未配置环境 E2E。
+- 新增 `npm run config:check`，用于部署前检查配置完整性且不输出凭据。
 
 只有 `CODEX_SPEC.md` 第 19 节全部验收条件都有证据时，才能将 Release 1 标记为完成。
