@@ -44,6 +44,8 @@ PowerShell 执行 `scripts/backup-db.ps1 -OutputDirectory D:\backups\weekly`，�
 
 # 迁移执行约束
 
+数据库集成测试还覆盖报告版本和审计记录的 UPDATE/DELETE 拒绝、同一员工同日报告唯一性、通知去重及事务回滚。不可变历史的测试记录只写入未提交事务，测试结束回滚，不关闭保护触发器。该测试不执行 TRUNCATE，也不清空已有业务表。
+
 CI 的 `database` 作业使用独立 PostgreSQL 16 服务执行 `npm run test:database`，检查全量迁移、重复迁移、schema 列可读性、组织外键隔离及两个连接竞争同一任务版本。手动运行时必须显式设置 `TEST_DATABASE_URL`，数据库名称须以 `_test` 结尾，禁止使用生产数据库；脚本不读取应用的 `DATABASE_URL`，只清理本次生成的 UUID 测试记录。新增工作流不代表测试已经执行通过，发布时应查看该作业的实际结果。
 
 数据库迁移由 `npm run db:migrate` 按 Drizzle journal 顺序执行。不要直接重复运行已标记完成的 SQL，也不要修改已经在任一环境执行过的迁移文件；线上修复必须新增迁移并先在预发布数据库演练。

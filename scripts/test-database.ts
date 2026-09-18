@@ -108,8 +108,73 @@ async function main() {
         [task],
       );
       assert.equal(saved.rows[0].version, 2);
+      // Append-only fixtures stay inside a rolled-back transaction; no trigger
+      // is disabled and no historical row needs to be deleted for cleanup.
+      await client.query("BEGIN");
+      const reportId = randomUUID();
+      const revisionId = randomUUID();
+      const auditId = randomUUID();
+      await client.query(
+        "INSERT INTO report (id,organization_id,author_id,type,report_date,due_at,calendar_version) VALUES ($1,$2,$3,'DAILY','2026-09-18','2026-09-18T10:00:00Z',1)",
+        [reportId, org, member],
+      );
+      await client.query(
+        "INSERT INTO report_revision (id,organization_id,report_id,revision_number,editor_id,reason,snapshot,diff) VALUES ($1,$2,$3,1,$4,'test','{}','{}')",
+        [revisionId, org, reportId, member],
+      );
+      await client.query(
+        "INSERT INTO audit_log (id,organization_id,actor_id,action,resource_type,resource_id,result) VALUES ($1,$2,$3,'TEST','REPORT',$4,'SUCCESS')",
+        [auditId, org, member, reportId],
+      );
+      for (const [sql, id] of [
+        [
+          "UPDATE report_revision SET reason='modified' WHERE id=$1",
+          revisionId,
+        ],
+        ["DELETE FROM report_revision WHERE id=$1", revisionId],
+        ["UPDATE audit_log SET result='modified' WHERE id=$1", auditId],
+        ["DELETE FROM audit_log WHERE id=$1", auditId],
+      ]) {
+        await client.query("SAVEPOINT immutable_check");
+        await assert.rejects(client.query(sql, [id]), {
+          code: "P0001",
+          message: "Historical records are append-only",
+        });
+        await client.query("ROLLBACK TO SAVEPOINT immutable_check");
+      }
+      await client.query("SAVEPOINT duplicate_report");
+      await assert.rejects(
+        client.query(
+          "INSERT INTO report (id,organization_id,author_id,type,report_date,due_at,calendar_version) VALUES ($1,$2,$3,'DAILY','2026-09-18','2026-09-18T10:00:00Z',1)",
+          [randomUUID(), org, member],
+        ),
+        { code: "23505" },
+      );
+      await client.query("ROLLBACK TO SAVEPOINT duplicate_report");
+      const notifications = [];
+      for (let i = 0; i < 2; i++) {
+        notifications.push(
+          await client.query(
+            "INSERT INTO notification (id,organization_id,recipient_id,dedupe_key,type,title) VALUES ($1,$2,$3,'same-reminder','TEST','test') ON CONFLICT DO NOTHING RETURNING id",
+            [randomUUID(), org, member],
+          ),
+        );
+      }
+      assert.equal(
+        notifications.reduce(
+          (count, result) => count + (result.rowCount ?? 0),
+          0,
+        ),
+        1,
+      );
+      await client.query("ROLLBACK");
+      const historyAfterRollback = await pool.query(
+        "SELECT id FROM report_revision WHERE id=$1 UNION ALL SELECT id FROM audit_log WHERE id=$2",
+        [revisionId, auditId],
+      );
+      assert.equal(historyAfterRollback.rowCount, 0);
       console.log(
-        "PASS: migration replay, schema columns, tenant foreign keys, concurrent optimistic update",
+        "PASS: migrations, schema, tenant isolation, concurrent updates, immutable history, report uniqueness, notification deduplication, rollback",
       );
     } finally {
       try {
