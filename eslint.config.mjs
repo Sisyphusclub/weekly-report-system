@@ -6,6 +6,7 @@ export default defineConfig([
   ...nextTs,
   globalIgnores([
     ".next/**",
+    ".next-browser-test/**",
     "src/components/base/**",
     "src/components/application/**",
     ".agents/**",
