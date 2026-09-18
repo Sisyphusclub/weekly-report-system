@@ -29,6 +29,18 @@ export function reportSearchConditions(
     dates.member ? eq(report.authorId, dates.member) : undefined,
     dates.status ? eq(report.status, dates.status) : undefined,
     dates.type ? eq(report.type, dates.type) : undefined,
+    dates.project
+      ? sql`exists (select 1 from report_task rt where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and rt.snapshot->>'projectId' = ${dates.project})`
+      : undefined,
+    dates.category
+      ? sql`exists (select 1 from report_task rt where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and rt.snapshot->>'categoryId' = ${dates.category})`
+      : undefined,
+    dates.taskStatus
+      ? sql`exists (select 1 from report_task rt where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and rt.snapshot->>'status' = ${dates.taskStatus})`
+      : undefined,
+    dates.blocked
+      ? sql`exists (select 1 from report_task rt where rt.organization_id = ${report.organizationId} and rt.report_id = ${report.id} and (rt.snapshot->>'status' = 'BLOCKED') = (${dates.blocked} = 'YES'))`
+      : undefined,
     dates.from
       ? gte(sql`coalesce(${report.reportDate}, ${report.weekEnd})`, dates.from)
       : undefined,

@@ -9,10 +9,14 @@ export function ReportFilters({
   query,
   filters,
   members,
+  projects,
+  categories,
 }: {
   query: string;
   filters: ReportFilter;
   members: Array<{ id: string; name: string }>;
+  projects: Array<{ id: string; name: string }>;
+  categories: Array<{ id: string; name: string }>;
 }) {
   return (
     <form action="/reports" className="flex flex-wrap items-end gap-3">
@@ -54,6 +58,71 @@ export function ReportFilters({
             !members.some((member) => member.id === filters.member) && (
               <SelectItem id={filters.member}>所选成员不可用</SelectItem>
             )}
+        </Select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-body-medium" id="report-project-label">
+          项目
+        </span>
+        <Select
+          name="project"
+          aria-labelledby="report-project-label"
+          defaultSelectedKey={filters.project ?? "ALL"}
+        >
+          <SelectItem id="ALL">全部项目</SelectItem>
+          {projects.map((item) => (
+            <SelectItem key={item.id} id={item.id} textValue={item.name}>
+              {item.name}
+            </SelectItem>
+          ))}
+        </Select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-body-medium" id="report-category-label">
+          分类
+        </span>
+        <Select
+          name="category"
+          aria-labelledby="report-category-label"
+          defaultSelectedKey={filters.category ?? "ALL"}
+        >
+          <SelectItem id="ALL">全部分类</SelectItem>
+          {categories.map((item) => (
+            <SelectItem key={item.id} id={item.id} textValue={item.name}>
+              {item.name}
+            </SelectItem>
+          ))}
+        </Select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-body-medium" id="report-task-status-label">
+          任务状态
+        </span>
+        <Select
+          name="taskStatus"
+          aria-labelledby="report-task-status-label"
+          defaultSelectedKey={filters.taskStatus ?? "ALL"}
+        >
+          <SelectItem id="ALL">全部任务状态</SelectItem>
+          <SelectItem id="TODO">待处理</SelectItem>
+          <SelectItem id="IN_PROGRESS">进行中</SelectItem>
+          <SelectItem id="BLOCKED">阻塞</SelectItem>
+          <SelectItem id="DONE">已完成</SelectItem>
+          <SelectItem id="CANCELED">已取消</SelectItem>
+        </Select>
+      </div>
+      <div className="flex flex-col gap-2">
+        <span className="text-body-medium" id="report-blocked-label">
+          阻塞条件
+        </span>
+        <Select
+          name="blocked"
+          aria-labelledby="report-blocked-label"
+          defaultSelectedKey={filters.blocked ?? "ALL"}
+        >
+          <SelectItem id="ALL">全部</SelectItem>
+          <SelectItem id="YES">包含阻塞任务</SelectItem>
+          <SelectItem id="NO">不含阻塞任务</SelectItem>
         </Select>
       </div>
       <div className="flex flex-col gap-2">

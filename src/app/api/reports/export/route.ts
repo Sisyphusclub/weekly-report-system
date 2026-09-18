@@ -25,7 +25,18 @@ export async function GET(request: Request) {
       60_000,
     );
     const url = new URL(request.url);
-    for (const key of ["q", "from", "to", "member", "status", "type"]) {
+    for (const key of [
+      "q",
+      "from",
+      "to",
+      "member",
+      "status",
+      "type",
+      "project",
+      "category",
+      "taskStatus",
+      "blocked",
+    ]) {
       if (url.searchParams.getAll(key).length > 1)
         throw new BusinessError("筛选参数不能重复");
     }
@@ -41,6 +52,10 @@ export async function GET(request: Request) {
       member: url.searchParams.get("member") ?? undefined,
       status: url.searchParams.get("status") ?? undefined,
       type: url.searchParams.get("type") ?? undefined,
+      project: url.searchParams.get("project") ?? undefined,
+      category: url.searchParams.get("category") ?? undefined,
+      taskStatus: url.searchParams.get("taskStatus") ?? undefined,
+      blocked: url.searchParams.get("blocked") ?? undefined,
     });
     if (!dates.success) throw new BusinessError("报告筛选条件无效");
     const filter = and(

@@ -24,6 +24,16 @@ it("保留成员、类型和状态，分页与导出可复用同一组条件", (
     false,
   );
 });
+it("支持项目、分类、任务状态和阻塞条件往返", () => {
+  const filters = reportFilter.parse({
+    project: "project-1",
+    category: "category-1",
+    taskStatus: "BLOCKED",
+    blocked: "YES",
+  });
+  const link = new URLSearchParams(reportFilterParams("", filters));
+  expect(reportFilter.parse(Object.fromEntries(link))).toEqual(filters);
+});
 it("全部选项不限制查询，非法条件不会退化为全量查询", () => {
   expect(
     reportFilter.parse({ member: "ALL", type: "ALL", status: "ALL" }),
@@ -34,6 +44,8 @@ it("全部选项不限制查询，非法条件不会退化为全量查询", () =
     { member: "a".repeat(201) },
     { status: "UNKNOWN" },
     { type: "MONTHLY" },
+    { taskStatus: "UNKNOWN" },
+    { blocked: "MAYBE" },
   ]) {
     expect(reportFilter.safeParse(filters).success).toBe(false);
   }

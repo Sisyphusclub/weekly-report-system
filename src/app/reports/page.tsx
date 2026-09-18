@@ -7,7 +7,7 @@ import { ButtonLink } from "@/components/base/buttons/button";
 import { CopyFilterLink } from "@/components/workspace/copy-filter-link";
 import { ReportFilters } from "@/components/workspace/report-filters";
 import { getDb } from "@/lib/db";
-import { user } from "@/lib/db/schema";
+import { user, project, category } from "@/lib/db/schema";
 import { and, asc, eq, ne } from "drizzle-orm";
 
 export const metadata = { title: "报告查询" };
@@ -33,6 +33,10 @@ export default async function ReportsPage({
     member: params.member,
     status: params.status,
     type: params.type,
+    project: params.project,
+    category: params.category,
+    taskStatus: params.taskStatus,
+    blocked: params.blocked,
   });
   const dates = parsedDates.success ? parsedDates.data : {};
   const result = parsedDates.success
@@ -40,10 +44,11 @@ export default async function ReportsPage({
     : { items: [], total: 0 };
   const href = (value: number) =>
     `/reports?${reportFilterParams(query, dates, value)}`;
+  const db = getDb();
   const members =
     actor.role === "ADMIN"
       ? [{ id: actor.id, name: actor.name }]
-      : await getDb()
+      : await db
           .select({ id: user.id, name: user.name })
           .from(user)
           .where(
@@ -53,6 +58,28 @@ export default async function ReportsPage({
             ),
           )
           .orderBy(asc(user.name), asc(user.id));
+  const [projects, categories] = await Promise.all([
+    db
+      .select({ id: project.id, name: project.name })
+      .from(project)
+      .where(
+        and(
+          eq(project.organizationId, actor.organizationId),
+          ne(project.status, "ARCHIVED"),
+        ),
+      )
+      .orderBy(asc(project.name), asc(project.id)),
+    db
+      .select({ id: category.id, name: category.name })
+      .from(category)
+      .where(
+        and(
+          eq(category.organizationId, actor.organizationId),
+          eq(category.enabled, true),
+        ),
+      )
+      .orderBy(asc(category.sortOrder), asc(category.name), asc(category.id)),
+  ]);
   return (
     <WorkspaceShell actor={actor} selected="reports">
       <header>
@@ -68,6 +95,8 @@ export default async function ReportsPage({
         query={query}
         filters={dates}
         members={members}
+        projects={projects}
+        categories={categories}
       />
       {parsedDates.success && (
         <>
