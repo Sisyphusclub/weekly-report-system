@@ -78,7 +78,13 @@ export async function listReports(
         revisionNumber: report.revisionNumber,
       })
       .from(report)
-      .innerJoin(user, eq(report.authorId, user.id))
+      .innerJoin(
+        user,
+        and(
+          eq(report.authorId, user.id),
+          eq(report.organizationId, user.organizationId),
+        ),
+      )
       .where(filter)
       .orderBy(desc(report.createdAt), desc(report.id))
       .limit(PAGE_SIZE)

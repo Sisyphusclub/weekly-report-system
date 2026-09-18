@@ -80,7 +80,13 @@ export async function GET(request: Request) {
         revisionNumber: report.revisionNumber,
       })
       .from(report)
-      .innerJoin(user, eq(user.id, report.authorId))
+      .innerJoin(
+        user,
+        and(
+          eq(user.id, report.authorId),
+          eq(user.organizationId, report.organizationId),
+        ),
+      )
       .where(filter)
       .orderBy(asc(report.reportDate), asc(report.weekStart), asc(report.id));
     const ids = reports.map((item) => item.id);
