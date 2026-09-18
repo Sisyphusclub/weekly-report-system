@@ -20,6 +20,7 @@
     "dev:infra:down": "docker compose --env-file .env.local -f docker-compose.dev.yml down",
     "dev:infra:logs": "docker compose --env-file .env.local -f docker-compose.dev.yml logs -f",
     "test:database": "tsx scripts/test-database.ts",
+    "test:auth": "tsx --env-file-if-exists=.env.local scripts/test-auth.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",
     "admin:bootstrap": "tsx --env-file-if-exists=.env.local scripts/bootstrap-admin.ts",
