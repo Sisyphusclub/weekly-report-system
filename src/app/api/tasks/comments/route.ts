@@ -13,6 +13,7 @@ import { z } from "zod";
 const input = z.object({
   taskId: z.string().uuid(),
   body: z.string().trim().min(1).max(5000),
+  parentId: z.string().uuid().nullable().optional(),
 });
 export async function GET(request: Request) {
   try {
@@ -41,6 +42,7 @@ export async function GET(request: Request) {
         deletedAt: taskComment.deletedAt,
         authorName: user.name,
         authorId: taskComment.authorId,
+        parentId: taskComment.parentId,
       })
       .from(taskComment)
       .innerJoin(user, eq(taskComment.authorId, user.id))
@@ -81,6 +83,20 @@ export async function POST(request: Request) {
         )
         .limit(1);
       if (!task) throw new BusinessError("任务不存在或无权评论", 404);
+      if (v.parentId) {
+        const [parent] = await tx
+          .select({ id: taskComment.id })
+          .from(taskComment)
+          .where(
+            and(
+              eq(taskComment.id, v.parentId),
+              eq(taskComment.organizationId, actor.organizationId),
+              eq(taskComment.taskId, v.taskId),
+            ),
+          )
+          .limit(1);
+        if (!parent) throw new BusinessError("回复目标不存在", 404);
+      }
       const usernames = mentionedUsernames(v.body);
       const mentioned = usernames.length
         ? await tx
@@ -105,6 +121,7 @@ export async function POST(request: Request) {
         taskId: v.taskId,
         authorId: actor.id,
         body: v.body,
+        parentId: v.parentId ?? null,
         mentions: valid.map((item) => item.username),
       });
       await tx.insert(auditLog).values({

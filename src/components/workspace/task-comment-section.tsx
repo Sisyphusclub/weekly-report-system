@@ -9,6 +9,7 @@ type Item = {
   authorId: string;
   createdAt: string;
   deletedAt: string | null;
+  parentId: string | null;
 };
 export function TaskCommentSection({
   taskId,
@@ -22,6 +23,7 @@ export function TaskCommentSection({
   const [message, setMessage] = useState("");
   const [pending, setPending] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<string | null>(null);
   async function load() {
     const r = await fetch(`/api/tasks/comments?taskId=${taskId}`);
     const d = await r.json();
@@ -38,11 +40,12 @@ export function TaskCommentSection({
     const r = await fetch("/api/tasks/comments", {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ taskId, body }),
+      body: JSON.stringify({ taskId, body, parentId: replyTo }),
     });
     const d = await r.json();
     if (r.ok) {
       setBody("");
+      setReplyTo(null);
       await load();
     } else setMessage(d.error ?? "评论发布失败");
     setPending(false);
@@ -138,6 +141,11 @@ export function TaskCommentSection({
                     </Button>
                   </span>
                 ))}
+              {!item.deletedAt && !editing && (
+                <Button variant="ghost" onClick={() => setReplyTo(item.id)}>
+                  回复
+                </Button>
+              )}
             </li>
           ))}
         </ul>
@@ -145,13 +153,18 @@ export function TaskCommentSection({
         <p className="my-3 text-text-secondary">暂无评论</p>
       )}
       <Textarea
-        label="评论内容"
+        label={replyTo ? "回复内容" : "评论内容"}
         value={editing ? "" : body}
         onChange={setBody}
         maxLength={5000}
         rows={3}
         isDisabled={pending || Boolean(editing)}
       />
+      {replyTo && (
+        <Button variant="ghost" onClick={() => setReplyTo(null)}>
+          取消回复
+        </Button>
+      )}
       <Button
         className="mt-2"
         onClick={() => void submit()}

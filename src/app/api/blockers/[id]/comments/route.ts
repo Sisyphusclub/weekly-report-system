@@ -10,7 +10,10 @@ import {
 } from "@/lib/db/schema";
 import { z } from "zod";
 import { mentionedUsernames } from "@/lib/comment-input";
-const input = z.object({ body: z.string().trim().min(1).max(5000) });
+const input = z.object({
+  body: z.string().trim().min(1).max(5000),
+  parentId: z.string().uuid().nullable().optional(),
+});
 async function access(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   tx: any,
@@ -56,6 +59,7 @@ export async function GET(
         authorId: blockerComment.authorId,
         createdAt: blockerComment.createdAt,
         deletedAt: blockerComment.deletedAt,
+        parentId: blockerComment.parentId,
       })
       .from(blockerComment)
       .innerJoin(user, eq(user.id, blockerComment.authorId))
@@ -84,6 +88,20 @@ export async function POST(
     const id = (await params).id;
     const result = await getDb().transaction(async (tx) => {
       await access(tx, id, actor);
+      if (parsed.data.parentId) {
+        const [parent] = await tx
+          .select({ id: blockerComment.id })
+          .from(blockerComment)
+          .where(
+            and(
+              eq(blockerComment.id, parsed.data.parentId),
+              eq(blockerComment.organizationId, actor.organizationId),
+              eq(blockerComment.blockerId, id),
+            ),
+          )
+          .limit(1);
+        if (!parent) throw new BusinessError("回复目标不存在", 404);
+      }
       const commentId = crypto.randomUUID();
       await tx.insert(blockerComment).values({
         id: commentId,
@@ -91,6 +109,7 @@ export async function POST(
         blockerId: id,
         authorId: actor.id,
         body: parsed.data.body,
+        parentId: parsed.data.parentId ?? null,
       });
       const names = mentionedUsernames(parsed.data.body);
       if (names.length) {

@@ -435,6 +435,7 @@ export const taskComment = pgTable(
     taskId: text("task_id").notNull(),
     authorId: text("author_id").notNull(),
     body: text("body").notNull(),
+    parentId: text("parent_id"),
     mentions: jsonb("mentions").notNull().default([]),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     ...timestamps(),
@@ -449,6 +450,10 @@ export const taskComment = pgTable(
       columns: [t.organizationId, t.authorId],
       foreignColumns: [user.organizationId, user.id],
     }),
+    foreignKey({
+      columns: [t.organizationId, t.parentId],
+      foreignColumns: [t.organizationId, t.id],
+    }),
   ],
 );
 export const blockerComment = pgTable(
@@ -459,6 +464,7 @@ export const blockerComment = pgTable(
     blockerId: text("blocker_id").notNull(),
     authorId: text("author_id").notNull(),
     body: text("body").notNull(),
+    parentId: text("parent_id"),
     deletedAt: timestamp("deleted_at", { withTimezone: true }),
     ...timestamps(),
   },
@@ -471,6 +477,10 @@ export const blockerComment = pgTable(
     foreignKey({
       columns: [t.organizationId, t.authorId],
       foreignColumns: [user.organizationId, user.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.parentId],
+      foreignColumns: [t.organizationId, t.id],
     }),
   ],
 );
