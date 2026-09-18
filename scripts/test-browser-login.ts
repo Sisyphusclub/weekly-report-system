@@ -174,6 +174,60 @@ async function main() {
           console.log(
             "PASS: weekly draft reload, submitted daily aggregation, immediate submit lock, persisted snapshot",
           );
+          const beforeRevision = (
+            await pool.query(
+              "SELECT id,version,revision_number FROM report WHERE id=$1",
+              [weekly.rows[0].id],
+            )
+          ).rows[0];
+          const historyBefore = (
+            await pool.query(
+              "SELECT snapshot FROM report_revision WHERE report_id=$1 ORDER BY revision_number",
+              [beforeRevision.id],
+            )
+          ).rows;
+          const revise = (reason: string) =>
+            context.request.post(`${origin}/api/reports/revisions`, {
+              headers: { origin },
+              data: {
+                reportId: beforeRevision.id,
+                version: beforeRevision.version,
+                summary: "修订后的周报总结",
+                reason,
+              },
+            });
+          assert.equal((await revise("")).status(), 400);
+          const revised = await revise("补充验收结果");
+          assert.equal(revised.status(), 200);
+          assert.equal((await revised.json()).status, "REVISED");
+          assert.equal((await revise("重复旧版本请求")).status(), 409);
+          const historyAfter = (
+            await pool.query(
+              "SELECT snapshot,reason FROM report_revision WHERE report_id=$1 ORDER BY revision_number",
+              [beforeRevision.id],
+            )
+          ).rows;
+          assert.equal(historyAfter.length, historyBefore.length + 1);
+          assert.deepEqual(
+            historyAfter.slice(0, -1).map((row) => row.snapshot),
+            historyBefore.map((row) => row.snapshot),
+          );
+          assert.equal(historyAfter.at(-1).reason, "补充验收结果");
+          assert.equal(
+            historyAfter.at(-1).snapshot.summary,
+            "修订后的周报总结",
+          );
+          assert.deepEqual(
+            historyAfter.at(-1).snapshot.summaries,
+            revisions.rows[0].snapshot.summaries,
+          );
+          await page.goto(`${origin}/reports/${beforeRevision.id}/history`);
+          await expect(
+            page.getByText("修订原因：补充验收结果", { exact: true }),
+          ).toBeVisible();
+          console.log(
+            "PASS: revision reason required, old snapshot preserved, source summaries preserved, stale write rejected, history page rendered",
+          );
           const projectId = randomUUID(),
             categoryId = randomUUID(),
             planId = randomUUID();
