@@ -2,7 +2,14 @@ import { and, eq, ne } from "drizzle-orm";
 import { taskInput } from "@/lib/task-input";
 import { writeActor, BusinessError, apiError } from "@/lib/api";
 import { getDb } from "@/lib/db";
-import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
+import {
+  auditLog,
+  category,
+  project,
+  taskStatusHistory,
+  user,
+  workTask,
+} from "@/lib/db/schema";
 import { desc } from "drizzle-orm";
 import { currentUser } from "@/lib/access";
 export async function GET(request: Request) {
@@ -148,6 +155,20 @@ export async function POST(request: Request) {
         .limit(1);
       if (!refs) throw new BusinessError("项目、分类或负责人无效");
       const id = input.id ?? crypto.randomUUID();
+      const previous = input.id
+        ? (
+            await tx
+              .select({ status: workTask.status })
+              .from(workTask)
+              .where(
+                and(
+                  eq(workTask.id, id),
+                  eq(workTask.organizationId, actor.organizationId),
+                ),
+              )
+              .limit(1)
+          )[0]
+        : undefined;
       const values = {
         projectId: input.projectId,
         categoryId: input.categoryId,
@@ -183,6 +204,16 @@ export async function POST(request: Request) {
           createdById: actor.id,
           ...values,
         });
+      if (!previous || previous.status !== input.status) {
+        await tx.insert(taskStatusHistory).values({
+          id: crypto.randomUUID(),
+          organizationId: actor.organizationId,
+          taskId: id,
+          fromStatus: previous?.status ?? null,
+          toStatus: input.status,
+          changedById: actor.id,
+        });
+      }
       await tx.insert(auditLog).values({
         id: crypto.randomUUID(),
         organizationId: actor.organizationId,

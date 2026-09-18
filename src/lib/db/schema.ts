@@ -304,6 +304,35 @@ export const workTask = pgTable(
     ),
   ],
 );
+export const taskStatusHistory = pgTable(
+  "task_status_history",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id").notNull(),
+    taskId: text("task_id").notNull(),
+    fromStatus: taskStatusEnum("from_status"),
+    toStatus: taskStatusEnum("to_status").notNull(),
+    changedById: text("changed_by_id").notNull(),
+    changedAt: timestamp("changed_at", { withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (t) => [
+    index("task_status_history_task").on(
+      t.organizationId,
+      t.taskId,
+      t.changedAt,
+    ),
+    foreignKey({
+      columns: [t.organizationId, t.taskId],
+      foreignColumns: [workTask.organizationId, workTask.id],
+    }),
+    foreignKey({
+      columns: [t.organizationId, t.changedById],
+      foreignColumns: [user.organizationId, user.id],
+    }),
+  ],
+);
 export const taskCollaborator = pgTable(
   "task_collaborator",
   {

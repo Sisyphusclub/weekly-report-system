@@ -33,6 +33,7 @@ function database(task: unknown) {
     }),
   });
   const audit = vi.fn().mockResolvedValue(undefined);
+  const inserts: unknown[] = [];
   const tx = {
     select: () => ({
       from: () => ({
@@ -42,12 +43,17 @@ function database(task: unknown) {
       }),
     }),
     update: () => ({ set }),
-    insert: () => ({ values: audit }),
+    insert: () => ({
+      values: async (value: unknown) => {
+        inserts.push(value);
+        await audit(value);
+      },
+    }),
   };
   mocks.getDb.mockReturnValue({
     transaction: (fn: (value: typeof tx) => unknown) => fn(tx),
   });
-  return { set, audit };
+  return { set, audit, inserts };
 }
 it.each([
   [null, 404],
@@ -63,7 +69,7 @@ it.each([
   expect(audit).not.toHaveBeenCalled();
 });
 it("本人更新状态并记录前后状态，不改日期或来源", async () => {
-  const { set, audit } = database({
+  const { set, audit, inserts } = database({
     id: taskId,
     primaryAssigneeId: "employee",
     version: 1,
@@ -81,6 +87,14 @@ it("本人更新状态并记录前后状态，不改日期或来源", async () =
       action: "TASK_STATUS_TODO_TO_DONE",
       actorId: "employee",
       resourceId: taskId,
+    }),
+  );
+  expect(inserts).toContainEqual(
+    expect.objectContaining({
+      taskId,
+      fromStatus: "TODO",
+      toStatus: "DONE",
+      changedById: "employee",
     }),
   );
 });

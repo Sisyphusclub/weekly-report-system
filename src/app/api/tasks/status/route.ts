@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import { apiError, BusinessError, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
-import { auditLog, workTask } from "@/lib/db/schema";
+import { auditLog, taskStatusHistory, workTask } from "@/lib/db/schema";
 
 const inputSchema = z.object({
   taskId: z.string().uuid(),
@@ -58,6 +58,14 @@ export async function PATCH(request: Request) {
           status: workTask.status,
         });
       if (!updated) throw new BusinessError("任务已更新，请刷新后重试", 409);
+      await tx.insert(taskStatusHistory).values({
+        id: crypto.randomUUID(),
+        organizationId: actor.organizationId,
+        taskId: task.id,
+        fromStatus: task.status,
+        toStatus: input.status,
+        changedById: actor.id,
+      });
       await tx.insert(auditLog).values({
         id: crypto.randomUUID(),
         organizationId: actor.organizationId,
