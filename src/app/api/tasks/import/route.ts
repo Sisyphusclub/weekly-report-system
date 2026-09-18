@@ -8,7 +8,7 @@ import {
 import { taskImportBatch } from "@/lib/task-import-input";
 import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
-import ExcelJS from "exceljs";
+import { parseTaskExcel } from "@/lib/task-excel-parser";
 import { boundedBody } from "@/lib/request-body";
 import { excelDate } from "@/lib/excel-date";
 export async function POST(request: Request) {
@@ -35,32 +35,7 @@ export async function POST(request: Request) {
         throw new BusinessError("仅支持 .xlsx 文件");
       if (file.size > 10 * 1024 * 1024)
         throw new BusinessError("Excel 文件不能超过 10 MB");
-      const workbook = new ExcelJS.Workbook();
-      try {
-        await workbook.xlsx.load(await file.arrayBuffer());
-      } catch {
-        throw new BusinessError("无法读取 Excel 文件，请确认文件完整且未加密");
-      }
-      const sheet = workbook.worksheets[0];
-      if (!sheet) throw new BusinessError("Excel 文件没有工作表");
-      const headers = (sheet.getRow(1).values as unknown[])
-        .slice(1)
-        .map(String);
-      const rows: Record<string, unknown>[] = [];
-      sheet.eachRow((row, index) => {
-        if (index > 1) {
-          if (rows.length >= 200)
-            throw new BusinessError(
-              "每次最多导入 200 条任务，请拆分文件后重试",
-            );
-          const values = (row.values as unknown[]).slice(1);
-          rows.push(
-            Object.fromEntries(
-              headers.map((header, i) => [header, values[i] ?? null]),
-            ),
-          );
-        }
-      });
+      const rows = await parseTaskExcel(await file.arrayBuffer());
       payload = {
         items: rows.map((row) => ({
           projectId: row.projectId ?? row["项目编号"],

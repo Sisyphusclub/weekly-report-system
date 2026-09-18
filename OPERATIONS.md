@@ -22,6 +22,8 @@
 
 ## 后台任务
 
+Excel 导入在独立 Node.js 子进程中解析，不继承应用密钥。每个应用进程最多同时运行 2 个解析任务，单次限时 15 秒，V8 老生代堆上限 128 MB；超时或子进程异常退出会拒绝导入。上传文件上限 10 MB，任务上限 200 条、工作表列数上限 32。V8 堆限制不覆盖 Buffer 等原生内存，部署时仍需根据应用和子进程的实测峰值设置容器总内存限制。解析脚本随 standalone 构建产物发布。
+
 由外部 cron、CI 或任务平台调用，并传入 `REMINDER_ORGANIZATION_ID`：`npm run reminders:run`、`npm run weekly:drafts`、`npm run attachments:cleanup`。任务可重复执行，通知使用唯一键去重，周报草稿只在不存在时创建；附件清理任务删除超过 1 小时仍未完成确认的对象和元数据。
 
 容器部署使用 `docker compose run --rm -T tools npm run <任务名>` 执行上述任务，工作日历导入使用 `calendar:seed`。`tools` 镜像包含 TypeScript 执行器、脚本和迁移目录，以非 root 用户运行；它没有端口映射，通过 profile 排除在常规服务启动之外。应用的 standalone 镜像仅用于提供 Web 服务，不包含运维执行环境。

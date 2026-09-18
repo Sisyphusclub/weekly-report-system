@@ -1,6 +1,10 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
   output: "standalone",
+  serverExternalPackages: ["exceljs"],
+  outputFileTracingIncludes: {
+    "/api/tasks/import": ["./scripts/parse-task-excel.mjs"],
+  },
   poweredByHeader: false,
   async headers() {
     const scriptPolicy =
