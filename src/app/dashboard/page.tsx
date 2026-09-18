@@ -4,9 +4,11 @@ import { getDb } from "@/lib/db";
 import { project, user, category, deliverableUnit } from "@/lib/db/schema";
 import { listReports } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { Input } from "@/components/base/input/input";
 import { DailySubmissions } from "@/components/workspace/daily-submissions";
 import { getSubmissionData } from "@/lib/submission-data";
+import { dateInput } from "@/lib/daily-input";
 import {
   getDashboardBreakdown,
   getDashboardMetrics,
@@ -17,7 +19,11 @@ export const metadata = { title: "工作看板" };
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ submissionPage?: string }>;
+  searchParams: Promise<{
+    submissionPage?: string;
+    from?: string;
+    to?: string;
+  }>;
 }) {
   const actor = await requireUser();
   const db = getDb();
@@ -77,13 +83,20 @@ export default async function DashboardPage({
   const parsedPage = Number(params.submissionPage ?? 1);
   const submissionPage =
     Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const from = dateInput.safeParse(params.from).success
+    ? dateInput.parse(params.from)
+    : undefined;
+  const to = dateInput.safeParse(params.to).success
+    ? dateInput.parse(params.to)
+    : undefined;
+  const range = from && to && from <= to ? { from, to } : undefined;
   const [reports, submissionData] = await Promise.all([
     listReports(actor, "", 1),
     getSubmissionData(actor, now),
   ]);
   const [metrics, breakdown] = await Promise.all([
     getDashboardMetrics(actor, now, submissionData),
-    getDashboardBreakdown(actor, now, submissionData),
+    getDashboardBreakdown(actor, now, submissionData, range),
   ]);
   return (
     <WorkspaceShell actor={actor} selected="dashboard">
@@ -96,6 +109,24 @@ export default async function DashboardPage({
           从工作记录中了解团队进展。
         </p>
       </header>
+      <form action="/dashboard" className="flex flex-wrap items-end gap-3">
+        <Input
+          name="from"
+          type="date"
+          label="项目视角开始日期"
+          defaultValue={from ?? ""}
+        />
+        <Input
+          name="to"
+          type="date"
+          label="项目视角结束日期"
+          defaultValue={to ?? ""}
+        />
+        <Button type="submit">查询项目范围</Button>
+        <ButtonLink href="/dashboard" variant="ghost">
+          恢复本周
+        </ButtonLink>
+      </form>
       {actor.role === "BOSS" && (
         <DailySubmissions
           data={submissionData}

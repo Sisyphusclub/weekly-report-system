@@ -57,13 +57,17 @@ export type DashboardBreakdown = {
     quantity: number;
   }>;
 };
+export type DashboardDateRange = { from: string; to: string };
 
 export async function getDashboardBreakdown(
   actor: Actor,
   now = new Date(),
   submissionData?: SubmissionData,
+  range?: DashboardDateRange,
 ): Promise<DashboardBreakdown> {
-  const dates = weekDates(shanghaiDate(now));
+  const dates = range ? [range.from, range.to] : weekDates(shanghaiDate(now));
+  const start = dates[0];
+  const end = dates[dates.length - 1];
   const db = getDb();
   const data = submissionData ?? (await getSubmissionData(actor, now));
   const [tasks, blockers, projects, deliveries] = await Promise.all([
@@ -79,8 +83,8 @@ export async function getDashboardBreakdown(
       .where(
         and(
           eq(workTask.organizationId, actor.organizationId),
-          gte(workTask.workDate, dates[0]),
-          lte(workTask.workDate, dates[6]),
+          gte(workTask.workDate, start),
+          lte(workTask.workDate, end),
         ),
       ),
     db
@@ -165,8 +169,8 @@ export async function getDashboardBreakdown(
               eq(workTask.organizationId, actor.organizationId),
               inArray(workTask.projectId, projectIds),
               eq(workTask.kind, "PLAN"),
-              gte(workTask.dueDate, dates[0]),
-              lte(workTask.dueDate, dates[6]),
+              gte(workTask.dueDate, start),
+              lte(workTask.dueDate, end),
             ),
           )
           .orderBy(asc(workTask.dueDate), asc(workTask.id))
@@ -182,8 +186,8 @@ export async function getDashboardBreakdown(
         and(
           eq(workTask.organizationId, actor.organizationId),
           eq(workTask.kind, "PLAN"),
-          gte(workTask.dueDate, dates[0]),
-          lte(workTask.dueDate, dates[6]),
+          gte(workTask.dueDate, start),
+          lte(workTask.dueDate, end),
         ),
       ),
   ]);
@@ -206,7 +210,8 @@ export async function getDashboardBreakdown(
       ).length,
     };
   });
-  const blockerTrend = dates.map((date) => ({
+  const trendDates = range ? dateRange(start, end) : dates;
+  const blockerTrend = trendDates.map((date) => ({
     date,
     opened: blockers.filter((item) => shanghaiDate(item.createdAt) === date)
       .length,
@@ -321,6 +326,17 @@ export async function getDashboardBreakdown(
     },
     memberDeliverables,
   };
+}
+
+function dateRange(from: string, to: string) {
+  const result: string[] = [];
+  const cursor = new Date(`${from}T00:00:00+08:00`);
+  const end = new Date(`${to}T00:00:00+08:00`);
+  while (cursor <= end && result.length < 366) {
+    result.push(cursor.toISOString().slice(0, 10));
+    cursor.setUTCDate(cursor.getUTCDate() + 1);
+  }
+  return result;
 }
 
 export function submissionRate(submitted: number, due: number) {
