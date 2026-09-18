@@ -7,6 +7,7 @@ import {
   deliverableUnit,
   project,
   projectMember,
+  taskStatusHistory,
   user,
 } from "@/lib/db/schema";
 import { weekDates, type Actor } from "@/lib/domain";
@@ -47,6 +48,7 @@ export type DashboardBreakdown = {
   }>;
   blockerTrend: Array<{ date: string; opened: number; resolved: number }>;
   blockerResolutionMedianHours: number | null;
+  planFulfillment: { completed: number; due: number; rate: number | null };
 };
 
 export async function getDashboardBreakdown(
@@ -111,7 +113,7 @@ export async function getDashboardBreakdown(
       .where(eq(deliverable.organizationId, actor.organizationId)),
   ]);
   const projectIds = projects.map((item) => item.id);
-  const [projectPeople, owners, nextPlans] = await Promise.all([
+  const [projectPeople, owners, nextPlans, duePlans] = await Promise.all([
     projectIds.length
       ? db
           .select({
@@ -162,6 +164,21 @@ export async function getDashboardBreakdown(
           )
           .orderBy(asc(workTask.dueDate), asc(workTask.id))
       : [],
+    db
+      .select({
+        id: workTask.id,
+        status: workTask.status,
+        dueDate: workTask.dueDate,
+      })
+      .from(workTask)
+      .where(
+        and(
+          eq(workTask.organizationId, actor.organizationId),
+          eq(workTask.kind, "PLAN"),
+          gte(workTask.dueDate, dates[0]),
+          lte(workTask.dueDate, dates[6]),
+        ),
+      ),
   ]);
   const ownerById = new Map(owners.map((item) => [item.id, item]));
   const memberRows = data.members.map((member) => {
@@ -207,6 +224,30 @@ export async function getDashboardBreakdown(
         ).toFixed(1),
       )
     : null;
+  const duePlanIds = duePlans.map((plan) => plan.id);
+  const planHistory = duePlanIds.length
+    ? await db
+        .select({
+          taskId: taskStatusHistory.taskId,
+          toStatus: taskStatusHistory.toStatus,
+          changedAt: taskStatusHistory.changedAt,
+        })
+        .from(taskStatusHistory)
+        .where(
+          and(
+            eq(taskStatusHistory.organizationId, actor.organizationId),
+            inArray(taskStatusHistory.taskId, duePlanIds),
+          ),
+        )
+        .orderBy(asc(taskStatusHistory.changedAt), asc(taskStatusHistory.id))
+    : [];
+  const completedPlans = duePlans.filter((plan) => {
+    const cutoff = new Date(`${plan.dueDate}T23:59:59.999+08:00`);
+    const history = planHistory.filter(
+      (entry) => entry.taskId === plan.id && entry.changedAt <= cutoff,
+    );
+    return (history.at(-1)?.toStatus ?? plan.status) === "DONE";
+  }).length;
   const projectRows = projects.map((item) => {
     const projectTasks = tasks.filter((task) => task.projectId === item.id);
     const totals = new Map<
@@ -243,6 +284,13 @@ export async function getDashboardBreakdown(
     projects: projectRows,
     blockerTrend,
     blockerResolutionMedianHours,
+    planFulfillment: {
+      completed: completedPlans,
+      due: duePlans.length,
+      rate: duePlans.length
+        ? Math.round((completedPlans / duePlans.length) * 100)
+        : null,
+    },
   };
 }
 

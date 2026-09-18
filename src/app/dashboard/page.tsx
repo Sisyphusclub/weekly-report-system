@@ -240,6 +240,14 @@ export default async function DashboardPage({
               ? "暂无数据"
               : `${breakdown.blockerResolutionMedianHours} 小时`}
           </p>
+          <p className="mt-2 text-body-regular text-text-secondary">
+            本周计划兑现率：
+            {breakdown.planFulfillment.rate === null
+              ? "暂无数据"
+              : `${breakdown.planFulfillment.rate}%`}
+            （{breakdown.planFulfillment.completed}/
+            {breakdown.planFulfillment.due}）
+          </p>
           <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
             {breakdown.blockerTrend.map((day) => (
               <div
