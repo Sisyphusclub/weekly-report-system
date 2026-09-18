@@ -455,6 +455,70 @@ async function main() {
               ).status(),
               409,
             );
+            const blockerCreated = await context.request.post(
+              `${origin}/api/blockers`,
+              {
+                headers: { origin },
+                data: {
+                  description: "浏览器验收阻塞",
+                  severity: "IMPORTANT",
+                  isSensitive: false,
+                },
+              },
+            );
+            assert.equal(blockerCreated.status(), 201);
+            const blockerId = (await blockerCreated.json()).id;
+            const blockerState = (
+              await pool.query(
+                "SELECT version,status FROM blocker WHERE id=$1",
+                [blockerId],
+              )
+            ).rows[0];
+            const assigned = await bossContext.request.patch(
+              `${origin}/api/blockers/${blockerId}`,
+              {
+                headers: { origin },
+                data: {
+                  action: "ASSIGN",
+                  coordinatorId: id,
+                  version: blockerState.version,
+                },
+              },
+            );
+            assert.equal(assigned.status(), 200);
+            const acknowledged = await bossContext.request.patch(
+              `${origin}/api/blockers/${blockerId}`,
+              {
+                headers: { origin },
+                data: { action: "ACKNOWLEDGE", version: blockerState.version + 1 },
+              },
+            );
+            assert.equal(acknowledged.status(), 200);
+            const resolved = await context.request.patch(
+              `${origin}/api/blockers/${blockerId}`,
+              {
+                headers: { origin },
+                data: {
+                  action: "RESOLVE",
+                  resolution: "已完成协调并解除阻塞",
+                  version: blockerState.version + 2,
+                },
+              },
+            );
+            assert.equal(resolved.status(), 200);
+            assert.deepEqual(
+              (
+                await pool.query(
+                  "SELECT status,coordinator_id,resolution FROM blocker WHERE id=$1",
+                  [blockerId],
+                )
+              ).rows[0],
+              {
+                status: "RESOLVED",
+                coordinator_id: id,
+                resolution: "已完成协调并解除阻塞",
+              },
+            );
             const bossPage = await bossContext.newPage();
             await bossPage.goto(`${origin}/dashboard`);
             await expect(
