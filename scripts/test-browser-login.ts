@@ -539,7 +539,10 @@ async function main() {
               `${origin}/api/blockers/${blockerId}`,
               {
                 headers: { origin },
-                data: { action: "ACKNOWLEDGE", version: blockerState.version + 1 },
+                data: {
+                  action: "ACKNOWLEDGE",
+                  version: blockerState.version + 1,
+                },
               },
             );
             assert.equal(acknowledged.status(), 200);
@@ -755,7 +758,11 @@ async function main() {
         title: "测试岗位",
         role: "EMPLOYEE",
       });
-      assert.equal(created.status(), 201, `admin create status ${created.status()}`);
+      assert.equal(
+        created.status(),
+        201,
+        `admin create status ${created.status()}`,
+      );
       const credential = await created.json();
       assert.ok(credential.temporaryPassword.length >= 12);
       const createdRow = (
@@ -788,7 +795,9 @@ async function main() {
           employeePage.getByRole("heading", { name: "账号安全" }),
         ).toBeVisible();
         const newPassword = `New-${randomUUID()}-secure`;
-        await employeePage.getByLabel("当前临时密码").fill(credential.temporaryPassword);
+        await employeePage
+          .getByLabel("当前临时密码")
+          .fill(credential.temporaryPassword);
         await employeePage.getByLabel("新密码").fill(newPassword);
         await employeePage.getByRole("button", { name: "更新密码" }).click();
         await expect(employeePage.getByRole("status")).toHaveText(
