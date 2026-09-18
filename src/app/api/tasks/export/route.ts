@@ -2,7 +2,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { apiError, enforceRateLimit, writeActor } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, workTask } from "@/lib/db/schema";
-import ExcelJS from "exceljs";
+import { taskWorkbook } from "@/lib/task-workbook";
 export async function GET(request: Request) {
   try {
     const actor = await writeActor(request);
@@ -43,19 +43,7 @@ export async function GET(request: Request) {
       result: "SUCCESS",
     });
     if (new URL(request.url).searchParams.get("format") === "xlsx") {
-      const generatedAt = new Date().toISOString();
-      const exportRows = rows.map((row) => ({
-        ...row,
-        generatedAt,
-        generatedBy: actor.id,
-      }));
-      const workbook = new ExcelJS.Workbook();
-      const sheet = workbook.addWorksheet("任务");
-      sheet.columns = Object.keys(exportRows[0] ?? {}).map((key) => ({
-        header: key,
-        key,
-      }));
-      exportRows.forEach((row) => sheet.addRow(row));
+      const workbook = taskWorkbook(rows, actor.id);
       const buffer = await workbook.xlsx.writeBuffer();
       return new Response(buffer, {
         headers: {
