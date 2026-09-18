@@ -1,4 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { createServer } from "node:http";
+import type { AddressInfo } from "node:net";
 const mocks = vi.hoisted(() => ({
   send: vi.fn(),
   config: vi.fn(),
@@ -120,5 +122,61 @@ describe("scanner contract", () => {
       vi.fn().mockResolvedValue(new Response(null, { status: 503 })),
     );
     await expect(scanObject(input)).rejects.toThrow("服务不可用");
+  });
+  it("rejects malformed JSON", async () => {
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response("not json")));
+    await expect(scanObject(input)).rejects.toThrow("未通过安全扫描");
+  });
+  it("aborts a stalled scanner request after the timeout", async () => {
+    vi.useFakeTimers();
+    try {
+      vi.stubGlobal(
+        "fetch",
+        vi.fn(
+          (_url: string, options: RequestInit) =>
+            new Promise((_resolve, reject) => {
+              options.signal!.addEventListener("abort", () =>
+                reject(new Error("aborted")),
+              );
+            }),
+        ),
+      );
+      const assertion = expect(scanObject(input)).rejects.toThrow("aborted");
+      await vi.advanceTimersByTimeAsync(15_000);
+      await assertion;
+      expect(vi.getTimerCount()).toBe(0);
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+  it("does not forward private download URLs to a redirected endpoint", async () => {
+    let forwarded = 0;
+    const server = createServer((request, response) => {
+      if (request.url === "/scan") {
+        response.writeHead(307, { Location: "/unexpected" });
+        response.end();
+      } else {
+        forwarded++;
+        response.setHeader("content-type", "application/json");
+        response.end(JSON.stringify({ clean: true }));
+      }
+    });
+    await new Promise<void>((resolve) =>
+      server.listen(0, "127.0.0.1", resolve),
+    );
+    const port = (server.address() as AddressInfo).port;
+    mocks.config.mockReturnValue({
+      ...mocks.config(),
+      ATTACHMENT_SCANNER_URL: `http://127.0.0.1:${port}/scan`,
+    });
+    try {
+      await expect(scanObject(input)).rejects.toThrow();
+      expect(forwarded).toBe(0);
+    } finally {
+      server.closeAllConnections();
+      await new Promise<void>((resolve, reject) =>
+        server.close((error) => (error ? reject(error) : resolve())),
+      );
+    }
   });
 });

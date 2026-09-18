@@ -141,6 +141,7 @@ export async function scanObject(input: {
   try {
     const response = await fetch(config.ATTACHMENT_SCANNER_URL, {
       method: "POST",
+      redirect: "error",
       headers: {
         "content-type": "application/json",
         ...(config.ATTACHMENT_SCANNER_TOKEN
