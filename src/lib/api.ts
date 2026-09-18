@@ -37,9 +37,16 @@ export function enforceRateLimit(
 }
 
 export async function writeActor(request: Request) {
+  const readOnly = request.method === "GET" || request.method === "HEAD";
+  const origin = request.headers.get("origin");
+  const site = request.headers.get("sec-fetch-site");
+  // Same-origin GETs and downloads commonly omit Origin. Writes must always
+  // carry the configured origin; Fetch Metadata never substitutes for it.
   if (
-    request.headers.get("origin") !==
-    new URL(getConfig().BETTER_AUTH_URL).origin
+    (origin !== null
+      ? origin !== new URL(getConfig().BETTER_AUTH_URL).origin
+      : !readOnly) ||
+    (readOnly && site !== null && site !== "same-origin" && site !== "none")
   )
     throw new BusinessError("请求来源无效", 403);
   const actor = await currentUser();
@@ -49,7 +56,7 @@ export async function writeActor(request: Request) {
     (actor.role !== "EMPLOYEE" && !actor.twoFactorEnabled)
   )
     throw new BusinessError("请先完成账号安全设置", 403);
-  if (["POST", "PATCH", "DELETE"].includes(request.method)) {
+  if (!readOnly) {
     enforceRateLimit(`write:${actor.organizationId}:${actor.id}`, 120, 60_000);
   }
   return actor;

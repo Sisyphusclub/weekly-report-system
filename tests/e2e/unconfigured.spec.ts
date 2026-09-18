@@ -28,6 +28,7 @@ test("unconfigured login is accessible, honest and responsive", async ({
 test("business routes require authentication", async ({ page }) => {
   for (const path of [
     "/dashboard",
+    "/activity",
     "/reports",
     "/reports/unknown",
     "/reports/unknown/history",
