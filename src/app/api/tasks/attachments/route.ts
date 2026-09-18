@@ -68,6 +68,7 @@ export async function PATCH(request: Request) {
         sha256: taskAttachment.sha256,
         contentType: taskAttachment.contentType,
         fileName: taskAttachment.fileName,
+        verifiedAt: taskAttachment.verifiedAt,
         assignee: workTask.primaryAssigneeId,
       })
       .from(taskAttachment)
@@ -87,25 +88,20 @@ export async function PATCH(request: Request) {
       .limit(1);
     if (!row || (actor.role === "EMPLOYEE" && row.assignee !== actor.id))
       throw new BusinessError("无权确认任务附件", 403);
-    try {
-      await verifyObject(
-        row.objectKey,
-        row.sizeBytes,
-        Buffer.from(row.sha256, "hex").toString("base64"),
-        row.contentType,
-      );
-      await scanObject({
-        key: row.objectKey,
-        fileName: row.fileName,
-        contentType: row.contentType,
-        sizeBytes: row.sizeBytes,
-        sha256: row.sha256,
-      });
-    } catch (error) {
-      await deleteObject(row.objectKey).catch(() => undefined);
-      await db.delete(taskAttachment).where(eq(taskAttachment.id, id));
-      throw error;
-    }
+    if (row.verifiedAt) return Response.json({ ok: true });
+    await verifyObject(
+      row.objectKey,
+      row.sizeBytes,
+      Buffer.from(row.sha256, "hex").toString("base64"),
+      row.contentType,
+    );
+    await scanObject({
+      key: row.objectKey,
+      fileName: row.fileName,
+      contentType: row.contentType,
+      sizeBytes: row.sizeBytes,
+      sha256: row.sha256,
+    });
     await db
       .update(taskAttachment)
       .set({ verifiedAt: new Date(), updatedAt: new Date() })
