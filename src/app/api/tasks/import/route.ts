@@ -10,6 +10,7 @@ import { getDb } from "@/lib/db";
 import { auditLog, category, project, user, workTask } from "@/lib/db/schema";
 import ExcelJS from "exceljs";
 import { boundedBody } from "@/lib/request-body";
+import { excelDate } from "@/lib/excel-date";
 export async function POST(request: Request) {
   try {
     const actor = await writeActor(request);
@@ -68,8 +69,8 @@ export async function POST(request: Request) {
           content: row.content ?? row["任务内容"],
           kind: row.kind ?? row["任务类型"],
           status: row.status ?? row["状态"] ?? "TODO",
-          workDate: row.workDate ?? row["工作日期"] ?? null,
-          dueDate: row.dueDate ?? row["截止日期"] ?? null,
+          workDate: excelDate(row.workDate ?? row["工作日期"]),
+          dueDate: excelDate(row.dueDate ?? row["截止日期"]),
         })),
       };
     } else payload = await body.json().catch(() => null);
