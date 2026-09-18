@@ -1,11 +1,14 @@
 import { z } from "zod";
-import { reportFilter } from "@/lib/report-filter";
+import { reportFilter, reportFilterParams } from "@/lib/report-filter";
 import { requireUser } from "@/lib/access";
 import { listReports, PAGE_SIZE } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { Input } from "@/components/base/input/input";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/base/buttons/button";
 import { CopyFilterLink } from "@/components/workspace/copy-filter-link";
+import { ReportFilters } from "@/components/workspace/report-filters";
+import { getDb } from "@/lib/db";
+import { user } from "@/lib/db/schema";
+import { and, asc, eq, ne } from "drizzle-orm";
 
 export const metadata = { title: "报告查询" };
 export default async function ReportsPage({
@@ -27,13 +30,29 @@ export default async function ReportsPage({
   const parsedDates = reportFilter.safeParse({
     from: params.from,
     to: params.to,
+    member: params.member,
+    status: params.status,
+    type: params.type,
   });
   const dates = parsedDates.success ? parsedDates.data : {};
   const result = parsedDates.success
     ? await listReports(actor, query, page, dates)
     : { items: [], total: 0 };
   const href = (value: number) =>
-    `/reports?${new URLSearchParams({ q: query, from: dates.from ?? "", to: dates.to ?? "", page: String(value) })}`;
+    `/reports?${reportFilterParams(query, dates, value)}`;
+  const members =
+    actor.role === "ADMIN"
+      ? [{ id: actor.id, name: actor.name }]
+      : await getDb()
+          .select({ id: user.id, name: user.name })
+          .from(user)
+          .where(
+            and(
+              eq(user.organizationId, actor.organizationId),
+              ne(user.role, "ADMIN"),
+            ),
+          )
+          .orderBy(asc(user.name), asc(user.id));
   return (
     <WorkspaceShell actor={actor} selected="reports">
       <header>
@@ -44,39 +63,25 @@ export default async function ReportsPage({
           共 {result.total} 份可查看的报告
         </p>
       </header>
-      <form action="/reports" className="flex flex-wrap items-end gap-3">
-        <Input
-          name="q"
-          label="搜索报告总结"
-          defaultValue={query}
-          placeholder="输入关键词"
-          maxLength={200}
-        />
-        <Button type="submit">搜索</Button>
-        <Input
-          name="from"
-          type="date"
-          label="开始日期"
-          defaultValue={typeof params.from === "string" ? params.from : ""}
-        />
-        <Input
-          name="to"
-          type="date"
-          label="结束日期"
-          defaultValue={typeof params.to === "string" ? params.to : ""}
-        />
-      </form>
-      <ButtonLink
-        href={`/api/reports/export?${new URLSearchParams({ q: query, from: dates.from ?? "", to: dates.to ?? "" })}`}
-        variant="secondary"
-      >
-        导出 JSON
-      </ButtonLink>
-      <CopyFilterLink
-        href={`/reports?${new URLSearchParams({ q: query, from: dates.from ?? "", to: dates.to ?? "", page: "1" })}`}
+      <ReportFilters
+        key={reportFilterParams(query, dates)}
+        query={query}
+        filters={dates}
+        members={members}
       />
+      {parsedDates.success && (
+        <>
+          <ButtonLink
+            href={`/api/reports/export?${reportFilterParams(query, dates)}`}
+            variant="secondary"
+          >
+            导出 JSON
+          </ButtonLink>
+          <CopyFilterLink href={href(1)} />
+        </>
+      )}
       {!parsedDates.success && (
-        <p role="alert">日期范围无效，请检查开始和结束日期。</p>
+        <p role="alert">筛选条件无效，请重新选择后查询。</p>
       )}
       <section className="rounded-3xl border border-border-button-default p-6">
         {result.items.length ? (

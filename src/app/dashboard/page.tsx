@@ -157,7 +157,7 @@ export default async function DashboardPage() {
                   · 阻塞 {member.openBlockers}
                 </span>
                 <ButtonLink
-                  href={`/reports?query=${encodeURIComponent(member.name)}`}
+                  href={`/reports?member=${encodeURIComponent(member.id)}`}
                   variant="ghost"
                 >
                   查看报告

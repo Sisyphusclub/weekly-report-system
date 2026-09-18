@@ -1,4 +1,4 @@
-import { and, asc, eq, gte, inArray, lte, sql } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import {
   apiError,
@@ -8,7 +8,7 @@ import {
 } from "@/lib/api";
 import { getDb } from "@/lib/db";
 import { auditLog, report, reportTask, user } from "@/lib/db/schema";
-import { reportExportVisibility } from "@/lib/reports";
+import { reportExportVisibility, reportSearchConditions } from "@/lib/reports";
 import { reportFilter } from "@/lib/report-filter";
 
 const querySchema = z.object({
@@ -25,6 +25,10 @@ export async function GET(request: Request) {
       60_000,
     );
     const url = new URL(request.url);
+    for (const key of ["q", "from", "to", "member", "status", "type"]) {
+      if (url.searchParams.getAll(key).length > 1)
+        throw new BusinessError("筛选参数不能重复");
+    }
     const parsed = querySchema.safeParse({
       q: url.searchParams.get("q") ?? "",
       from: url.searchParams.get("from") ?? undefined,
@@ -34,25 +38,14 @@ export async function GET(request: Request) {
     const dates = reportFilter.safeParse({
       from: parsed.data.from,
       to: parsed.data.to,
+      member: url.searchParams.get("member") ?? undefined,
+      status: url.searchParams.get("status") ?? undefined,
+      type: url.searchParams.get("type") ?? undefined,
     });
-    if (!dates.success) throw new BusinessError("日期范围无效");
+    if (!dates.success) throw new BusinessError("报告筛选条件无效");
     const filter = and(
       reportExportVisibility(actor),
-      dates.data.from
-        ? gte(
-            sql`coalesce(${report.reportDate}, ${report.weekEnd})`,
-            dates.data.from,
-          )
-        : undefined,
-      dates.data.to
-        ? lte(
-            sql`coalesce(${report.reportDate}, ${report.weekStart})`,
-            dates.data.to,
-          )
-        : undefined,
-      parsed.data.q
-        ? sql`${report.summary} ilike ${`%${parsed.data.q.replace(/[\\%_]/g, "\\$&")}%`}`
-        : undefined,
+      reportSearchConditions(parsed.data.q, dates.data),
     );
     const db = getDb();
     const reports = await db

@@ -2,6 +2,7 @@ import { and, or, eq, desc, ilike, count, gte, lte, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { report, user } from "@/lib/db/schema";
 import type { Actor } from "@/lib/domain";
+import type { ReportFilter } from "@/lib/report-filter";
 
 export const PAGE_SIZE = 20;
 export function reportVisibility(actor: Actor) {
@@ -20,14 +21,14 @@ export function reportExportVisibility(actor: Actor) {
       : eq(report.authorId, actor.id),
   );
 }
-export async function listReports(
-  actor: Actor,
+export function reportSearchConditions(
   query: string,
-  page: number,
-  dates: { from?: string; to?: string } = {},
+  dates: ReportFilter = {},
 ) {
-  const filter = and(
-    reportVisibility(actor),
+  return and(
+    dates.member ? eq(report.authorId, dates.member) : undefined,
+    dates.status ? eq(report.status, dates.status) : undefined,
+    dates.type ? eq(report.type, dates.type) : undefined,
     dates.from
       ? gte(sql`coalesce(${report.reportDate}, ${report.weekEnd})`, dates.from)
       : undefined,
@@ -37,6 +38,17 @@ export async function listReports(
     query
       ? ilike(report.summary, `%${query.replace(/[\\%_]/g, "\\$&")}%`)
       : undefined,
+  );
+}
+export async function listReports(
+  actor: Actor,
+  query: string,
+  page: number,
+  dates: ReportFilter = {},
+) {
+  const filter = and(
+    reportVisibility(actor),
+    reportSearchConditions(query, dates),
   );
   const db = getDb();
   const [items, total] = await Promise.all([
