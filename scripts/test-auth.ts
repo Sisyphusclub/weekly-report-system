@@ -15,7 +15,7 @@ async function main() {
   const id = randomUUID();
   const org = randomUUID();
   const username = `test_${id.replaceAll("-", "").slice(0, 20)}`;
-  const password = randomUUID();
+  let password = randomUUID();
   const origin = process.env.BETTER_AUTH_URL!;
   const auth = getAuth();
   let cookie = "";
@@ -38,7 +38,7 @@ async function main() {
       [org],
     );
     await pool.query(
-      "INSERT INTO app_user(id,organization_id,name,email,username,status,must_change_password) VALUES($1,$2,'integration',$3,$4,'ACTIVE',false)",
+      "INSERT INTO app_user(id,organization_id,name,email,username,status,must_change_password) VALUES($1,$2,'integration',$3,$4,'PENDING',true)",
       [id, org, `${id}@test.invalid`, username],
     );
     await pool.query(
@@ -57,25 +57,83 @@ async function main() {
     const session = await (await request("get-session")).json();
     assert.equal(session.user.id, id);
     assert.equal(session.user.organizationId, org);
+    assert.equal(
+      (await request("two-factor/enable", { password })).status,
+      403,
+    );
+    const firstDevice = cookie;
+    cookie = "";
+    assert.equal(
+      (await request("sign-in/username", { username, password })).status,
+      200,
+    );
+    assert.equal(
+      (
+        await request("change-password", {
+          currentPassword: password,
+          newPassword: password,
+        })
+      ).status,
+      400,
+    );
+    const oldPassword = password;
+    password = randomUUID();
+    assert.equal(
+      (
+        await request("change-password", {
+          currentPassword: oldPassword,
+          newPassword: password,
+        })
+      ).status,
+      200,
+    );
+    const changed = await pool.query(
+      "SELECT status,must_change_password FROM app_user WHERE id=$1",
+      [id],
+    );
+    assert.deepEqual(changed.rows[0], {
+      status: "ACTIVE",
+      must_change_password: false,
+    });
+    const currentDevice = cookie;
+    cookie = firstDevice;
+    assert.equal(await (await request("get-session")).json(), null);
+    cookie = currentDevice;
+    assert.equal((await (await request("get-session")).json()).user.id, id);
     assert.equal((await request("sign-out", {})).status, 200);
     assert.equal(await (await request("get-session")).json(), null);
+    assert.equal(
+      (await request("sign-in/username", { username, password: oldPassword }))
+        .status,
+      401,
+    );
+    const audit = await pool.query(
+      "SELECT count(*)::int AS count FROM audit_log WHERE actor_id=$1 AND action='PASSWORD_CHANGED'",
+      [id],
+    );
+    assert.equal(audit.rows[0].count, 1);
     await pool.query("UPDATE app_user SET status='DISABLED' WHERE id=$1", [id]);
     assert.equal(
       (await request("sign-in/username", { username, password })).status,
       401,
     );
     console.log(
-      "PASS: wrong password, login, persisted session, organization identity, logout, disabled account",
+      "PASS: login, first password change, TOTP enrollment gate, old password rejection, other session revocation, password audit, logout, disabled account",
     );
   } finally {
     await pool.query("DELETE FROM auth_session WHERE user_id=$1", [id]);
     await pool.query("DELETE FROM auth_account WHERE user_id=$1", [id]);
-    await pool.query("DELETE FROM app_user WHERE id=$1", [id]);
-    await pool.query("DELETE FROM organization WHERE id=$1", [org]);
+    // Preserve append-only audit records and their referenced identities.
+    // Run in a disposable database; the runner removes that database afterwards.
     await closePool();
   }
 }
-main().catch(() => {
+main().catch((error: unknown) => {
+  if (error instanceof assert.AssertionError)
+    console.error(
+      "Assertion failed at",
+      error.stack?.split("\n").find((line) => line.includes("test-auth.ts:")),
+    );
   console.error(
     "Authentication integration failed; credentials are not logged.",
   );

@@ -154,6 +154,14 @@ function createAuth() {
         const current = ctx.context.session;
         await getDb().transaction(async (tx) => {
           await tx
+            .delete(schema.session)
+            .where(
+              and(
+                eq(schema.session.userId, current.user.id),
+                ne(schema.session.id, current.session.id),
+              ),
+            );
+          await tx
             .update(schema.user)
             .set({
               mustChangePassword: false,
