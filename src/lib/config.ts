@@ -19,6 +19,7 @@ const schema = z
     S3_SECRET_ACCESS_KEY: optionalEnvironmentValue(z.string().min(1)),
     ATTACHMENT_SCANNER_URL: optionalEnvironmentValue(z.string().url()),
     ATTACHMENT_SCANNER_TOKEN: optionalEnvironmentValue(z.string().min(1)),
+    CLAMAV_URL: optionalEnvironmentValue(z.string().url()),
   })
   .superRefine((env, context) => {
     if (
@@ -50,6 +51,12 @@ const schema = z
           code: "custom",
           path: ["ATTACHMENT_SCANNER_URL"],
           message: "预发布和生产环境必须配置附件安全扫描服务",
+        });
+      if (!env.CLAMAV_URL)
+        context.addIssue({
+          code: "custom",
+          path: ["CLAMAV_URL"],
+          message: "预发布和生产环境必须配置 ClamAV 扫描服务",
         });
     }
   });

@@ -36,6 +36,7 @@ describe("runtime configuration", () => {
         S3_SECRET_ACCESS_KEY: "secret",
         ATTACHMENT_SCANNER_URL: "https://scanner.example/scan",
         ATTACHMENT_SCANNER_TOKEN: "",
+        CLAMAV_URL: "https://clamav.example",
       }).ready,
     ).toBe(true));
   it("treats blank optional development values as unset", () => {
@@ -54,6 +55,21 @@ describe("runtime configuration", () => {
       expect(result.config.ATTACHMENT_SCANNER_TOKEN).toBeUndefined();
       expect(result.config.S3_ENDPOINT).toBeUndefined();
     }
+  });
+  it("requires ClamAV in non-development environments", () => {
+    const result = configurationStatus({
+      ...env,
+      APP_ENV: "production",
+      BETTER_AUTH_URL: "https://reports.example",
+      S3_ENDPOINT: "https://s3.example",
+      S3_REGION: "us-east-1",
+      S3_BUCKET: "weekly",
+      S3_ACCESS_KEY_ID: "access",
+      S3_SECRET_ACCESS_KEY: "secret",
+      ATTACHMENT_SCANNER_URL: "https://scanner.example/scan",
+    });
+    expect(result.ready).toBe(false);
+    if (!result.ready) expect(result.fields).toContain("CLAMAV_URL");
   });
   it.each(["production", "staging"])(
     "still rejects blank required infrastructure in %s",
