@@ -19,7 +19,11 @@ const schema = z
     S3_SECRET_ACCESS_KEY: optionalEnvironmentValue(z.string().min(1)),
     ATTACHMENT_SCANNER_URL: optionalEnvironmentValue(z.string().url()),
     ATTACHMENT_SCANNER_TOKEN: optionalEnvironmentValue(z.string().min(1)),
-    CLAMAV_URL: optionalEnvironmentValue(z.string().url()),
+    CLAMAV_URL: optionalEnvironmentValue(
+      z.string().refine((value) => /^tcp:\/\/[^/]+/.test(value), {
+        message: "必须使用 tcp://ClamAV 地址",
+      }),
+    ),
   })
   .superRefine((env, context) => {
     if (

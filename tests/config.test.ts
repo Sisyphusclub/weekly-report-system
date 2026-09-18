@@ -36,7 +36,7 @@ describe("runtime configuration", () => {
         S3_SECRET_ACCESS_KEY: "secret",
         ATTACHMENT_SCANNER_URL: "https://scanner.example/scan",
         ATTACHMENT_SCANNER_TOKEN: "",
-        CLAMAV_URL: "https://clamav.example",
+        CLAMAV_URL: "tcp://clamav.example:3310",
       }).ready,
     ).toBe(true));
   it("treats blank optional development values as unset", () => {

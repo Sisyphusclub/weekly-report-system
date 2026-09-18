@@ -9,6 +9,27 @@
 
 部署前运行 `npm run config:check` 检查必需配置；命令只输出缺少的字段名，不输出密钥值。
 
+## 本地开发环境
+
+本机没有 PostgreSQL 时，使用仓库内的开发 Compose 栈。它包含 PostgreSQL、MinIO（S3 兼容对象存储）、MinIO 自动建桶任务和 ClamAV；ClamAV 只通过本机端口提供给本地应用，MinIO 存储桶默认设为私有。
+
+```powershell
+npm run dev:env
+npm run dev:infra:up
+npm run db:migrate
+npm run calendar:seed
+npm run dev
+```
+
+首次初始化管理员时，不要把密码放在命令行参数中。将一次性 JSON 通过标准输入传给 `npm run admin:bootstrap`，然后在登录页修改临时密码并绑定 TOTP。开发服务可通过 `GET http://localhost:3000/api/health` 检查，必须同时看到 `database`、`storage` 和 `scanner` 为 `ready`。
+
+```powershell
+npm run dev:infra:logs
+npm run dev:infra:down
+```
+
+`npm run dev:env` 会在项目根目录生成随机 `.env.local`；该文件被 Git 忽略，不能提交或复制到预发布/生产环境。MinIO 控制台地址是 `http://localhost:9001`，仅用于本地开发。
+
 ## 部署
 
 1. 拉取目标 Git 提交，并执行 `npm ci`。

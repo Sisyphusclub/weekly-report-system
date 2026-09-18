@@ -72,6 +72,7 @@ test("no signup, no fallback credentials, and no fake health", async ({
     status: "not_ready",
     database: "not_checked",
     storage: "not_checked",
+    scanner: "not_checked",
   });
   expect(JSON.stringify(healthBody)).not.toMatch(
     /DATABASE_URL|SECRET|PASSWORD/i,
