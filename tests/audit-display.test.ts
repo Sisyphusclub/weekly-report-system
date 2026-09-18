@@ -34,6 +34,10 @@ it("preserves recovery reasons as plain text", () => {
   expect(auditReasonDetails("OLD_ACTION", null)).toEqual([]);
 });
 it("keeps unknown event codes visible", () => {
+  expect(auditActionLabel("TASK_STATUS_TODO_TO_IN_PROGRESS")).toBe(
+    "任务状态：待开始 → 进行中",
+  );
+  expect(auditActionLabel("REPORT_SUBMIT")).toBe("提交日报");
   expect(auditActionLabel("TASK_TRANSFER")).toBe("批量转交任务");
   expect(auditActionLabel("FUTURE_EVENT")).toBe("FUTURE_EVENT");
 });

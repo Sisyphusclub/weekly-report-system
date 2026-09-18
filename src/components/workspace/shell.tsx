@@ -54,7 +54,7 @@ export function WorkspaceShell({
         </div>
       </header>
       <div className="mx-auto grid max-w-7xl gap-6 p-4 md:p-6 lg:grid-cols-[180px_minmax(0,1fr)]">
-        <nav aria-label="主要导航" className="flex gap-2 lg:flex-col">
+        <nav aria-label="主要导航" className="flex flex-wrap gap-2 lg:flex-col">
           {[
             ...(actor.role === "ADMIN"
               ? [
@@ -100,6 +100,9 @@ export function WorkspaceShell({
               ? [{ key: "tasks", label: "任务管理", href: "/tasks" }]
               : []),
             { key: "notifications", label: "通知中心", href: "/notifications" },
+            ...(actor.role === "BOSS"
+              ? [{ key: "audit", label: "业务变更", href: "/activity" }]
+              : []),
             {
               key: "dashboard",
               label: actor.role === "ADMIN" ? "系统概览" : "工作看板",

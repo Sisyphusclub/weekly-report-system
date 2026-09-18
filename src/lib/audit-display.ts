@@ -1,4 +1,34 @@
 const labels: Record<string, string> = {
+  TASK_CREATE: "创建任务",
+  TASK_UPDATE: "修改任务",
+  TASK_IMPORT: "导入任务",
+  TASK_EXPORT: "导出任务",
+  PLAN_ROLL: "结转计划",
+  REPORT_SUBMIT: "提交日报",
+  REPORT_SAVE: "保存日报草稿",
+  WEEKLY_REPORT_SUBMIT: "提交周报",
+  WEEKLY_REPORT_SAVE: "保存周报草稿",
+  REPORT_REVISE: "修订报告",
+  REPORT_EXPORT: "导出报告",
+  REVISION_REQUEST_CREATE: "申请修订报告",
+  REVISION_APPROVED: "批准报告修订",
+  REVISION_REJECTED: "拒绝报告修订",
+  BLOCKER_CREATE: "创建阻塞",
+  BLOCKER_ASSIGN: "分派阻塞",
+  BLOCKER_ACKNOWLEDGE: "确认阻塞",
+  BLOCKER_RESOLVE: "解决阻塞",
+  BLOCKER_COMMENT_CREATE: "评论阻塞",
+  BLOCKER_COMMENT_UPDATE: "修改阻塞评论",
+  BLOCKER_COMMENT_DELETE: "删除阻塞评论",
+  TASK_COMMENT_CREATE: "评论任务",
+  TASK_COMMENT_UPDATE: "修改任务评论",
+  TASK_COMMENT_DELETE: "删除任务评论",
+  DELIVERABLE_CREATE: "添加交付物",
+  DELIVERABLE_UPDATE: "修改交付物",
+  EXTERNAL_LINK_CREATE: "添加任务链接",
+  ATTACHMENT_UPLOAD_INIT: "开始上传附件",
+  ATTACHMENT_VERIFY: "确认附件上传",
+  ATTACHMENT_DELETE: "删除附件",
   TASK_TRANSFER: "批量转交任务",
   OPS_TOTP_RESET: "运维重置双因素认证",
   PASSWORD_RESET: "重置密码",
@@ -8,6 +38,20 @@ const labels: Record<string, string> = {
 };
 
 export function auditActionLabel(action: string) {
+  const transition =
+    /^TASK_STATUS_(TODO|IN_PROGRESS|BLOCKED|DONE|CANCELED)_TO_(TODO|IN_PROGRESS|BLOCKED|DONE|CANCELED)$/.exec(
+      action,
+    );
+  if (transition) {
+    const statuses: Record<string, string> = {
+      TODO: "待开始",
+      IN_PROGRESS: "进行中",
+      BLOCKED: "阻塞",
+      DONE: "已完成",
+      CANCELED: "已取消",
+    };
+    return `任务状态：${statuses[transition[1]]} → ${statuses[transition[2]]}`;
+  }
   return labels[action] ?? action;
 }
 

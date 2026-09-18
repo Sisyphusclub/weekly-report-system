@@ -8,6 +8,7 @@ import { migrate } from "drizzle-orm/node-postgres/migrator";
 import { is } from "drizzle-orm";
 import { PgTable } from "drizzle-orm/pg-core";
 import * as schema from "../src/lib/db/schema";
+import { businessAuditVisibility } from "../src/lib/audit-visibility";
 
 async function main() {
   // Never fall back to the application database. Use a dedicated disposable DB.
@@ -126,6 +127,60 @@ async function main() {
         "INSERT INTO audit_log (id,organization_id,actor_id,action,resource_type,resource_id,result) VALUES ($1,$2,$3,'TEST','REPORT',$4,'SUCCESS')",
         [auditId, org, member, reportId],
       );
+      const businessIds = {
+        task: randomUUID(),
+        draft: randomUUID(),
+        submit: randomUUID(),
+        security: randomUUID(),
+      };
+      for (const [id, action, type, resourceId] of [
+        [businessIds.task, "TASK_UPDATE", "TASK", task],
+        [businessIds.draft, "REPORT_SAVE", "report", reportId],
+        [businessIds.submit, "REPORT_SUBMIT", "REPORT", reportId],
+        [businessIds.security, "PASSWORD_RESET", "USER", member],
+      ]) {
+        await client.query(
+          "INSERT INTO audit_log (id,organization_id,actor_id,action,resource_type,resource_id,result) VALUES ($1,$2,$3,$4,$5,$6,'SUCCESS')",
+          [id, org, member, action, type, resourceId],
+        );
+      }
+      const businessDb = drizzle(client);
+      const visibleIds = async (
+        actorId: string,
+        organizationId = org,
+        role: "BOSS" | "EMPLOYEE" = "BOSS",
+      ) =>
+        (
+          await businessDb
+            .select({ id: schema.auditLog.id })
+            .from(schema.auditLog)
+            .where(
+              businessAuditVisibility({ id: actorId, organizationId, role }),
+            )
+        )
+          .map((row) => row.id)
+          .sort();
+      const bossId = randomUUID();
+      assert.deepEqual(await visibleIds(bossId), [businessIds.task]);
+      assert.deepEqual(await visibleIds(bossId, otherOrg), []);
+      assert.deepEqual(await visibleIds(member, org, "EMPLOYEE"), []);
+      assert.deepEqual(
+        await visibleIds(member),
+        [
+          auditId,
+          businessIds.task,
+          businessIds.draft,
+          businessIds.submit,
+        ].sort(),
+      );
+      await client.query(
+        "UPDATE report SET status='SUBMITTED',submitted_at=now() WHERE id=$1",
+        [reportId],
+      );
+      assert.deepEqual(
+        await visibleIds(bossId),
+        [businessIds.task, businessIds.submit].sort(),
+      );
       for (const [sql, id] of [
         [
           "UPDATE report_revision SET reason='modified' WHERE id=$1",
@@ -174,7 +229,7 @@ async function main() {
       );
       assert.equal(historyAfterRollback.rowCount, 0);
       console.log(
-        "PASS: migrations, schema, tenant isolation, concurrent updates, immutable history, report uniqueness, notification deduplication, rollback",
+        "PASS: migrations, schema, tenant isolation, concurrent updates, business audit visibility, immutable history, report uniqueness, notification deduplication, rollback",
       );
     } finally {
       try {
