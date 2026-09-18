@@ -56,8 +56,20 @@ export default async function BlockersPage({
       coordinatorName: coordinator.name,
     })
     .from(blocker)
-    .innerJoin(user, eq(blocker.reporterId, user.id))
-    .leftJoin(project, eq(blocker.projectId, project.id))
+    .innerJoin(
+      user,
+      and(
+        eq(blocker.reporterId, user.id),
+        eq(blocker.organizationId, user.organizationId),
+      ),
+    )
+    .leftJoin(
+      project,
+      and(
+        eq(blocker.projectId, project.id),
+        eq(blocker.organizationId, project.organizationId),
+      ),
+    )
     .leftJoin(
       coordinator,
       and(
