@@ -330,8 +330,8 @@ export async function getDashboardBreakdown(
 
 function dateRange(from: string, to: string) {
   const result: string[] = [];
-  const cursor = new Date(`${from}T00:00:00+08:00`);
-  const end = new Date(`${to}T00:00:00+08:00`);
+  const cursor = new Date(`${from}T00:00:00Z`);
+  const end = new Date(`${to}T00:00:00Z`);
   while (cursor <= end && result.length < 366) {
     result.push(cursor.toISOString().slice(0, 10));
     cursor.setUTCDate(cursor.getUTCDate() + 1);
