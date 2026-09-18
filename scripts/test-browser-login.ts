@@ -399,8 +399,64 @@ async function main() {
               ).rows[0].reviewer_id,
               bossId,
             );
+            await pool.query(
+              "UPDATE report SET submitted_at=now()-interval '8 days' WHERE id=$1",
+              [beforeRevision.id],
+            );
+            const rejectionInput = {
+              reportId: beforeRevision.id,
+              version: finalReport.version,
+              summary: "不应发布的修订内容",
+              reason: "补充逾期更正",
+            };
+            const rejectedRequest = await context.request.post(
+              `${origin}/api/reports/revisions`,
+              { headers: { origin }, data: rejectionInput },
+            );
+            assert.equal(rejectedRequest.status(), 200);
+            const rejectedResult = await rejectedRequest.json();
+            const rejectDecision = await bossPost(
+              "/api/reports/revisions/review",
+              {
+                requestId: rejectedResult.id,
+                version: 1,
+                decision: "REJECTED",
+                reason: "材料不足，暂不通过",
+              },
+            );
+            assert.equal(rejectDecision.status(), 200);
+            assert.equal((await rejectDecision.json()).status, "REJECTED");
+            assert.deepEqual(
+              (
+                await pool.query(
+                  "SELECT summary,version FROM report WHERE id=$1",
+                  [beforeRevision.id],
+                )
+              ).rows[0],
+              finalReport,
+            );
+            const rejectedState = (
+              await pool.query(
+                "SELECT status,reviewer_id,review_reason FROM revision_request WHERE id=$1",
+                [rejectedResult.id],
+              )
+            ).rows[0];
+            assert.equal(rejectedState.status, "REJECTED");
+            assert.equal(rejectedState.reviewer_id, bossId);
+            assert.equal(rejectedState.review_reason, "材料不足，暂不通过");
+            assert.equal(
+              (
+                await bossPost("/api/reports/revisions/review", {
+                  requestId: rejectedResult.id,
+                  version: 1,
+                  decision: "REJECTED",
+                  reason: "重复审核",
+                })
+              ).status(),
+              409,
+            );
             console.log(
-              "PASS: boss MFA enrollment, revision approval, version increment, reviewer identity, notification deduplication, repeated review denial",
+              "PASS: boss MFA enrollment, revision approval and rejection, version guard, reviewer identity, notification deduplication, repeated review denial",
             );
           } finally {
             await bossContext.close();
