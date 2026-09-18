@@ -64,7 +64,13 @@ export async function POST(request: Request) {
           .select({ categoryName: category.name })
           .from(project)
           .innerJoin(category, eq(category.id, item.categoryId))
-          .innerJoin(user, eq(user.id, item.primaryAssigneeId))
+          .innerJoin(
+            user,
+            and(
+              eq(user.id, item.primaryAssigneeId),
+              eq(user.organizationId, project.organizationId),
+            ),
+          )
           .where(
             and(
               eq(project.id, item.projectId),

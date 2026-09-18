@@ -139,7 +139,13 @@ export async function POST(request: Request) {
         })
         .from(project)
         .innerJoin(category, eq(category.organizationId, actor.organizationId))
-        .innerJoin(user, eq(user.id, input.primaryAssigneeId))
+        .innerJoin(
+          user,
+          and(
+            eq(user.id, input.primaryAssigneeId),
+            eq(user.organizationId, project.organizationId),
+          ),
+        )
         .where(
           and(
             eq(project.id, input.projectId),
