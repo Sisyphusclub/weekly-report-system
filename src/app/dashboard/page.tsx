@@ -59,22 +59,58 @@ export default async function DashboardPage({
     return (
       <WorkspaceShell actor={actor} selected="dashboard">
         <header>
-          <h1 className="text-title-1-medium">系统概览</h1>
+          <p className="mb-2 text-caption-1-medium text-text-tertiary">
+            内部工作空间
+          </p>
+          <h1 className="text-title-1-medium">工作台</h1>
           <p className="mt-2 text-body-regular text-text-secondary">
-            管理员工作空间 · 账号与基础资料
+            从这里进入账号、项目和基础资料。
           </p>
         </header>
         <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-          {["账号", "项目", "启用分类", "启用交付物单位"].map((label, i) => (
+          {[
+            ["账号", counts[0][0].value, "/admin/users"],
+            ["项目", counts[1][0].value, "/admin/projects"],
+            ["启用分类", counts[2][0].value, "/admin/dictionaries"],
+            ["交付物单位", counts[3][0].value, "/admin/dictionaries"],
+          ].map(([label, value, href]) => (
             <section
               key={label}
               className="rounded-3xl border border-border-button-default p-6"
             >
               <h2 className="text-body-regular text-text-secondary">{label}</h2>
-              <p className="mt-3 text-title-1-medium">{counts[i][0].value}</p>
+              <p className="mt-3 text-title-1-medium">{value}</p>
+              <ButtonLink className="mt-4" href={href} variant="ghost">
+                查看
+              </ButtonLink>
             </section>
           ))}
         </div>
+        <section className="rounded-3xl border border-border-button-default p-6">
+          <h2 className="text-title-2-medium">常用入口</h2>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              ["账号管理", "创建账号、重置密码和停用账号", "/admin/users"],
+              ["项目管理", "维护项目负责人和参与成员", "/admin/projects"],
+              ["工作日历", "维护工作日与免报日期", "/admin/calendar"],
+              ["系统设置", "组织信息和运行配置", "/admin/settings"],
+            ].map(([title, detail, href]) => (
+              <ButtonLink
+                key={href}
+                href={href}
+                variant="secondary"
+                className="h-auto justify-start p-4"
+              >
+                <span className="flex flex-col items-start gap-1">
+                  <span className="text-body-medium">{title}</span>
+                  <span className="text-caption-1-regular text-text-secondary">
+                    {detail}
+                  </span>
+                </span>
+              </ButtonLink>
+            ))}
+          </div>
+        </section>
       </WorkspaceShell>
     );
   }

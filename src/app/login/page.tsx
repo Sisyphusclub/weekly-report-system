@@ -1,4 +1,4 @@
-import { RiArrowUpLine, RiBarChartBoxLine, RiTimeLine } from "@remixicon/react";
+import { RiBarChartBoxLine, RiTimeLine } from "@remixicon/react";
 import { LoginForm } from "@/components/workspace/login-form";
 import { configurationStatus } from "@/lib/config";
 
@@ -20,50 +20,32 @@ export default function LoginPage() {
         <div className="relative flex flex-col gap-10">
           <div>
             <p className="text-caption-1-semibold text-text-white/60">
-              MARKETING / 2026
+              MARKETING / WORKSPACE
             </p>
             <h2 className="mt-4 max-w-xl text-[clamp(2.5rem,4vw,4.5rem)] leading-[1.05] font-semibold">
-              今天的进展，
+              工作从这里，
               <br />
-              明天接着做。
+              继续向前。
             </h2>
           </div>
-          <div className="grid max-w-2xl grid-cols-3 gap-px overflow-hidden rounded-lg border border-text-white/15 bg-text-white/15">
+          <div className="max-w-2xl divide-y divide-text-white/15 border-y border-text-white/15">
             {[
-              ["本周完成", "24", "+18%"],
-              ["进行中", "12", "稳定"],
-              ["待协调", "03", "需关注"],
-            ].map(([label, value, change], index) => (
-              <div key={label} className="bg-text-primary/80 p-5">
-                <p className="text-caption-1-regular text-text-white/60">
-                  {label}
-                </p>
-                <p className="mt-3 text-headline-medium">{value}</p>
-                <p
-                  className={`mt-2 text-caption-1-regular ${index === 2 ? "text-warning-500" : "text-success-500"}`}
-                >
-                  {index === 0 && (
-                    <RiArrowUpLine className="mr-1 inline size-3" aria-hidden />
-                  )}
-                  {change}
-                </p>
+              ["01", "记录日报", "填写今天的工作进展"],
+              ["02", "查看项目", "掌握当前项目状态"],
+              ["03", "处理阻塞", "及时同步需要协调的事项"],
+            ].map(([index, title, detail]) => (
+              <div key={index} className="flex items-center gap-5 py-5">
+                <span className="text-caption-1-regular text-text-white/40">
+                  {index}
+                </span>
+                <div>
+                  <p className="text-body-medium">{title}</p>
+                  <p className="mt-1 text-caption-1-regular text-text-white/55">
+                    {detail}
+                  </p>
+                </div>
               </div>
             ))}
-          </div>
-          <div className="max-w-2xl border-t border-text-white/15 pt-5">
-            <div className="flex justify-between text-caption-1-regular text-text-white/60">
-              <span>本周项目节奏</span>
-              <span>截至今日 18:30</span>
-            </div>
-            <div className="mt-4 flex items-end gap-2">
-              {[42, 58, 46, 76, 68, 88, 64].map((height, index) => (
-                <div
-                  key={index}
-                  className="flex-1 rounded-t-sm bg-accent-500/80"
-                  style={{ height: `${height}px` }}
-                />
-              ))}
-            </div>
           </div>
         </div>
         <p className="relative text-caption-1-regular text-text-white/50">

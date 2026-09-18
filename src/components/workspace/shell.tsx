@@ -113,7 +113,7 @@ export function WorkspaceShell({
               : []),
             {
               key: "dashboard",
-              label: actor.role === "ADMIN" ? "系统概览" : "工作看板",
+              label: "工作台",
               href: "/dashboard",
             },
             {
