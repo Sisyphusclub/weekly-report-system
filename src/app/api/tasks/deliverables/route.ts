@@ -50,6 +50,7 @@ export async function POST(request: Request) {
           and(
             eq(deliverable.taskId, input.taskId),
             eq(deliverable.unitId, input.unitId),
+            eq(deliverable.organizationId, actor.organizationId),
           ),
         )
         .limit(1);
@@ -63,7 +64,12 @@ export async function POST(request: Request) {
         await tx
           .update(deliverable)
           .set(values)
-          .where(eq(deliverable.id, existing.id));
+          .where(
+            and(
+              eq(deliverable.id, existing.id),
+              eq(deliverable.organizationId, actor.organizationId),
+            ),
+          );
       else {
         id = crypto.randomUUID();
         await tx.insert(deliverable).values({
