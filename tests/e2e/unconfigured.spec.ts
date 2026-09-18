@@ -65,5 +65,15 @@ test("no signup, no fallback credentials, and no fake health", async ({
       })
     ).status(),
   ).toBe(503);
-  expect((await request.get("/api/health")).status()).toBe(503);
+  const health = await request.get("/api/health");
+  expect(health.status()).toBe(503);
+  const healthBody = await health.json();
+  expect(healthBody).toMatchObject({
+    status: "not_ready",
+    database: "not_checked",
+    storage: "not_checked",
+  });
+  expect(JSON.stringify(healthBody)).not.toMatch(
+    /DATABASE_URL|SECRET|PASSWORD/i,
+  );
 });
