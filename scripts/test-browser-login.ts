@@ -3,6 +3,8 @@ import { randomUUID } from "node:crypto";
 import { chromium, expect } from "@playwright/test";
 import { Pool } from "pg";
 import { hashPassword } from "better-auth/crypto";
+import { base32 } from "@better-auth/utils/base32";
+import { createOTP } from "@better-auth/utils/otp";
 
 async function main() {
   if (process.env.APP_ENV !== "development")
@@ -307,6 +309,102 @@ async function main() {
           console.log(
             "PASS: expired revision creates one pending request without altering published report or historical snapshots",
           );
+          const bossId = randomUUID();
+          const bossName = `boss_${bossId.replaceAll("-", "").slice(0, 16)}`;
+          const bossPassword = randomUUID();
+          await pool.query(
+            "INSERT INTO app_user(id,organization_id,name,email,username,role,status,must_change_password) VALUES($1,$2,'审核验收',$3,$4,'BOSS','ACTIVE',false)",
+            [bossId, org, `${bossId}@test.invalid`, bossName],
+          );
+          await pool.query(
+            "INSERT INTO auth_account(id,account_id,provider_id,user_id,password) VALUES($1,$1,'credential',$1,$2)",
+            [bossId, await hashPassword(bossPassword)],
+          );
+          const bossContext = await browser.newContext();
+          try {
+            const bossPost = (path: string, data: object) =>
+              bossContext.request.post(`${origin}${path}`, {
+                headers: { origin },
+                data,
+              });
+            assert.equal(
+              (
+                await bossPost("/api/auth/sign-in/username", {
+                  username: bossName,
+                  password: bossPassword,
+                })
+              ).status(),
+              200,
+            );
+            const setup = await bossPost("/api/auth/two-factor/enable", {
+              password: bossPassword,
+            });
+            assert.equal(setup.status(), 200);
+            const secret = new TextDecoder().decode(
+              base32.decode(
+                new URL((await setup.json()).totpURI).searchParams.get(
+                  "secret",
+                )!,
+              ),
+            );
+            assert.equal(
+              (
+                await bossPost("/api/auth/two-factor/verify-totp", {
+                  code: await createOTP(secret).totp(),
+                })
+              ).status(),
+              200,
+            );
+            const decision = {
+              requestId: pendingResult.id,
+              version: 1,
+              decision: "APPROVED",
+              reason: "核实后同意",
+            };
+            const review = await bossPost(
+              "/api/reports/revisions/review",
+              decision,
+            );
+            assert.equal(review.status(), 200);
+            assert.equal((await review.json()).status, "APPROVED");
+            assert.equal(
+              (
+                await bossPost("/api/reports/revisions/review", decision)
+              ).status(),
+              409,
+            );
+            const finalReport = (
+              await pool.query(
+                "SELECT summary,version FROM report WHERE id=$1",
+                [beforeRevision.id],
+              )
+            ).rows[0];
+            assert.equal(finalReport.summary, approvalInput.summary);
+            assert.equal(finalReport.version, approvedState.version + 1);
+            assert.equal(
+              (
+                await pool.query(
+                  "SELECT count(*)::int AS count FROM notification WHERE recipient_id=$1 AND dedupe_key=$2",
+                  [id, `revision-reviewed:${pendingResult.id}`],
+                )
+              ).rows[0].count,
+              1,
+            );
+            assert.equal(
+              (
+                await pool.query(
+                  "SELECT reviewer_id FROM revision_request WHERE id=$1",
+                  [pendingResult.id],
+                )
+              ).rows[0].reviewer_id,
+              bossId,
+            );
+            console.log(
+              "PASS: boss MFA enrollment, revision approval, version increment, reviewer identity, notification deduplication, repeated review denial",
+            );
+          } finally {
+            await bossContext.close();
+          }
           const projectId = randomUUID(),
             categoryId = randomUUID(),
             planId = randomUUID();
