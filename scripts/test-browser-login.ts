@@ -224,6 +224,45 @@ async function main() {
           console.log(
             "PASS: authenticated plan rolling, source preservation, concurrent idempotency, stale version rejection",
           );
+          await page.goto(`${origin}/tasks`);
+          const sourceCard = page
+            .getByRole("region", { name: "任务列表", exact: true })
+            .locator(":scope > div")
+            .filter({ has: page.locator("span", { hasText: "2026-09-17" }) });
+          await expect(sourceCard).toHaveCount(1);
+          await expect(async () => {
+            await sourceCard.getByLabel(/新截止日期/).fill("2026-09-20");
+            await expect(
+              sourceCard.getByRole("button", { name: "滚动计划", exact: true }),
+            ).toBeEnabled({ timeout: 1000 });
+          }).toPass({ timeout: 10000 });
+          await sourceCard
+            .getByRole("button", { name: "滚动计划", exact: true })
+            .click();
+          await expect(sourceCard.getByRole("status")).toHaveText(
+            "后续计划已创建",
+          );
+          await expect
+            .poll(
+              async () =>
+                (
+                  await pool.query(
+                    "SELECT count(*)::int AS count FROM work_task WHERE source_task_id=$1 AND due_date='2026-09-20'",
+                    [planId],
+                  )
+                ).rows[0].count,
+            )
+            .toBe(1);
+          await page.reload();
+          await expect(
+            page
+              .getByRole("region", { name: "任务列表", exact: true })
+              .locator(":scope > div")
+              .filter({ has: page.locator("span", { hasText: "2026-09-20" }) }),
+          ).toHaveCount(1);
+          console.log(
+            "PASS: plan roll date input, button submission, success feedback, refreshed task list",
+          );
         } else {
           await expect(
             page.getByLabel("工作总结", { exact: true }),
