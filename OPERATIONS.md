@@ -14,6 +14,8 @@
 4. 使用 `npm run start` 启动应用，并检查 `GET /api/health` 返回 `ready`。
 5. 使用进程管理器托管服务；将 `scripts/run-scheduled-jobs.ps1` 接入计划任务，并设置提醒任务所需的组织环境变量。
 
+发布前可运行 `npm run verify`，一次执行类型、Lint、格式、单元测试、迁移检查和生产构建门禁。
+
 ## 回滚
 
 1. 停止当前进程并记录当前提交、迁移版本和错误日志。
