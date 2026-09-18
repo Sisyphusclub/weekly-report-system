@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/base/input/input";
 import { Button } from "@/components/base/buttons/button";
+import { useClientReady } from "@/lib/use-client-ready";
 
 export function RollPlanForm({
   taskId,
@@ -15,6 +16,7 @@ export function RollPlanForm({
   dueDate: string;
 }) {
   const router = useRouter();
+  const ready = useClientReady();
   const busy = useRef(false);
   const [date, setDate] = useState("");
   const [pending, setPending] = useState(false);
@@ -58,7 +60,7 @@ export function RollPlanForm({
           value={date}
           onChange={setDate}
           isRequired
-          isDisabled={pending}
+          isDisabled={!ready || pending}
         />
         <Button type="submit" variant="secondary" disabled={pending || !date}>
           {pending ? "正在创建…" : "滚动计划"}
