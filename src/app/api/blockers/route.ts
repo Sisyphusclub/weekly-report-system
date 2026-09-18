@@ -18,12 +18,7 @@ export async function POST(request: Request) {
     )
       return Response.json({ error: "请求来源无效" }, { status: 403 });
     const actor = await currentUser();
-    if (
-      !actor ||
-      actor.role === "ADMIN" ||
-      actor.mustChangePassword ||
-      (actor.role === "BOSS" && !actor.twoFactorEnabled)
-    )
+    if (!actor || actor.role === "ADMIN" || actor.mustChangePassword)
       return Response.json(
         { error: "请先登录并完成账号安全设置" },
         { status: 403 },

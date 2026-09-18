@@ -36,11 +36,7 @@ export async function requireUser(
 ) {
   const actor = await currentUser();
   if (!actor) redirect("/login");
-  if (
-    !options.allowSecuritySetup &&
-    (actor.mustChangePassword ||
-      (actor.role !== "EMPLOYEE" && !actor.twoFactorEnabled))
-  )
+  if (!options.allowSecuritySetup && actor.mustChangePassword)
     redirect("/security");
   return actor;
 }

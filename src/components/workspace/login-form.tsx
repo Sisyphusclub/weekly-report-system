@@ -11,9 +11,6 @@ export function LoginForm({ configured }: { configured: boolean }) {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [code, setCode] = useState("");
-  const [secondFactor, setSecondFactor] = useState(false);
-  const [recovery, setRecovery] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -23,43 +20,20 @@ export function LoginForm({ configured }: { configured: boolean }) {
     setBusy(true);
     setError("");
     try {
-      if (secondFactor) {
-        const result = recovery
-          ? await authClient.twoFactor.verifyBackupCode({
-              code,
-              trustDevice: false,
-            })
-          : await authClient.twoFactor.verifyTotp({ code, trustDevice: false });
-        if (result.error) {
-          setError("验证码无效或已过期，请重新输入。连续失败后请稍后再试。");
-          return;
-        }
-      } else {
-        const result = await authClient.signIn.username({
-          username: username.trim().toLowerCase(),
-          password,
-          rememberMe: false,
-        });
-        if (result.error) {
-          setError(
-            result.error.status === 429
-              ? "登录尝试过于频繁，请 15 分钟后重试。"
-              : result.error.status === 503
-                ? "认证服务暂不可用，请联系管理员。"
-                : "登录失败，请检查用户名和密码，或联系管理员。",
-          );
-          return;
-        }
-        setPassword("");
-        if (
-          result.data &&
-          "twoFactorRedirect" in result.data &&
-          result.data.twoFactorRedirect
-        ) {
-          setSecondFactor(true);
-          return;
-        }
+      const result = await authClient.signIn.username({
+        username: username.trim().toLowerCase(),
+        password,
+        rememberMe: false,
+      });
+      if (result.error) {
+        setError(
+          result.error.status === 503
+            ? "认证服务暂不可用，请联系管理员。"
+            : "登录失败，请检查用户名和密码，或联系管理员。",
+        );
+        return;
       }
+      setPassword("");
       router.replace("/dashboard");
       router.refresh();
     } catch {
@@ -75,43 +49,31 @@ export function LoginForm({ configured }: { configured: boolean }) {
       className="flex flex-col gap-5"
       aria-label="账号登录"
     >
-      {secondFactor ? (
+      <>
         <Input
-          label={recovery ? "一次性恢复码" : "身份验证器验证码"}
-          value={code}
-          onChange={setCode}
-          autoComplete="one-time-code"
+          label="用户名"
+          name="username"
+          value={username}
+          onChange={setUsername}
+          autoComplete="username"
+          placeholder="输入用户名"
+          leadingIcon={RiUserLine}
           isRequired
-          isDisabled={busy}
-          autoFocus
+          isDisabled={!configured || busy}
         />
-      ) : (
-        <>
-          <Input
-            label="用户名"
-            name="username"
-            value={username}
-            onChange={setUsername}
-            autoComplete="username"
-            placeholder="输入用户名"
-            leadingIcon={RiUserLine}
-            isRequired
-            isDisabled={!configured || busy}
-          />
-          <Input
-            label="密码"
-            name="password"
-            type="password"
-            value={password}
-            onChange={setPassword}
-            autoComplete="current-password"
-            placeholder="请输入密码"
-            leadingIcon={RiLockLine}
-            isRequired
-            isDisabled={!configured || busy}
-          />
-        </>
-      )}
+        <Input
+          label="密码"
+          name="password"
+          type="password"
+          value={password}
+          onChange={setPassword}
+          autoComplete="current-password"
+          placeholder="请输入密码"
+          leadingIcon={RiLockLine}
+          isRequired
+          isDisabled={!configured || busy}
+        />
+      </>
       {error && (
         <p role="alert" className="text-body-regular text-text-primary">
           {error}
@@ -123,22 +85,8 @@ export function LoginForm({ configured }: { configured: boolean }) {
         trailingIcon={RiArrowRightLine}
         className="h-11 w-full"
       >
-        {busy ? "登录中…" : secondFactor ? "验证并继续" : "登录"}
+        {busy ? "登录中…" : "登录"}
       </Button>
-      {secondFactor && (
-        <Button
-          type="button"
-          variant="ghost"
-          disabled={busy}
-          onClick={() => {
-            setRecovery(!recovery);
-            setCode("");
-            setError("");
-          }}
-        >
-          {recovery ? "使用身份验证器" : "使用一次性恢复码"}
-        </Button>
-      )}
       <p className="text-caption-1-regular text-text-tertiary">
         账号由管理员统一管理。忘记密码请联系管理员。
       </p>

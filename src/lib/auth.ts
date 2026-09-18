@@ -50,16 +50,6 @@ function createAuth() {
       useSecureCookies: config.APP_ENV !== "development",
       defaultCookieAttributes: { httpOnly: true, sameSite: "lax" },
     },
-    rateLimit: {
-      enabled: true,
-      storage: "database",
-      window: 60,
-      max: 60,
-      customRules: {
-        "/sign-in/username": { window: 900, max: 5 },
-        "/two-factor/*": { window: 60, max: 5 },
-      },
-    },
     databaseHooks: {
       session: {
         create: {
@@ -189,11 +179,6 @@ function createAuth() {
       username(),
       twoFactor({
         issuer: "市场部工作看板",
-        accountLockout: {
-          enabled: true,
-          maxFailedAttempts: 5,
-          durationSeconds: 900,
-        },
       }),
     ],
   });
