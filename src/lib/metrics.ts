@@ -133,7 +133,13 @@ export async function getDashboardBreakdown(
             name: user.name,
           })
           .from(projectMember)
-          .innerJoin(user, eq(user.id, projectMember.userId))
+          .innerJoin(
+            user,
+            and(
+              eq(user.id, projectMember.userId),
+              eq(user.organizationId, projectMember.organizationId),
+            ),
+          )
           .where(
             and(
               eq(projectMember.organizationId, actor.organizationId),
