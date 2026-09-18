@@ -80,7 +80,7 @@ export default async function DashboardPage({
             >
               <h2 className="text-body-regular text-text-secondary">{label}</h2>
               <p className="mt-3 text-title-1-medium">{value}</p>
-              <ButtonLink className="mt-4" href={href} variant="ghost">
+              <ButtonLink className="mt-4" href={String(href)} variant="ghost">
                 查看
               </ButtonLink>
             </section>
