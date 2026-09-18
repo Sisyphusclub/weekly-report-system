@@ -1,4 +1,5 @@
 import { ButtonLink } from "@/components/base/buttons/button";
+import { Chip } from "@/components/base/badges/chip";
 import {
   dailySubmissionStatus,
   type DailySubmissionStatus,
@@ -15,6 +16,25 @@ const statusLabels: Record<DailySubmissionStatus, string> = {
   REST_DAY: "休息日",
   NOT_STARTED: "尚未入职",
 };
+const statusColors: Record<
+  DailySubmissionStatus,
+  | "orange"
+  | "lime"
+  | "rose"
+  | "yellow"
+  | "cyan"
+  | "blue"
+  | "purple"
+  | "neutral"
+> = {
+  SUBMITTED: "lime",
+  LATE: "yellow",
+  PENDING: "orange",
+  OVERDUE: "rose",
+  EXEMPT: "blue",
+  REST_DAY: "neutral",
+  NOT_STARTED: "purple",
+};
 const statusOrder: Record<DailySubmissionStatus, number> = {
   OVERDUE: 0,
   PENDING: 1,
@@ -28,9 +48,11 @@ const statusOrder: Record<DailySubmissionStatus, number> = {
 export function DailySubmissions({
   data,
   requestedPage,
+  showReportLinks = true,
 }: {
   data: SubmissionData;
   requestedPage: number;
+  showReportLinks?: boolean;
 }) {
   const date = shanghaiDate(data.now);
   const rows = data.members
@@ -58,6 +80,15 @@ export function DailySubmissions({
   const completed = rows.filter(
     (row) => row.status === "SUBMITTED" || row.status === "LATE",
   ).length;
+  const due = rows.length -
+    rows.filter(
+      (row) =>
+        row.status === "EXEMPT" ||
+        row.status === "REST_DAY" ||
+        row.status === "NOT_STARTED",
+    ).length;
+  const followUp = waiting;
+  const displayDate = date.replaceAll("-", ".");
   const pageCount = Math.max(1, Math.ceil(rows.length / 20));
   const page = Math.min(requestedPage, pageCount);
   return (
@@ -65,12 +96,38 @@ export function DailySubmissions({
       id="today-submissions"
       className="rounded-3xl border border-border-button-default p-6"
     >
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-title-2-medium">今日提交 · {date}</h2>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <p className="text-caption-1-medium text-text-tertiary">日报看板</p>
+          <h2 className="mt-1 text-title-2-medium">今日提交 · {displayDate}</h2>
+        </div>
         <p className="text-body-regular text-text-secondary">
-          未提交 {waiting} 人 · 已提交 {completed} 人 · 无需提交{" "}
-          {rows.length - waiting - completed} 人
+          按当前有效成员统计
         </p>
+      </div>
+      <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {[
+          ["应提交", due, "soft"],
+          ["已提交", completed, "lime"],
+          ["待跟进", followUp, "rose"],
+          ["无需提交", rows.length - due, "blue"],
+        ].map(([label, value, color]) => (
+          <div
+            key={label}
+            className="rounded-2xl bg-background-secondary-default p-4"
+          >
+            <p className="text-caption-1-medium text-text-secondary">{label}</p>
+            <div className="mt-2 flex items-end justify-between gap-2">
+              <p className="text-title-2-medium">{value}</p>
+              <Chip
+                variant="caption"
+                color={color as "soft" | "lime" | "rose" | "blue"}
+              >
+                人
+              </Chip>
+            </div>
+          </div>
+        ))}
       </div>
       {rows.length ? (
         <ul className="mt-4 divide-y divide-separator-border">
@@ -80,10 +137,13 @@ export function DailySubmissions({
               className="flex flex-wrap items-center justify-between gap-3 py-3"
             >
               <span className="text-body-medium">{row.name}</span>
-              <span className="text-body-regular text-text-secondary">
+              <Chip
+                variant="caption"
+                color={statusColors[row.status]}
+              >
                 {statusLabels[row.status]}
-              </span>
-              {row.report && (
+              </Chip>
+              {showReportLinks && row.report && (
                 <ButtonLink href={`/reports/${row.report.id}`} variant="ghost">
                   查看日报
                 </ButtonLink>

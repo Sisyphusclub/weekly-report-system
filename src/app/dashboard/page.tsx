@@ -1,32 +1,39 @@
+import {
+  RiArrowRightLine,
+  RiBarChart2Line,
+  RiCheckboxCircleLine,
+  RiFireLine,
+  RiPulseLine,
+  RiTimerLine,
+} from "@remixicon/react";
 import { and, count, eq } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { project, user, category, deliverableUnit } from "@/lib/db/schema";
+import { category, deliverableUnit, project, user } from "@/lib/db/schema";
 import { listReports } from "@/lib/reports";
-import { WorkspaceShell } from "@/components/workspace/shell";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
-import { Input } from "@/components/base/input/input";
-import { DailySubmissions } from "@/components/workspace/daily-submissions";
 import { getSubmissionData } from "@/lib/submission-data";
-import { dateInput } from "@/lib/daily-input";
 import {
   getDashboardBreakdown,
   getDashboardMetrics,
   submissionRate,
 } from "@/lib/metrics";
+import { shanghaiDate } from "@/lib/daily-input";
+import { WorkspaceShell } from "@/components/workspace/shell";
+import { ButtonLink } from "@/components/base/buttons/button";
+import { Chip } from "@/components/base/badges/chip";
+import { DailySubmissions } from "@/components/workspace/daily-submissions";
+import { MemberCompareCard } from "@/components/dashboard/member-compare-card";
+import { ProjectCollabCard } from "@/components/dashboard/project-collab-card";
+import { PlanStrip } from "@/components/dashboard/plan-strip";
+import { type WorkStatus } from "@/components/dashboard/task-item-row";
 
 export const metadata = { title: "工作看板" };
-export default async function DashboardPage({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    submissionPage?: string;
-    from?: string;
-    to?: string;
-  }>;
-}) {
+
+export default async function DashboardPage() {
   const actor = await requireUser();
   const db = getDb();
+  const now = new Date();
+  const data = await getSubmissionData(actor, now);
   if (actor.role === "ADMIN") {
     const counts = await Promise.all([
       db
@@ -58,309 +65,418 @@ export default async function DashboardPage({
     ]);
     return (
       <WorkspaceShell actor={actor} selected="dashboard">
-        <header>
-          <p className="mb-2 text-caption-1-medium text-text-tertiary">
-            内部工作空间
-          </p>
-          <h1 className="text-title-1-medium">工作台</h1>
-          <p className="mt-2 text-body-regular text-text-secondary">
-            从这里进入账号、项目和基础资料。
-          </p>
-        </header>
-        <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
+        <PageIntro
+          eyebrow="今天"
+          title="日报总览"
+          description="掌握今日填报进度，优先处理未提交与逾期成员。"
+        />
+        <DailySubmissions
+          data={data}
+          requestedPage={1}
+          showReportLinks={false}
+        />
+        <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
           {[
             ["账号", counts[0][0].value, "/admin/users"],
             ["项目", counts[1][0].value, "/admin/projects"],
             ["启用分类", counts[2][0].value, "/admin/dictionaries"],
             ["交付物单位", counts[3][0].value, "/admin/dictionaries"],
           ].map(([label, value, href]) => (
-            <section
-              key={label}
-              className="rounded-3xl border border-border-button-default p-6"
-            >
-              <h2 className="text-body-regular text-text-secondary">{label}</h2>
-              <p className="mt-3 text-title-1-medium">{value}</p>
-              <ButtonLink className="mt-4" href={String(href)} variant="ghost">
-                查看
-              </ButtonLink>
-            </section>
+            <MetricCard
+              key={String(label)}
+              label={String(label)}
+              value={String(value)}
+              href={String(href)}
+            />
           ))}
-        </div>
-        <section className="rounded-3xl border border-border-button-default p-6">
-          <h2 className="text-title-2-medium">常用入口</h2>
-          <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              ["账号管理", "创建账号、重置密码和停用账号", "/admin/users"],
-              ["项目管理", "维护项目负责人和参与成员", "/admin/projects"],
-              ["工作日历", "维护工作日与免报日期", "/admin/calendar"],
-              ["系统设置", "组织信息和运行配置", "/admin/settings"],
-            ].map(([title, detail, href]) => (
-              <ButtonLink
-                key={href}
-                href={href}
-                variant="secondary"
-                className="h-auto justify-start p-4"
-              >
-                <span className="flex flex-col items-start gap-1">
-                  <span className="text-body-medium">{title}</span>
-                  <span className="text-caption-1-regular text-text-secondary">
-                    {detail}
-                  </span>
-                </span>
-              </ButtonLink>
-            ))}
-          </div>
         </section>
       </WorkspaceShell>
     );
   }
-  const now = new Date();
-  const params = await searchParams;
-  const parsedPage = Number(params.submissionPage ?? 1);
-  const submissionPage =
-    Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
-  const from = dateInput.safeParse(params.from).success
-    ? dateInput.parse(params.from)
-    : undefined;
-  const to = dateInput.safeParse(params.to).success
-    ? dateInput.parse(params.to)
-    : undefined;
-  const range = from && to && from <= to ? { from, to } : undefined;
-  const [reports, submissionData] = await Promise.all([
+  const [metrics, breakdown, reports] = await Promise.all([
+    getDashboardMetrics(actor, now, data),
+    getDashboardBreakdown(actor, now, data),
     listReports(actor, "", 1),
-    getSubmissionData(actor, now),
   ]);
-  const [metrics, breakdown] = await Promise.all([
-    getDashboardMetrics(actor, now, submissionData),
-    getDashboardBreakdown(actor, now, submissionData, range),
-  ]);
+  const rate = submissionRate(metrics.submittedReports, metrics.dueReports);
+  const today = shanghaiDate(now).replaceAll("-", ".");
+  const isBoss = actor.role === "BOSS";
   return (
     <WorkspaceShell actor={actor} selected="dashboard">
-      <header>
-        <p className="mb-2 text-caption-1-medium text-text-tertiary">
-          团队协作空间
-        </p>
-        <h1 className="text-title-1-medium">工作看板</h1>
-        <p className="mt-2 text-body-regular text-text-secondary">
-          从工作记录中了解团队进展。
-        </p>
-      </header>
-      <form action="/dashboard" className="flex flex-wrap items-end gap-3">
-        <Input
-          name="from"
-          type="date"
-          label="项目视角开始日期"
-          defaultValue={from ?? ""}
-        />
-        <Input
-          name="to"
-          type="date"
-          label="项目视角结束日期"
-          defaultValue={to ?? ""}
-        />
-        <Button type="submit">查询项目范围</Button>
-        <ButtonLink href="/dashboard" variant="ghost">
-          恢复本周
-        </ButtonLink>
-      </form>
-      {actor.role === "BOSS" && (
-        <DailySubmissions
-          data={submissionData}
-          requestedPage={submissionPage}
-        />
-      )}
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        {[
-          [
-            "本周按时提交率",
-            submissionRate(metrics.onTimeReports, metrics.dueReports) === null
-              ? "暂无数据"
-              : `${submissionRate(metrics.onTimeReports, metrics.dueReports)}%`,
-          ],
-          ["待处理阻塞", String(metrics.openBlockers)],
-          ["紧急阻塞", String(metrics.urgentBlockers)],
-          ["本周完成任务", String(metrics.completedTasks)],
-        ].map(([label, value]) => (
-          <section
-            key={label}
-            className="rounded-3xl border border-border-button-default p-5"
+      <PageIntro
+        eyebrow={isBoss ? "负责人视角 · 今日" : today}
+        title={isBoss ? "团队工作驾驶舱" : "工作看板"}
+        description={
+          isBoss
+            ? "从提交进度、阻塞和计划兑现率判断团队今天是否需要介入。"
+            : "查看本周工作进展、交付物与待跟进事项。"
+        }
+        action={
+          <ButtonLink
+            href="/daily"
+            variant="primary"
+            leadingIcon={RiCheckboxCircleLine}
           >
-            <p className="text-body-regular text-text-secondary">{label}</p>
-            <p className="mt-2 text-title-2-medium">{value}</p>
-          </section>
-        ))}
-      </div>
-      <p className="text-body-regular text-text-secondary">
-        按当前有效成员本周已到截止时间的日报统计，扣除休息日和免报日期。
-      </p>
-      <section className="rounded-3xl border border-border-button-default p-6">
-        <div className="flex items-center justify-between gap-4">
-          <h2 className="text-title-2-medium">最近报告</h2>
-          <ButtonLink href="/reports" variant="secondary">
-            查看全部
+            填写今日日报
           </ButtonLink>
-        </div>
-        {reports.items.length ? (
-          <ul className="mt-5 divide-y divide-separator-border">
-            {reports.items.slice(0, 6).map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-4"
-              >
-                <div>
-                  <p className="text-body-medium">
-                    {item.author} · {item.type === "DAILY" ? "日报" : "周报"} ·{" "}
-                    {item.date ?? item.weekStart}
-                  </p>
-                  <p className="mt-1 text-body-regular text-text-secondary">
-                    {item.summary || "未填写总结"}
-                  </p>
-                </div>
-                <ButtonLink href={`/reports/${item.id}`} variant="ghost">
-                  查看报告
-                </ButtonLink>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="py-12 text-center">
-            <p className="text-headline-medium">还没有可查看的报告</p>
-            <p className="mt-2 text-body-regular text-text-secondary">
-              团队已提交的报告会出现在这里，草稿仅本人可见。
-            </p>
-          </div>
-        )}
+        }
+      />
+      {isBoss && <DailySubmissions data={data} requestedPage={1} />}
+      <section className="grid grid-cols-2 gap-3 xl:grid-cols-4">
+        <MetricCard
+          label="本周按时提交"
+          value={rate === null ? "—" : `${rate}%`}
+          note={`${metrics.submittedReports}/${metrics.dueReports} 已提交`}
+          icon={RiCheckboxCircleLine}
+          tone="success"
+        />
+        <MetricCard
+          label="待处理阻塞"
+          value={String(metrics.openBlockers)}
+          note={
+            metrics.urgentBlockers
+              ? `${metrics.urgentBlockers} 项紧急`
+              : "当前无紧急项"
+          }
+          icon={RiFireLine}
+          tone={metrics.openBlockers ? "danger" : "neutral"}
+          href="/blockers"
+        />
+        <MetricCard
+          label="计划兑现率"
+          value={
+            breakdown.planFulfillment.rate === null
+              ? "—"
+              : `${breakdown.planFulfillment.rate}%`
+          }
+          note={`${breakdown.planFulfillment.completed}/${breakdown.planFulfillment.due} 项完成`}
+          icon={RiPulseLine}
+          tone="warning"
+        />
+        <MetricCard
+          label="本周完成任务"
+          value={String(metrics.completedTasks)}
+          note={`${metrics.inProgressTasks} 项推进中`}
+          icon={RiBarChart2Line}
+          tone="info"
+          href="/tasks"
+        />
       </section>
-      <div className="grid gap-6 xl:grid-cols-2">
-        <section className="rounded-3xl border border-border-button-default p-6">
-          <h2 className="text-title-2-medium">成员视角</h2>
-          <ul className="mt-4 divide-y divide-separator-border">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
+        <section className="min-w-0 rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+          <SectionHeading
+            title="今日计划横向矩阵"
+            detail="按成员查看计划完成情况"
+            href={isBoss ? "/reports" : "/tasks"}
+          />
+          <PlanStrip>
             {breakdown.members.map((member) => (
-              <li
-                key={member.id}
-                className="flex flex-wrap items-center justify-between gap-3 py-3"
-              >
-                <span>{member.name}</span>
-                <span className="text-text-secondary">
-                  截至已到期日报 {member.submitted}/{member.due} · 完成{" "}
-                  {member.completed} · 阻塞 {member.openBlockers}
-                </span>
-                <ButtonLink
-                  href={`/reports?member=${encodeURIComponent(member.id)}`}
-                  variant="ghost"
-                >
-                  查看报告
-                </ButtonLink>
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className="rounded-3xl border border-border-button-default p-6">
-          <h2 className="text-title-2-medium">成员交付物</h2>
-          {breakdown.memberDeliverables.length ? (
-            <ul className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {breakdown.memberDeliverables.map((item) => (
-                <li
-                  key={`${item.memberId}:${item.unitId}`}
-                  className="rounded-xl bg-background-secondary-default p-3"
-                >
-                  <p className="text-body-medium">{item.memberName}</p>
-                  <p className="text-body-regular text-text-secondary">
-                    {item.quantity} {item.unitName}
-                  </p>
-                  <ButtonLink
-                    href={`/tasks?assignee=${encodeURIComponent(item.memberId)}`}
-                    variant="ghost"
-                  >
-                    查看任务
-                  </ButtonLink>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mt-4 text-body-regular text-text-secondary">
-              本周暂无交付物
-            </p>
-          )}
-        </section>
-        <section className="rounded-3xl border border-border-button-default p-6">
-          <h2 className="text-title-2-medium">项目视角</h2>
-          <ul className="mt-4 divide-y divide-separator-border">
-            {breakdown.projects.map((project) => (
-              <li key={project.id} className="flex flex-col gap-2 py-3">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <span>{project.name}</span>
-                  <ButtonLink
-                    href={`/tasks?project=${project.id}`}
-                    variant="ghost"
-                  >
-                    查看任务
-                  </ButtonLink>
-                </div>
-                <span className="text-text-secondary">
-                  完成 {project.completed} · 推进中 {project.inProgress} · 阻塞{" "}
-                  {project.blocked}
-                </span>
-                <span className="text-text-secondary">
-                  负责人：{project.owner?.name ?? "未设置"} · 参与成员：
-                  {project.members.map((member) => member.name).join("、") ||
-                    "暂无"}
-                </span>
-                {project.nextPlans.length > 0 && (
-                  <span className="text-text-secondary">
-                    下周计划：
-                    {project.nextPlans
-                      .slice(0, 3)
-                      .map((plan) => plan.content)
-                      .join("、")}
-                  </span>
-                )}
-                {project.deliverables.length > 0 && (
-                  <span className="text-text-secondary">
-                    交付物：
-                    {project.deliverables
-                      .map((item) => `${item.quantity} ${item.unitName}`)
-                      .join("、")}
-                  </span>
-                )}
-              </li>
-            ))}
-          </ul>
-        </section>
-        <section className="rounded-3xl border border-border-button-default p-6">
-          <h2 className="text-title-2-medium">本周阻塞趋势</h2>
-          <p className="mt-2 text-body-regular text-text-secondary">
-            已解决阻塞中位时长：
-            {breakdown.blockerResolutionMedianHours === null
-              ? "暂无数据"
-              : `${breakdown.blockerResolutionMedianHours} 小时`}
-          </p>
-          <p className="mt-2 text-body-regular text-text-secondary">
-            本周计划兑现率：
-            {breakdown.planFulfillment.rate === null
-              ? "暂无数据"
-              : `${breakdown.planFulfillment.rate}%`}
-            （{breakdown.planFulfillment.completed}/
-            {breakdown.planFulfillment.due}）
-          </p>
-          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
-            {breakdown.blockerTrend.map((day) => (
               <div
-                key={day.date}
-                className="rounded-xl bg-background-secondary-default p-3"
+                key={member.id}
+                className="w-[230px] shrink-0 rounded-xl border border-border-button-default bg-background-secondary-default p-4"
               >
-                <p className="text-caption-1-medium text-text-secondary">
-                  {day.date.slice(5)}
-                </p>
-                <p className="mt-2 text-body-medium">新增 {day.opened}</p>
-                <p className="text-body-regular text-text-secondary">
-                  解决 {day.resolved}
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-body-semibold">
+                    {member.name}
+                  </span>
+                  <Chip
+                    variant="caption"
+                    color={member.openBlockers ? "rose" : "soft"}
+                  >
+                    {member.completed} 完成
+                  </Chip>
+                </div>
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-background-tertiary-default">
+                  <div
+                    className="h-full rounded-full bg-accent-500"
+                    style={{
+                      width: `${member.due ? Math.min(100, Math.round((member.submitted / member.due) * 100)) : 0}%`,
+                    }}
+                  />
+                </div>
+                <p className="mt-2 text-caption-1-regular text-text-tertiary">
+                  计划履约 ·{" "}
+                  {member.due
+                    ? Math.round((member.submitted / member.due) * 100)
+                    : 0}
+                  %
                 </p>
               </div>
             ))}
+          </PlanStrip>
+        </section>
+        <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+          <SectionHeading title="交付物与分类" detail="本周累计产出" />
+          <div className="mt-5 space-y-3">
+            {breakdown.memberDeliverables.slice(0, 6).map((item) => (
+              <div
+                key={`${item.memberId}:${item.unitId}`}
+                className="flex items-center justify-between gap-3"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <span className="size-2 rounded-full bg-accent-500" />
+                  <span className="truncate text-body-regular">
+                    {item.memberName}
+                  </span>
+                </div>
+                <span className="shrink-0 text-body-semibold tabular-nums">
+                  {item.quantity}{" "}
+                  <span className="text-caption-1-regular text-text-tertiary">
+                    {item.unitName}
+                  </span>
+                </span>
+              </div>
+            ))}
+            {breakdown.memberDeliverables.length === 0 && (
+              <EmptyState text="本周暂无交付物记录" />
+            )}
+          </div>
+          <div className="mt-5 border-t border-separator-border pt-4">
+            <div className="flex items-center justify-between text-caption-1-medium">
+              <span className="text-text-secondary">阻塞解决中位时长</span>
+              <span className="tabular-nums text-text-primary">
+                {breakdown.blockerResolutionMedianHours === null
+                  ? "—"
+                  : `${breakdown.blockerResolutionMedianHours}h`}
+              </span>
+            </div>
           </div>
         </section>
       </div>
+      {isBoss && (
+        <section className="rounded-2xl border border-status-rose-text/30 bg-background-primary-default p-5 shadow-xs">
+          <SectionHeading
+            title="阻塞作战室"
+            detail={`${metrics.openBlockers} 项待协调`}
+            href="/blockers"
+            tone="danger"
+          />
+          <div className="mt-4 grid gap-3 md:grid-cols-3">
+            {breakdown.projects
+              .filter((item) => item.blocked > 0)
+              .slice(0, 3)
+              .map((item) => (
+                <div
+                  key={item.id}
+                  className="rounded-xl bg-status-rose-background p-4"
+                >
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="truncate text-body-semibold text-status-rose-text">
+                      {item.name}
+                    </p>
+                    <Chip variant="caption" color="rose">
+                      {item.blocked} 项
+                    </Chip>
+                  </div>
+                  <p className="mt-2 text-caption-1-regular text-status-rose-text">
+                    项目内存在阻塞，需要负责人介入协调。
+                  </p>
+                </div>
+              ))}
+            {breakdown.projects.every((item) => item.blocked === 0) && (
+              <EmptyState text="当前没有项目阻塞" />
+            )}
+          </div>
+        </section>
+      )}
+      <div
+        id="projects"
+        className="grid gap-6 xl:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]"
+      >
+        <section className="min-w-0">
+          <SectionHeading
+            title="成员视角"
+            detail="今日计划与实际完成对照"
+            href="/reports"
+          />
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            {breakdown.members.slice(0, 6).map((member, index) => (
+              <MemberCompareCard
+                key={member.id}
+                member={member}
+                plans={breakdown.projects
+                  .flatMap((project) =>
+                    project.nextPlans
+                      .slice(0, 1)
+                      .map((plan) => ({
+                        content: plan.content,
+                        projectName: project.name,
+                        status: "TODO" as WorkStatus,
+                      })),
+                  )
+                  .slice(index, index + 2)}
+                hasRisk={member.openBlockers > 0}
+              />
+            ))}
+          </div>
+          {breakdown.members.length === 0 && <EmptyState text="暂无成员数据" />}
+        </section>
+        <section>
+          <SectionHeading
+            title="项目协同"
+            detail="跨成员贡献聚合"
+            href="/tasks"
+          />
+          <div className="mt-4 space-y-3">
+            {breakdown.projects.slice(0, 5).map((item) => (
+              <ProjectCollabCard key={item.id} project={item} />
+            ))}
+            {breakdown.projects.length === 0 && (
+              <EmptyState text="暂无项目数据" />
+            )}
+          </div>
+        </section>
+      </div>
+      <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+        <SectionHeading
+          title="最近报告"
+          detail={`${reports.total} 份可查看`}
+          href="/reports"
+        />
+        <ul className="mt-3 divide-y divide-separator-border">
+          {reports.items.slice(0, 4).map((item) => (
+            <li
+              key={item.id}
+              className="flex flex-wrap items-center justify-between gap-3 py-3"
+            >
+              <div className="min-w-0">
+                <p className="truncate text-body-medium">
+                  {item.author} · {item.type === "DAILY" ? "日报" : "周报"} ·{" "}
+                  {item.date ?? item.weekStart}
+                </p>
+                <p className="mt-1 truncate text-caption-1-regular text-text-tertiary">
+                  {item.summary || "未填写总结"}
+                </p>
+              </div>
+              <Chip
+                variant="caption"
+                color={item.status === "SUBMITTED" ? "lime" : "yellow"}
+              >
+                {item.status === "SUBMITTED" ? "已提交" : "草稿"}
+              </Chip>
+            </li>
+          ))}
+        </ul>
+      </section>
     </WorkspaceShell>
+  );
+}
+
+function PageIntro({
+  eyebrow,
+  title,
+  description,
+  action,
+}: {
+  eyebrow: string;
+  title: string;
+  description: string;
+  action?: React.ReactNode;
+}) {
+  return (
+    <header className="flex flex-wrap items-end justify-between gap-4">
+      <div>
+        <p className="text-caption-1-semibold uppercase tracking-[0.08em] text-accent-600">
+          {eyebrow}
+        </p>
+        <h1 className="mt-2 text-title-1-semibold tracking-[-0.02em]">
+          {title}
+        </h1>
+        <p className="mt-2 max-w-2xl text-body-regular text-text-secondary">
+          {description}
+        </p>
+      </div>
+      {action}
+    </header>
+  );
+}
+function SectionHeading({
+  title,
+  detail,
+  href,
+  tone = "default",
+}: {
+  title: string;
+  detail: string;
+  href?: string;
+  tone?: "default" | "danger";
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <div className="min-w-0">
+        <h2
+          className={`text-title-3-semibold ${tone === "danger" ? "text-status-rose-text" : "text-text-primary"}`}
+        >
+          {title}
+        </h2>
+        <p className="mt-1 text-caption-1-regular text-text-tertiary">
+          {detail}
+        </p>
+      </div>
+      {href && (
+        <ButtonLink
+          href={href}
+          variant="ghost"
+          size="small"
+          trailingIcon={RiArrowRightLine}
+        >
+          查看全部
+        </ButtonLink>
+      )}
+    </div>
+  );
+}
+function MetricCard({
+  label,
+  value,
+  note,
+  href,
+  icon: Icon,
+  tone = "neutral",
+}: {
+  label: string;
+  value: string;
+  note?: string;
+  href?: string;
+  icon?: typeof RiTimerLine;
+  tone?: "neutral" | "success" | "danger" | "warning" | "info";
+}) {
+  const toneClass = {
+    neutral: "text-text-primary",
+    success: "text-state-success-base",
+    danger: "text-status-rose-text",
+    warning: "text-status-yellow-text",
+    info: "text-status-blue-text",
+  }[tone];
+  return (
+    <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+      <div className="flex items-start justify-between gap-3">
+        <p className="text-caption-1-medium text-text-secondary">{label}</p>
+        {Icon && <Icon className={`size-5 ${toneClass}`} aria-hidden />}
+      </div>
+      <p className={`mt-4 text-display-4-semibold tabular-nums ${toneClass}`}>
+        {value}
+      </p>
+      {note && (
+        <p className="mt-1 text-caption-1-regular text-text-tertiary">{note}</p>
+      )}
+      {href && (
+        <ButtonLink
+          href={href}
+          variant="ghost"
+          size="small"
+          className="mt-3 -ml-2"
+        >
+          查看详情
+        </ButtonLink>
+      )}
+    </section>
+  );
+}
+function EmptyState({ text }: { text: string }) {
+  return (
+    <div className="rounded-xl border border-dashed border-border-button-default px-4 py-8 text-center text-body-regular text-text-tertiary">
+      {text}
+    </div>
   );
 }

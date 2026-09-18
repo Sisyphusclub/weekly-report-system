@@ -5,7 +5,7 @@ import { Button } from "@/components/base/buttons/button";
 import { Select, SelectItem } from "@/components/base/select/select";
 import { Checkbox } from "@/components/base/checkbox/checkbox";
 import { useRouter } from "next/navigation";
-export function BlockerForm() {
+export function BlockerForm({ compact = false }: { compact?: boolean }) {
   const router = useRouter();
   const [severity, setSeverity] = useState("NORMAL");
   const [sensitive, setSensitive] = useState(false);
@@ -40,9 +40,9 @@ export function BlockerForm() {
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className={`flex flex-col gap-4 ${compact ? "" : "rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs"}`}
     >
-      <h2 className="text-title-2-medium">提交阻塞</h2>
+      <h2 className={compact ? "sr-only" : "text-title-2-medium"}>提交阻塞</h2>
       <Textarea
         label="阻塞描述"
         isRequired
