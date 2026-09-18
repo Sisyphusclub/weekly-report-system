@@ -125,6 +125,55 @@ async function main() {
           console.log(
             "PASS: daily draft persistence, reload, submission preview, database submission, submitted form lock",
           );
+          const linkedProjectId = randomUUID();
+          const linkedCategoryId = randomUUID();
+          const linkedTaskId = randomUUID();
+          await pool.query(
+            "INSERT INTO project(id,organization_id,name,owner_id) VALUES($1,$2,'日报关联验收',$3)",
+            [linkedProjectId, org, id],
+          );
+          await pool.query(
+            "INSERT INTO category(id,organization_id,name) VALUES($1,$2,'滚动开发')",
+            [linkedCategoryId, org],
+          );
+          await pool.query(
+            "INSERT INTO work_task(id,organization_id,created_by_id,primary_assignee_id,project_id,category_id,category_name,content,kind,status,work_date,due_date) VALUES($1,$2,$3,$3,$4,$5,'开发','日报关联任务','ACTUAL','DONE','2026-09-17','2026-09-16')",
+            [linkedTaskId, org, id, linkedProjectId, linkedCategoryId],
+          );
+          const linkedDaily = await context.request.post(
+            `${origin}/api/reports/daily`,
+            {
+              headers: { origin },
+              data: {
+                reportDate: "2026-09-17",
+                version: 0,
+                summary: "已完成关联任务日报",
+                noWorkReason: "",
+                noPlanReason: "暂无下一周期计划",
+                taskIds: [linkedTaskId],
+                submit: true,
+              },
+            },
+          );
+          assert.equal(
+            linkedDaily.status(),
+            200,
+            `linked daily status ${linkedDaily.status()}: ${await linkedDaily.text()}`,
+          );
+          const linkedReport = (
+            await pool.query(
+              "SELECT r.id,r.status,rt.task_id FROM report r JOIN report_task rt ON rt.report_id=r.id WHERE r.author_id=$1 AND r.report_date='2026-09-17' AND r.type='DAILY'",
+              [id],
+            )
+          ).rows[0];
+          assert.deepEqual(linkedReport, {
+            id: linkedReport.id,
+            status: "SUBMITTED",
+            task_id: linkedTaskId,
+          });
+          console.log(
+            "PASS: daily submission linked to assigned task and persisted task snapshot relation",
+          );
           // A fixed past week makes submission independent of today's weekday.
           for (const date of [
             "2026-09-07",
@@ -546,7 +595,7 @@ async function main() {
             [categoryId, org],
           );
           await pool.query(
-            "INSERT INTO work_task(id,organization_id,created_by_id,primary_assignee_id,project_id,category_id,category_name,content,kind,status,due_date) VALUES($1,$2,$3,$3,$4,$5,'开发','未完成计划','PLAN','IN_PROGRESS','2026-09-17')",
+            "INSERT INTO work_task(id,organization_id,created_by_id,primary_assignee_id,project_id,category_id,category_name,content,kind,status,due_date) VALUES($1,$2,$3,$3,$4,$5,'滚动开发','未完成计划','PLAN','IN_PROGRESS','2026-09-17')",
             [planId, org, id, projectId, categoryId],
           );
           const roll = () =>
