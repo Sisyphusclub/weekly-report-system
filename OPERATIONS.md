@@ -5,6 +5,7 @@
 - Node.js 与 npm 版本按 `package.json` 及锁文件安装。
 - PostgreSQL 由部署环境提供，使用 `DATABASE_URL` 注入；不要把密码写入仓库。
 - 生产环境必须配置认证密钥、应用地址和对象存储相关环境变量。启动前运行 `npm run build`。
+- `.env.example` 仅是字段模板，所有尖括号占位符和空值都必须由部署系统注入；它不包含可用的默认账号或密码。
 
 部署前运行 `npm run config:check` 检查必需配置；命令只输出缺少的字段名，不输出密钥值。
 
