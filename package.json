@@ -21,6 +21,7 @@
     "dev:infra:logs": "docker compose --env-file .env.local -f docker-compose.dev.yml logs -f",
     "test:database": "tsx scripts/test-database.ts",
     "test:storage": "tsx --env-file-if-exists=.env.local scripts/test-storage-scan.ts",
+    "test:browser": "tsx --env-file-if-exists=.env.local scripts/test-browser-isolated.ts",
     "test:auth": "tsx --env-file-if-exists=.env.local scripts/test-auth-isolated.ts",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx --env-file-if-exists=.env.local scripts/migrate.ts",

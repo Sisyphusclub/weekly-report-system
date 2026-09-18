@@ -1,5 +1,7 @@
 import type { NextConfig } from "next";
 const config: NextConfig = {
+  distDir:
+    process.env.BROWSER_TEST_BUILD === "1" ? ".next-browser-test" : ".next",
   output: "standalone",
   serverExternalPackages: ["exceljs"],
   outputFileTracingIncludes: {

@@ -1,5 +1,6 @@
 node_modules/
 .next/
+.next-browser-test/
 out/
 coverage/
 test-results/
