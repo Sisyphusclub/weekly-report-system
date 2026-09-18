@@ -44,6 +44,7 @@ export const organization = pgTable("organization", {
   name: text("name").notNull(),
   timezone: text("timezone").notNull().default("Asia/Shanghai"),
   locale: text("locale").notNull().default("zh-CN"),
+  version: integer("version").notNull().default(1),
   ...timestamps(),
 });
 export const user = pgTable(

@@ -1,4 +1,5 @@
 const labels: Record<string, string> = {
+  ORGANIZATION_SETTINGS_UPDATE: "修改系统设置",
   TASK_CREATE: "创建任务",
   TASK_UPDATE: "修改任务",
   TASK_IMPORT: "导入任务",

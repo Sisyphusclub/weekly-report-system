@@ -8,7 +8,7 @@ export function WorkspaceShell({
   selected,
   children,
 }: {
-  actor: { name: string; role: Role };
+  actor: { name: string; role: Role; organizationName?: string };
   selected:
     | "dashboard"
     | "reports"
@@ -22,7 +22,8 @@ export function WorkspaceShell({
     | "tasks"
     | "calendar"
     | "exemptions"
-    | "audit";
+    | "audit"
+    | "settings";
   children: React.ReactNode;
 }) {
   return (
@@ -39,7 +40,9 @@ export function WorkspaceShell({
             <span className="flex size-9 items-center justify-center rounded-xl bg-accent-600 text-headline-medium text-text-white">
               周
             </span>
-            <span className="text-headline-medium">市场部工作看板</span>
+            <span className="break-words text-headline-medium">
+              {actor.organizationName ?? "市场部工作看板"}
+            </span>
           </div>
           <div className="flex items-center gap-4">
             <span className="text-body-regular text-text-secondary">
@@ -85,6 +88,11 @@ export function WorkspaceShell({
                   },
                   { key: "audit", label: "审计日志", href: "/admin/audit" },
                   { key: "tasks", label: "任务数据", href: "/admin/tasks" },
+                  {
+                    key: "settings",
+                    label: "系统设置",
+                    href: "/admin/settings",
+                  },
                 ]
               : []),
             ...(actor.role !== "ADMIN"

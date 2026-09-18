@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { getAuth } from "@/lib/auth";
 import { getDb } from "@/lib/db";
-import { user } from "@/lib/db/schema";
+import { organization, user } from "@/lib/db/schema";
 import { configurationStatus } from "@/lib/config";
 
 export async function currentUser() {
@@ -14,6 +14,7 @@ export async function currentUser() {
     .select({
       id: user.id,
       organizationId: user.organizationId,
+      organizationName: organization.name,
       role: user.role,
       status: user.status,
       name: user.name,
@@ -22,6 +23,7 @@ export async function currentUser() {
       twoFactorEnabled: user.twoFactorEnabled,
     })
     .from(user)
+    .innerJoin(organization, eq(organization.id, user.organizationId))
     .where(eq(user.id, session.user.id))
     .limit(1);
   if (!actor || actor.status === "DISABLED" || actor.status === "LOCKED")
