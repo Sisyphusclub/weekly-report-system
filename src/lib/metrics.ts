@@ -45,6 +45,7 @@ export type DashboardBreakdown = {
     nextPlans: Array<{ id: string; content: string; assigneeId: string }>;
     deliverables: Array<{ unitId: string; unitName: string; quantity: number }>;
   }>;
+  blockerTrend: Array<{ date: string; opened: number; resolved: number }>;
 };
 
 export async function getDashboardBreakdown(
@@ -76,6 +77,8 @@ export async function getDashboardBreakdown(
       .select({
         reporterId: blocker.reporterId,
         coordinatorId: blocker.coordinatorId,
+        createdAt: blocker.createdAt,
+        resolvedAt: blocker.resolvedAt,
       })
       .from(blocker)
       .where(and(blockerVisibility(actor), ne(blocker.status, "RESOLVED"))),
@@ -176,6 +179,14 @@ export async function getDashboardBreakdown(
       ).length,
     };
   });
+  const blockerTrend = dates.map((date) => ({
+    date,
+    opened: blockers.filter((item) => shanghaiDate(item.createdAt) === date)
+      .length,
+    resolved: blockers.filter(
+      (item) => item.resolvedAt && shanghaiDate(item.resolvedAt) === date,
+    ).length,
+  }));
   const projectRows = projects.map((item) => {
     const projectTasks = tasks.filter((task) => task.projectId === item.id);
     const totals = new Map<
@@ -207,7 +218,7 @@ export async function getDashboardBreakdown(
       deliverables: [...totals.values()],
     };
   });
-  return { members: memberRows, projects: projectRows };
+  return { members: memberRows, projects: projectRows, blockerTrend };
 }
 
 export function submissionRate(submitted: number, due: number) {

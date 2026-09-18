@@ -232,6 +232,25 @@ export default async function DashboardPage({
             ))}
           </ul>
         </section>
+        <section className="rounded-3xl border border-border-button-default p-6">
+          <h2 className="text-title-2-medium">本周阻塞趋势</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4 xl:grid-cols-7">
+            {breakdown.blockerTrend.map((day) => (
+              <div
+                key={day.date}
+                className="rounded-xl bg-background-secondary-default p-3"
+              >
+                <p className="text-caption-1-medium text-text-secondary">
+                  {day.date.slice(5)}
+                </p>
+                <p className="mt-2 text-body-medium">新增 {day.opened}</p>
+                <p className="text-body-regular text-text-secondary">
+                  解决 {day.resolved}
+                </p>
+              </div>
+            ))}
+          </div>
+        </section>
       </div>
     </WorkspaceShell>
   );
