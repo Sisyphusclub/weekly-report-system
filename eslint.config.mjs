@@ -9,6 +9,8 @@ export default defineConfig([
     ".next-browser-test/**",
     "src/components/base/**",
     "src/components/application/**",
+    "src/components/motion/**",
+    "src/components/premium/**",
     ".agents/**",
     ".codex-backups/**",
   ]),

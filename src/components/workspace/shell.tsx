@@ -1,25 +1,53 @@
+"use client";
+
 import {
-  RiAlarmWarningLine,
-  RiArrowRightLine,
-  RiCalendarScheduleLine,
-  RiDashboardLine,
-  RiFileChartLine,
-  RiFlowChart,
-  RiFolderChartLine,
-  RiListCheck3,
-  RiLockLine,
-  RiNotification3Line,
-  RiSettings3Line,
-  RiShieldUserLine,
-  RiStackLine,
-  RiTeamLine,
-  RiTimeLine,
-} from "@remixicon/react";
-import { ButtonLink } from "@/components/base/buttons/button";
+  Bell,
+  CalendarDays,
+  ChartNoAxesCombined,
+  CircleAlert,
+  ClipboardCheck,
+  FileChartColumn,
+  Files,
+  FolderKanban,
+  KeyRound,
+  LayoutDashboard,
+  ListChecks,
+  PanelLeft,
+  Settings,
+  ShieldCheck,
+  SlidersHorizontal,
+  UserRoundCog,
+  Users,
+  X,
+  type LucideIcon,
+} from "lucide-react";
+import { useRouter } from "next/navigation";
+import type { ReactNode } from "react";
+import {
+  AnimatedSidebar,
+  AnimatedSidebarClose,
+  AnimatedSidebarContent,
+  AnimatedSidebarFooter,
+  AnimatedSidebarGroup,
+  AnimatedSidebarGroupContent,
+  AnimatedSidebarGroupLabel,
+  AnimatedSidebarHeader,
+  AnimatedSidebarInset,
+  AnimatedSidebarMenu,
+  AnimatedSidebarMenuButton,
+  AnimatedSidebarMenuItem,
+  AnimatedSidebarProvider,
+  AnimatedSidebarRail,
+  AnimatedSidebarTrigger,
+  useAnimatedSidebar,
+} from "@/components/motion/animated-sidebar";
+import {
+  MorphingSearch,
+  type MorphingSearchItem,
+} from "@/components/motion/morphing-search";
 import { SignOutButton } from "@/components/workspace/sign-out-button";
-import { Avatar } from "@/components/base/avatar/avatar";
-import { cx } from "@/utils/cx";
 import type { Role } from "@/lib/domain";
+import { cn } from "@/lib/utils";
 
 type NavKey =
   | "dashboard"
@@ -29,6 +57,7 @@ type NavKey =
   | "dictionaries"
   | "projects"
   | "users"
+  | "members"
   | "weekly"
   | "notifications"
   | "tasks"
@@ -37,332 +66,327 @@ type NavKey =
   | "audit"
   | "settings";
 
+type NavItem = {
+  key: NavKey;
+  label: string;
+  href: string;
+  icon: LucideIcon;
+  keywords?: string[];
+};
+
 const roleLabel: Record<Role, string> = {
   EMPLOYEE: "成员",
   BOSS: "负责人",
   ADMIN: "管理员",
 };
-const initials = (name: string) => name.trim().slice(0, 1) || "周";
 
 export function WorkspaceShell({
   actor,
   selected,
   children,
 }: {
-  actor: { id?: string; name: string; role: Role; organizationName?: string };
+  actor: {
+    id?: string;
+    name: string;
+    role: Role;
+    username?: string;
+    organizationName?: string;
+  };
   selected: NavKey;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
-  const isAdmin = actor.role === "ADMIN";
-  const isBoss = actor.role === "BOSS";
+  const router = useRouter();
   const workspaceLabel = actor.organizationName ?? "市场部工作台";
-  const workspaceNav = [
-    ...(actor.role !== "ADMIN"
-      ? [
-          {
-            key: "daily" as const,
-            label: "今日工作台",
-            href: "/daily",
-            icon: RiListCheck3,
-          },
-          {
-            key: "weekly" as const,
-            label: "本周周报",
-            href: "/weekly",
-            icon: RiFileChartLine,
-          },
-          {
-            key: "tasks" as const,
-            label: "任务管理",
-            href: "/tasks",
-            icon: RiStackLine,
-          },
-          {
-            key: "blockers" as const,
-            label: "阻塞中心",
-            href: "/blockers",
-            icon: RiAlarmWarningLine,
-          },
-        ]
-      : []),
-    {
-      key: "dashboard" as const,
-      label: isAdmin ? "日报总览" : "工作看板",
-      href: "/dashboard",
-      icon: RiDashboardLine,
-    },
-    {
-      key: "reports" as const,
-      label: isAdmin ? "我的报告" : "报告查询",
-      href: "/reports",
-      icon: RiFileChartLine,
-    },
-    {
-      key: "notifications" as const,
-      label: "通知中心",
-      href: "/notifications",
-      icon: RiNotification3Line,
-    },
-  ];
-  const extraNav = isAdmin
-    ? [
-        {
-          key: "users" as const,
-          label: "账号管理",
-          href: "/admin/users",
-          icon: RiTeamLine,
-        },
-        {
-          key: "projects" as const,
-          label: "项目管理",
-          href: "/admin/projects",
-          icon: RiFolderChartLine,
-        },
-        {
-          key: "dictionaries" as const,
-          label: "分类与单位",
-          href: "/admin/dictionaries",
-          icon: RiFlowChart,
-        },
-        {
-          key: "calendar" as const,
-          label: "工作日历",
-          href: "/admin/calendar",
-          icon: RiCalendarScheduleLine,
-        },
-        {
-          key: "exemptions" as const,
-          label: "请假与免报",
-          href: "/admin/exemptions",
-          icon: RiTimeLine,
-        },
-        {
-          key: "audit" as const,
-          label: "审计日志",
-          href: "/admin/audit",
-          icon: RiShieldUserLine,
-        },
-        {
-          key: "settings" as const,
-          label: "系统设置",
-          href: "/admin/settings",
-          icon: RiSettings3Line,
-        },
-      ]
-    : isBoss
-      ? [
-          {
-            key: "audit" as const,
-            label: "业务变更",
-            href: "/activity",
-            icon: RiTimeLine,
-          },
-          {
-            key: "projects" as const,
-            label: "项目协同",
-            href: "/dashboard#projects",
-            icon: RiFolderChartLine,
-          },
-        ]
-      : [];
+  const groups = navigationForRole(actor.role);
+  const searchItems: MorphingSearchItem[] = groups
+    .flatMap((group) => group.items)
+    .map((item) => ({
+      id: item.href,
+      title: item.label,
+      description: workspaceLabel,
+      keywords: item.keywords,
+      icon: item.icon,
+    }));
 
   return (
-    <div className="min-h-screen bg-background-full">
+    <div className="min-h-svh bg-background text-foreground">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-background-primary-default focus:p-4"
+        className="sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:not-sr-only focus:rounded-xl focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:shadow-lg focus:ring-2 focus:ring-ring"
       >
         跳到主要内容
       </a>
-      <div className="flex min-h-screen">
-        <aside className="sticky top-0 hidden h-screen w-[244px] shrink-0 flex-col border-r border-separator-border bg-background-primary-default lg:flex">
-          <div className="flex h-[76px] items-center gap-3 border-b border-separator-border px-5">
-            <span className="flex size-9 items-center justify-center rounded-xl bg-accent-600 text-headline-semibold text-text-white shadow-xs">
-              周
-            </span>
-            <div className="min-w-0">
-              <p className="truncate text-body-semibold text-text-primary">
-                {workspaceLabel}
-              </p>
-              <p className="mt-0.5 text-caption-1-regular text-text-tertiary">
-                市场部协作空间
-              </p>
-            </div>
-          </div>
-          <div className="flex-1 overflow-y-auto px-3 py-5">
-            <p className="px-3 text-caption-1-semibold uppercase tracking-[0.08em] text-text-tertiary">
-              工作区
-            </p>
-            <nav aria-label="工作区导航" className="mt-2 flex flex-col gap-1">
-              {workspaceNav.map((item) => (
-                <NavItem
-                  key={item.key}
-                  item={item}
-                  selected={selected === item.key}
-                />
-              ))}
-            </nav>
-            {extraNav.length > 0 && (
-              <>
-                <p className="mt-7 px-3 text-caption-1-semibold uppercase tracking-[0.08em] text-text-tertiary">
-                  {isAdmin ? "系统维护" : "团队视角"}
-                </p>
-                <nav aria-label="管理导航" className="mt-2 flex flex-col gap-1">
-                  {extraNav.map((item) => (
-                    <NavItem
-                      key={`${item.key}-${item.href}`}
-                      item={item}
-                      selected={selected === item.key}
-                    />
-                  ))}
-                </nav>
-              </>
-            )}
-          </div>
-          <div className="border-t border-separator-border p-3">
-            <div className="flex items-center gap-3 rounded-xl p-2.5">
-              <Avatar initials={initials(actor.name)} color="blue" size="md" />
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-body-medium text-text-primary">
-                  {actor.name}
-                </p>
-                <p className="text-caption-1-regular text-text-tertiary">
-                  {roleLabel[actor.role]}
-                </p>
-              </div>
-              <ButtonLink
-                href="/security"
-                variant="ghost"
-                iconOnly
-                leadingIcon={RiLockLine}
-                aria-label="账号安全"
-                className="size-8 p-0"
-              />
-            </div>
-            <SignOutButton />
-          </div>
-        </aside>
-        <div className="flex min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-20 border-b border-separator-border bg-background-primary-default/95 backdrop-blur">
-            <div className="flex min-h-[76px] items-center justify-between gap-4 px-4 sm:px-6 xl:px-8">
-              <div className="flex min-w-0 items-center gap-3">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-accent-600 text-body-semibold text-text-white lg:hidden">
-                  周
+      <AnimatedSidebarProvider
+        style={{
+          "--sidebar-width": "16rem",
+          "--sidebar-width-icon": "4.25rem",
+          "--sidebar-width-mobile": "18rem",
+        }}
+      >
+        <AnimatedSidebar
+          ariaLabel={`${workspaceLabel}导航`}
+          collapsible="icon"
+          panelClassName="border-border bg-muted/35"
+        >
+          <AnimatedSidebarHeader className="p-3 pb-2">
+            <div className="flex min-h-11 items-center gap-3 overflow-hidden px-2">
+              <span className="grid size-8 shrink-0 place-items-center rounded-xl bg-foreground text-sm font-semibold text-background">
+                周
+              </span>
+              <span className="min-w-0 flex-1 group-data-[state=collapsed]/sidebar:hidden">
+                <span className="block truncate text-sm font-semibold text-foreground">
+                  {workspaceLabel}
                 </span>
-                <div className="min-w-0">
-                  <p className="truncate text-caption-1-regular text-text-tertiary">
-                    {workspaceLabel}
-                  </p>
-                  <p className="truncate text-body-semibold text-text-primary">
-                    {pageLabel(selected)}
-                  </p>
-                </div>
-              </div>
-              <div className="flex shrink-0 items-center gap-2 sm:gap-4">
-                <div className="hidden items-center gap-2 rounded-lg bg-background-secondary-default px-3 py-2 sm:flex">
-                  <span className="size-2 rounded-full bg-state-success-base" />
-                  <span className="text-caption-1-medium text-text-secondary">
-                    系统正常
-                  </span>
-                </div>
-                <div className="hidden items-center gap-2 md:flex">
-                  <RiCalendarScheduleLine
-                    className="size-4 text-text-tertiary"
-                    aria-hidden
+                <span className="block truncate text-xs text-muted-foreground">
+                  工作台
+                </span>
+              </span>
+              <AnimatedSidebarClose className="ml-auto text-muted-foreground hover:bg-muted md:hidden">
+                <X className="size-4" aria-hidden />
+              </AnimatedSidebarClose>
+            </div>
+          </AnimatedSidebarHeader>
+
+          <AnimatedSidebarContent>
+            <AnimatedSidebarGroup className="pb-1">
+              <AnimatedSidebarGroupContent>
+                <AnimatedSidebarMenu>
+                  <WorkspaceSearch
+                    items={searchItems}
+                    onSelect={(item) => router.push(item.id)}
                   />
-                  <span className="text-caption-1-medium text-text-secondary">
-                    {formatToday()}
-                  </span>
-                </div>
-                <ButtonLink
-                  href="/notifications"
-                  variant="ghost"
-                  iconOnly
-                  leadingIcon={RiNotification3Line}
-                  aria-label="通知中心"
-                  className="relative size-9 p-0"
+                </AnimatedSidebarMenu>
+              </AnimatedSidebarGroupContent>
+            </AnimatedSidebarGroup>
+
+            {groups.map((group) => (
+              <AnimatedSidebarGroup key={group.label}>
+                <AnimatedSidebarGroupLabel>
+                  {group.label}
+                </AnimatedSidebarGroupLabel>
+                <AnimatedSidebarGroupContent>
+                  <AnimatedSidebarMenu>
+                    {group.items.map((item) => {
+                      const Icon = item.icon;
+                      return (
+                        <AnimatedSidebarMenuItem
+                          key={`${item.key}:${item.href}`}
+                        >
+                          <AnimatedSidebarMenuButton
+                            href={item.href}
+                            isActive={selected === item.key}
+                            icon={<Icon className="size-4" />}
+                          >
+                            {item.label}
+                          </AnimatedSidebarMenuButton>
+                        </AnimatedSidebarMenuItem>
+                      );
+                    })}
+                  </AnimatedSidebarMenu>
+                </AnimatedSidebarGroupContent>
+              </AnimatedSidebarGroup>
+            ))}
+          </AnimatedSidebarContent>
+
+          <AnimatedSidebarFooter className="gap-1">
+            <AnimatedSidebarMenu>
+              <AnimatedSidebarMenuItem>
+                <AnimatedSidebarMenuButton
+                  href="/security"
+                  icon={<KeyRound className="size-4" />}
                 >
-                  <>
-                    {isBoss && (
-                    <span className="absolute right-1.5 top-1.5 size-1.5 rounded-full bg-status-rose-text" />
-                    )}
-                  </>
-                </ButtonLink>
-                <div className="lg:hidden">
-                  <SignOutButton />
-                </div>
+                  账号安全
+                </AnimatedSidebarMenuButton>
+              </AnimatedSidebarMenuItem>
+            </AnimatedSidebarMenu>
+            <SignOutButton collapseLabel />
+            <div className="mt-1 flex min-h-11 items-center gap-3 overflow-hidden rounded-xl px-2">
+              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                {initials(actor.name)}
+              </span>
+              <span className="min-w-0 flex-1 group-data-[state=collapsed]/sidebar:hidden">
+                <span className="block truncate text-sm font-medium text-foreground">
+                  {actor.name}
+                </span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {roleLabel[actor.role]}
+                  {actor.username ? ` · ${actor.username}` : ""}
+                </span>
+              </span>
+            </div>
+          </AnimatedSidebarFooter>
+          <AnimatedSidebarRail />
+        </AnimatedSidebar>
+
+        <AnimatedSidebarInset>
+          <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:px-6 xl:px-8">
+            <div className="flex min-w-0 items-center gap-3">
+              <AnimatedSidebarTrigger className="-ml-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
+                <PanelLeft className="size-4" aria-hidden />
+              </AnimatedSidebarTrigger>
+              <div className="h-5 w-px bg-border" aria-hidden />
+              <div className="min-w-0">
+                <p className="truncate text-xs text-muted-foreground">
+                  {workspaceLabel}
+                </p>
+                <p className="truncate text-sm font-medium text-foreground">
+                  {pageLabel(selected, actor.role)}
+                </p>
               </div>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <div className="hidden items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 sm:flex">
+                <span className="size-2 rounded-full bg-status-lime-text" />
+                <span className="text-xs text-muted-foreground">系统正常</span>
+              </div>
+              <div className="hidden px-2 text-xs text-muted-foreground md:block">
+                {formatToday()}
+              </div>
+              <a
+                href="/notifications"
+                aria-label="通知中心"
+                className={cn(
+                  "relative grid size-10 place-items-center rounded-xl text-muted-foreground outline-none transition-colors",
+                  "hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
+                  selected === "notifications" && "bg-muted text-foreground",
+                )}
+              >
+                <Bell className="size-4" aria-hidden />
+                {actor.role === "BOSS" && (
+                  <span className="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-destructive" />
+                )}
+              </a>
             </div>
           </header>
-          <main
+
+          <div
             id="main-content"
             className="mx-auto flex w-full max-w-[1560px] min-w-0 flex-1 flex-col gap-6 px-4 py-6 sm:px-6 xl:px-8 xl:py-8"
           >
             {children}
-          </main>
-        </div>
-      </div>
+          </div>
+        </AnimatedSidebarInset>
+      </AnimatedSidebarProvider>
     </div>
   );
 }
 
-function NavItem({
-  item,
-  selected,
+function WorkspaceSearch({
+  items,
+  onSelect,
 }: {
-  item: {
-    key: NavKey;
-    label: string;
-    href: string;
-    icon: React.ComponentType<{
-      className?: string;
-      "aria-hidden"?: boolean | "true" | "false";
-    }>;
-  };
-  selected: boolean;
+  items: MorphingSearchItem[];
+  onSelect: (item: MorphingSearchItem) => void;
 }) {
-  const Icon = item.icon;
+  const { state } = useAnimatedSidebar();
   return (
-    <ButtonLink
-      href={item.href}
-      variant="ghost"
-      aria-current={selected ? "page" : undefined}
-      className={cx(
-        "group h-10 justify-start gap-2.5 rounded-lg px-3 text-body-medium",
-        selected
-          ? "bg-background-secondary-default text-text-primary shadow-xs"
-          : "text-text-secondary hover:text-text-primary",
-      )}
-    >
-      <Icon
-        className={cx(
-          "size-[18px] shrink-0",
-          selected
-            ? "text-accent-600"
-            : "text-text-tertiary group-hover:text-text-primary",
-        )}
-        aria-hidden
+    <AnimatedSidebarMenuItem>
+      <MorphingSearch
+        items={items}
+        placeholder="搜索功能"
+        emptyMessage="没有匹配的功能"
+        shortcut="k"
+        iconOnly={state === "collapsed"}
+        onSelect={onSelect}
+        className={cn(state === "collapsed" ? "mx-auto" : "h-10 w-full")}
       />
-      <span className="min-w-0 flex-1 truncate">{item.label}</span>
-      {selected && (
-        <RiArrowRightLine className="size-4 text-text-tertiary" aria-hidden />
-      )}
-    </ButtonLink>
+    </AnimatedSidebarMenuItem>
   );
 }
 
-function pageLabel(selected: NavKey) {
+function navigationForRole(
+  role: Role,
+): Array<{ label: string; items: NavItem[] }> {
+  if (role === "ADMIN") {
+    return [
+      {
+        label: "工作区",
+        items: [
+          nav("dashboard", "日报总览", "/dashboard", LayoutDashboard),
+          nav("reports", "我的报告", "/reports", FileChartColumn),
+        ],
+      },
+      {
+        label: "系统维护",
+        items: [
+          nav("users", "账号管理", "/admin/users", UserRoundCog),
+          nav("projects", "项目管理", "/admin/projects", FolderKanban),
+          nav("tasks", "任务管理", "/admin/tasks", ListChecks),
+          nav(
+            "dictionaries",
+            "分类与单位",
+            "/admin/dictionaries",
+            SlidersHorizontal,
+          ),
+          nav("calendar", "工作日历", "/admin/calendar", CalendarDays),
+          nav(
+            "exemptions",
+            "请假与免报",
+            "/admin/exemptions",
+            ClipboardCheck,
+          ),
+          nav("audit", "审计日志", "/admin/audit", ShieldCheck),
+          nav("settings", "系统设置", "/admin/settings", Settings),
+        ],
+      },
+    ];
+  }
+  if (role === "BOSS") {
+    return [
+      {
+        label: "团队视角",
+        items: [
+          nav("dashboard", "工作总览", "/boss/dashboard", LayoutDashboard),
+          nav("members", "成员看板", "/boss/members", Users),
+          nav("projects", "项目协同", "/boss/projects", FolderKanban),
+          nav("blockers", "阻塞中心", "/blockers", CircleAlert),
+          nav("reports", "报告查询", "/reports", ChartNoAxesCombined),
+        ],
+      },
+    ];
+  }
+  return [
+    {
+      label: "工作区",
+      items: [
+        nav("dashboard", "概览", "/dashboard", LayoutDashboard),
+        nav("daily", "今日工作", "/daily", ClipboardCheck),
+        nav("weekly", "本周周报", "/weekly", CalendarDays),
+        nav("tasks", "任务", "/tasks", ListChecks),
+        nav("blockers", "阻塞", "/blockers", CircleAlert),
+        nav("reports", "报告", "/reports", Files),
+      ],
+    },
+  ];
+}
+
+function nav(
+  key: NavKey,
+  label: string,
+  href: string,
+  icon: LucideIcon,
+): NavItem {
+  return { key, label, href, icon, keywords: [key, label] };
+}
+
+function initials(name: string) {
+  return name.trim().slice(0, 1) || "周";
+}
+
+function pageLabel(selected: NavKey, role: Role) {
   return (
     {
-      dashboard: "工作看板",
+      dashboard:
+        role === "ADMIN" ? "日报总览" : role === "BOSS" ? "工作总览" : "概览",
       daily: "今日工作台",
       weekly: "本周周报",
       tasks: "任务管理",
       blockers: "阻塞中心",
-      reports: "报告查询",
+      reports: role === "ADMIN" ? "我的报告" : "报告查询",
       notifications: "通知中心",
       users: "账号管理",
-      projects: "项目管理",
+      members: "成员看板",
+      projects: role === "BOSS" ? "项目协同" : "项目管理",
       dictionaries: "分类与单位",
       calendar: "工作日历",
       exemptions: "请假与免报",
@@ -377,5 +401,6 @@ function formatToday() {
     month: "2-digit",
     day: "2-digit",
     weekday: "short",
+    timeZone: "Asia/Shanghai",
   }).format(new Date());
 }

@@ -640,6 +640,20 @@
  * Tailwind reads the *current* computed value of the variable, so light↔dark
  * flips work without rebuild. */
 @theme inline {
+  /* beUI Pro / shadcn semantic aliases. Keep the existing product tokens as
+   * the source of truth so both component systems follow the same theme. */
+  --color-background: var(--color-background-primary-default);
+  --color-foreground: var(--color-text-primary);
+  --color-muted: var(--color-background-secondary-default);
+  --color-muted-foreground: var(--color-text-secondary);
+  --color-border: var(--color-separator-border);
+  --color-border-strong: var(--color-border-button-hover);
+  --color-ring: var(--color-border-focus-ring);
+  --color-primary: var(--color-accent-600);
+  --color-primary-foreground: var(--color-text-white);
+  --color-destructive: var(--color-status-rose-text);
+  --color-destructive-foreground: var(--color-text-white);
+
   --color-foreground-full:            var(--color-foreground-full);
   --color-foreground-icon-primary:    var(--color-foreground-icon-primary);
   --color-foreground-icon-hover:      var(--color-foreground-icon-hover);
