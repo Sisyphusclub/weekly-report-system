@@ -82,9 +82,25 @@ const reportColumns: DataTableColumn<RecentReport>[] = [
     cell: (item) => (
       <Badge
         variant="caption"
-        color={item.status === "SUBMITTED" ? "lime" : "yellow"}
+        color="soft"
+        showIcon={false}
+        className={cx(
+          item.status === "SUBMITTED"
+            ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+            : "border-amber-200 bg-amber-50 text-amber-700",
+        )}
       >
-        {item.status === "SUBMITTED" ? "已提交" : "草稿"}
+        {item.status === "SUBMITTED" ? (
+          <>
+            <CheckCircle2 className="size-3" aria-hidden />
+            已提交
+          </>
+        ) : (
+          <>
+            <FileText className="size-3" aria-hidden />
+            草稿
+          </>
+        )}
       </Badge>
     ),
   },
@@ -201,14 +217,16 @@ export function EmployeeDashboard({
         {openBlockers > 0 ? (
           <div className="flex flex-wrap items-center justify-between gap-2 border-b border-rose-200 bg-rose-50 px-5 py-2.5 text-rose-700">
             <span className="flex items-center gap-2 text-sm font-medium">
-              <CircleAlert className="size-4" aria-hidden />
+              <span className="grid size-6 shrink-0 place-items-center rounded-md bg-rose-700 text-white shadow-sm">
+                <CircleAlert className="size-3.5" aria-hidden />
+              </span>
               {openBlockers} 项卡点正在等待协调
             </span>
             <ButtonLink
               href="/blockers"
               variant="ghost"
               size="small"
-              className="text-rose-700 hover:bg-rose-100 hover:text-rose-700"
+              className="text-rose-700 hover:bg-rose-700 hover:text-white"
             >
               查看卡点
               <ArrowRight className="size-3.5" aria-hidden />
@@ -381,8 +399,8 @@ function MetricStat({
             tone === "info" &&
               "bg-status-blue-background text-status-blue-text",
             tone === "success" &&
-              "bg-status-lime-background text-status-lime-text",
-            danger && "bg-rose-100 text-rose-700",
+              "border border-emerald-200 bg-emerald-50 text-emerald-700",
+            danger && "border border-rose-700 bg-rose-700 text-white shadow-sm",
           )}
         >
           <Icon className="size-5" aria-hidden />
