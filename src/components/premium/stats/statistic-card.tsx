@@ -7,7 +7,7 @@ type StatisticTone = "neutral" | "info" | "success" | "danger";
 
 export interface StatisticProps {
   label: string;
-  value: number;
+  value: number | string;
   suffix?: string;
   progress?: number;
   tone?: StatisticTone;
@@ -77,8 +77,7 @@ export function StatisticCard({
     <Card
       className={cx(
         "h-full min-h-24",
-        tone === "danger" &&
-          "border-rose-200 bg-rose-50/70 text-rose-700",
+        tone === "danger" && "border-rose-200 bg-rose-50/70 text-rose-700",
         className,
       )}
     >
@@ -86,8 +85,7 @@ export function StatisticCard({
         <span
           className={cx(
             "grid size-10 shrink-0 place-items-center rounded-lg border border-transparent bg-muted text-muted-foreground",
-            tone === "info" &&
-              "border-blue-200 bg-blue-50 text-blue-700",
+            tone === "info" && "border-blue-200 bg-blue-50 text-blue-700",
             tone === "success" &&
               "border-emerald-200 bg-emerald-50 text-emerald-700",
             tone === "danger" &&

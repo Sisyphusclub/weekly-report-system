@@ -7,13 +7,13 @@ export function ProgressCircle({
   tone = "primary",
   label,
 }: {
-  value: number;
+  value: number | null;
   size?: number;
   stroke?: number;
   tone?: "primary" | "success" | "danger";
   label?: string;
 }) {
-  const normalized = Math.min(100, Math.max(0, value));
+  const normalized = value === null ? 0 : Math.min(100, Math.max(0, value));
   const radius = (size - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (normalized / 100) * circumference;
@@ -31,7 +31,7 @@ export function ProgressCircle({
       aria-label={label}
       aria-valuemin={0}
       aria-valuemax={100}
-      aria-valuenow={normalized}
+      aria-valuenow={value === null ? undefined : normalized}
     >
       <svg viewBox={`0 0 ${size} ${size}`} className="size-full -rotate-90">
         <circle
@@ -56,7 +56,7 @@ export function ProgressCircle({
         />
       </svg>
       <span className="absolute inset-0 grid place-items-center text-[10px] font-semibold tabular-nums text-slate-700">
-        {Math.round(normalized)}%
+        {value === null ? "—" : `${Math.round(normalized)}%`}
       </span>
     </div>
   );

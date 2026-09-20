@@ -2,10 +2,11 @@
  * choosing colors, borders, or elevations ad hoc. */
 
 @theme {
-  --font-sans: ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    "PingFang SC", "Microsoft YaHei", sans-serif;
-  --font-mono: ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono",
-    monospace;
+  --font-sans:
+    ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Microsoft YaHei", sans-serif;
+  --font-mono:
+    ui-monospace, "SFMono-Regular", Consolas, "Liberation Mono", monospace;
   --radius-2lg: 10px;
   --shadow-card: 0 1px 2px rgb(15 23 42 / 0.05);
   --shadow-xs: 0 1px 2px rgb(15 23 42 / 0.05);
@@ -36,6 +37,12 @@
   --be-info-bg: #eff6ff;
   --be-info-border: #bfdbfe;
   --be-info-text: #1d4ed8;
+  --be-chart-1: #2563eb;
+  --be-chart-2: #0f766e;
+  --be-chart-3: #d97706;
+  --be-chart-4: #64748b;
+  --be-chart-5: #7c3aed;
+  --be-chart-grid: #e2e8f0;
   color-scheme: light;
 }
 
@@ -62,6 +69,12 @@
   --be-info-bg: #172554;
   --be-info-border: #1d4ed8;
   --be-info-text: #93c5fd;
+  --be-chart-1: #60a5fa;
+  --be-chart-2: #2dd4bf;
+  --be-chart-3: #fbbf24;
+  --be-chart-4: #94a3b8;
+  --be-chart-5: #a78bfa;
+  --be-chart-grid: #475569;
   color-scheme: dark;
 }
 
@@ -84,4 +97,9 @@
   --color-success: var(--be-success-text);
   --color-warning: var(--be-warning-text);
   --color-info: var(--be-info-text);
+  --color-chart-1: var(--be-chart-1);
+  --color-chart-2: var(--be-chart-2);
+  --color-chart-3: var(--be-chart-3);
+  --color-chart-4: var(--be-chart-4);
+  --color-chart-5: var(--be-chart-5);
 }

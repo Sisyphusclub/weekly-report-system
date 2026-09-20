@@ -1,17 +1,8 @@
-import { and, asc, count, eq, gte, inArray, lte, ne, or } from "drizzle-orm";
+import { and, count, eq, gte, inArray, lte, ne, or } from "drizzle-orm";
 import { getDb } from "@/lib/db";
-import {
-  blocker,
-  workTask,
-  deliverable,
-  deliverableUnit,
-  project,
-  projectMember,
-  taskStatusHistory,
-  user,
-} from "@/lib/db/schema";
+import { blocker, project, projectMember, report, user } from "@/lib/db/schema";
 import { weekDates, type Actor } from "@/lib/domain";
-import { shanghaiDate } from "@/lib/daily-input";
+import { dailyEntriesSchema, shanghaiDate } from "@/lib/daily-input";
 import { weeklySubmissionMetrics } from "@/lib/submission-metrics";
 import { blockerVisibility } from "@/lib/blockers";
 import { getSubmissionData, type SubmissionData } from "@/lib/submission-data";
@@ -34,6 +25,10 @@ export type DashboardBreakdown = {
     due: number;
     openBlockers: number;
     completed: number;
+    todayPlans: number;
+    todayActuals: number;
+    todayCompleted: number;
+    todaySubmitted: boolean;
   }>;
   projects: Array<{
     id: string;
@@ -60,6 +55,8 @@ export type DashboardBreakdown = {
   categoryBreakdown: Array<{ name: string; value: number }>;
   deliverableSummary: Array<{
     unitId: string;
+    label: string;
+    unit: string;
     unitName: string;
     quantity: number;
   }>;
@@ -85,51 +82,38 @@ export async function getDashboardBreakdown(
   const data = submissionData ?? (await getSubmissionData(actor, now));
   const employeeProjectIds =
     actor.role === "EMPLOYEE"
-      ? (() => {
-          return Promise.all([
-            db
-              .select({ projectId: projectMember.projectId })
-              .from(projectMember)
-              .where(
-                and(
-                  eq(projectMember.organizationId, actor.organizationId),
-                  eq(projectMember.userId, actor.id),
-                ),
-              ),
-            db
-              .select({ projectId: workTask.projectId })
-              .from(workTask)
-              .where(
-                and(
-                  eq(workTask.organizationId, actor.organizationId),
-                  eq(workTask.primaryAssigneeId, actor.id),
-                ),
-              ),
-          ]).then(([memberships, tasks]) => [
-            ...new Set([
-              ...memberships.map((item) => item.projectId),
-              ...tasks.map((item) => item.projectId),
-            ]),
-          ]);
-        })()
+      ? db
+          .select({ projectId: projectMember.projectId })
+          .from(projectMember)
+          .where(
+            and(
+              eq(projectMember.organizationId, actor.organizationId),
+              eq(projectMember.userId, actor.id),
+            ),
+          )
+          .then((memberships) => [
+            ...new Set(memberships.map((item) => item.projectId)),
+          ])
       : Promise.resolve(null);
   const resolvedEmployeeProjectIds = await employeeProjectIds;
-  const [tasks, blockers, projects, deliveries] = await Promise.all([
+  const [dailyReports, blockers, projects] = await Promise.all([
     db
       .select({
-        id: workTask.id,
-        primaryAssigneeId: workTask.primaryAssigneeId,
-        projectId: workTask.projectId,
-        categoryName: workTask.categoryName,
-        status: workTask.status,
-        workDate: workTask.workDate,
+        id: report.id,
+        authorId: report.authorId,
+        reportDate: report.reportDate,
+        status: report.status,
+        planEntries: report.planEntries,
+        workEntries: report.workEntries,
       })
-      .from(workTask)
+      .from(report)
       .where(
         and(
-          eq(workTask.organizationId, actor.organizationId),
-          gte(workTask.workDate, start),
-          lte(workTask.workDate, end),
+          eq(report.organizationId, actor.organizationId),
+          eq(report.type, "DAILY"),
+          eq(report.status, "SUBMITTED"),
+          gte(report.reportDate, start),
+          lte(report.reportDate, end),
         ),
       ),
     db
@@ -163,25 +147,35 @@ export async function getDashboardBreakdown(
             : undefined,
         ),
       ),
-    db
-      .select({
-        taskId: deliverable.taskId,
-        unitId: deliverable.unitId,
-        unitName: deliverable.unitName,
-        quantity: deliverable.quantity,
-      })
-      .from(deliverable)
-      .innerJoin(
-        deliverableUnit,
-        and(
-          eq(deliverableUnit.id, deliverable.unitId),
-          eq(deliverableUnit.organizationId, deliverable.organizationId),
-        ),
-      )
-      .where(eq(deliverable.organizationId, actor.organizationId)),
   ]);
   const projectIds = projects.map((item) => item.id);
-  const [projectPeople, owners, nextPlans, duePlans] = await Promise.all([
+  const structuredReports = dailyReports.map((item) => {
+    const plans = dailyEntriesSchema.safeParse(item.planEntries);
+    const works = dailyEntriesSchema.safeParse(item.workEntries);
+    return {
+      ...item,
+      reportDate: item.reportDate ?? start,
+      plans: plans.success ? plans.data : [],
+      works: works.success ? works.data : [],
+    };
+  });
+  const planRows = structuredReports.flatMap((item) =>
+    item.plans.map((entry, index) => ({
+      ...entry,
+      id: `${item.id}:plan:${index}`,
+      authorId: item.authorId,
+      reportDate: item.reportDate,
+    })),
+  );
+  const workRows = structuredReports.flatMap((item) =>
+    item.works.map((entry, index) => ({
+      ...entry,
+      id: `${item.id}:work:${index}`,
+      authorId: item.authorId,
+      reportDate: item.reportDate,
+    })),
+  );
+  const [projectPeople, owners] = await Promise.all([
     projectIds.length
       ? db
           .select({
@@ -218,45 +212,16 @@ export async function getDashboardBreakdown(
             ),
           )
       : [],
-    projectIds.length
-      ? db
-          .select({
-            id: workTask.id,
-            projectId: workTask.projectId,
-            content: workTask.content,
-            assigneeId: workTask.primaryAssigneeId,
-          })
-          .from(workTask)
-          .where(
-            and(
-              eq(workTask.organizationId, actor.organizationId),
-              inArray(workTask.projectId, projectIds),
-              eq(workTask.kind, "PLAN"),
-              gte(workTask.dueDate, start),
-              lte(workTask.dueDate, end),
-            ),
-          )
-          .orderBy(asc(workTask.dueDate), asc(workTask.id))
-      : [],
-    db
-      .select({
-        id: workTask.id,
-        status: workTask.status,
-        dueDate: workTask.dueDate,
-      })
-      .from(workTask)
-      .where(
-        and(
-          eq(workTask.organizationId, actor.organizationId),
-          eq(workTask.kind, "PLAN"),
-          gte(workTask.dueDate, start),
-          lte(workTask.dueDate, end),
-        ),
-      ),
   ]);
   const ownerById = new Map(owners.map((item) => [item.id, item]));
+  const today = shanghaiDate(now);
   const memberRows = data.members.map((member) => {
     const submissions = weeklySubmissionMetrics({ ...data, members: [member] });
+    const todayReport = structuredReports.find(
+      (item) => item.authorId === member.id && item.reportDate === today,
+    );
+    const todayPlans = todayReport?.plans ?? [];
+    const todayWorks = todayReport?.works ?? [];
     return {
       id: member.id,
       name: member.name,
@@ -267,10 +232,14 @@ export async function getDashboardBreakdown(
           row.status !== "RESOLVED" &&
           (row.reporterId === member.id || row.coordinatorId === member.id),
       ).length,
-      completed: tasks.filter(
-        (task) =>
-          task.primaryAssigneeId === member.id && task.status === "DONE",
+      completed: workRows.filter(
+        (entry) => entry.authorId === member.id && entry.status === "DONE",
       ).length,
+      todayPlans: todayPlans.length,
+      todayActuals: todayWorks.length,
+      todayCompleted: todayWorks.filter((entry) => entry.status === "DONE")
+        .length,
+      todaySubmitted: Boolean(todayReport),
     };
   });
   const trendDates = range ? dateRange(start, end) : dates;
@@ -299,88 +268,49 @@ export async function getDashboardBreakdown(
         ).toFixed(1),
       )
     : null;
-  const duePlanIds = duePlans.map((plan) => plan.id);
-  const planHistory = duePlanIds.length
-    ? await db
-        .select({
-          taskId: taskStatusHistory.taskId,
-          toStatus: taskStatusHistory.toStatus,
-          changedAt: taskStatusHistory.changedAt,
-        })
-        .from(taskStatusHistory)
-        .where(
-          and(
-            eq(taskStatusHistory.organizationId, actor.organizationId),
-            inArray(taskStatusHistory.taskId, duePlanIds),
-          ),
-        )
-        .orderBy(asc(taskStatusHistory.changedAt), asc(taskStatusHistory.id))
-    : [];
-  const completedPlans = duePlans.filter((plan) => {
-    const cutoff = new Date(`${plan.dueDate}T23:59:59.999+08:00`);
-    const history = planHistory.filter(
-      (entry) => entry.taskId === plan.id && entry.changedAt <= cutoff,
-    );
-    return (history.at(-1)?.toStatus ?? plan.status) === "DONE";
-  }).length;
-  const today = shanghaiDate(now);
-  const todayDuePlans = duePlans.filter((plan) => plan.dueDate === today);
-  const todayCompletedPlans = todayDuePlans.filter((plan) => {
-    const cutoff = new Date(`${plan.dueDate}T23:59:59.999+08:00`);
-    const history = planHistory.filter(
-      (entry) => entry.taskId === plan.id && entry.changedAt <= cutoff,
-    );
-    return (history.at(-1)?.toStatus ?? plan.status) === "DONE";
-  }).length;
+  const completedPlans = planRows.filter(
+    (plan) => plan.status === "DONE",
+  ).length;
+  const todayDuePlans = planRows.filter((plan) => plan.reportDate === today);
+  const todayCompletedPlans = todayDuePlans.filter(
+    (plan) => plan.status === "DONE",
+  ).length;
   const projectRows = projects.map((item) => {
-    const projectTasks = tasks.filter((task) => task.projectId === item.id);
-    const totals = new Map<
-      string,
-      { unitId: string; unitName: string; quantity: number }
-    >();
-    for (const delivery of deliveries.filter((row) =>
-      projectTasks.some((task) => task.id === row.taskId),
-    )) {
-      const current = totals.get(delivery.unitId);
-      totals.set(delivery.unitId, {
-        unitId: delivery.unitId,
-        unitName: delivery.unitName,
-        quantity: (current?.quantity ?? 0) + Number(delivery.quantity),
-      });
-    }
+    const projectWorks = workRows.filter(
+      (entry) => entry.projectId === item.id,
+    );
+    const projectPlans = planRows.filter(
+      (entry) => entry.projectId === item.id && entry.reportDate === today,
+    );
     return {
       id: item.id,
       name: item.name,
-      completed: projectTasks.filter((task) => task.status === "DONE").length,
-      inProgress: projectTasks.filter((task) => task.status === "IN_PROGRESS")
+      completed: projectWorks.filter((entry) => entry.status === "DONE").length,
+      inProgress: projectWorks.filter((entry) => entry.status === "IN_PROGRESS")
         .length,
-      blocked: projectTasks.filter((task) => task.status === "BLOCKED").length,
+      blocked: projectWorks.filter((entry) => entry.status === "BLOCKED")
+        .length,
       owner: ownerById.get(item.ownerId) ?? null,
       members: projectPeople
         .filter((person) => person.projectId === item.id)
         .map(({ id, name }) => ({ id, name })),
-      nextPlans: nextPlans.filter((plan) => plan.projectId === item.id),
-      deliverables: [...totals.values()],
+      nextPlans: projectPlans.map((plan) => ({
+        id: plan.id,
+        content: plan.content,
+        assigneeId: plan.authorId,
+      })),
+      deliverables: summarizeDeliverables(projectWorks),
     };
   });
   const memberNames = new Map(
     data.members.map((member) => [member.id, member.name]),
   );
-  const categoryTotals = tasks.reduce((map, task) => {
-    const name = task.categoryName?.trim() || "未分类";
+  const categoryTotals = workRows.reduce((map, entry) => {
+    const name = entry.category.trim() || "未分类";
     map.set(name, (map.get(name) ?? 0) + 1);
     return map;
   }, new Map<string, number>());
-  const deliverableTotals = deliveries.reduce((map, delivery) => {
-    if (!tasks.some((task) => task.id === delivery.taskId)) return map;
-    const current = map.get(delivery.unitId);
-    map.set(delivery.unitId, {
-      unitId: delivery.unitId,
-      unitName: delivery.unitName,
-      quantity: (current?.quantity ?? 0) + Number(delivery.quantity),
-    });
-    return map;
-  }, new Map<string, { unitId: string; unitName: string; quantity: number }>());
+  const deliverableSummary = summarizeDeliverables(workRows);
   const projectNames = new Map(projectRows.map((item) => [item.id, item.name]));
   const blockerItems = blockers
     .filter((item) => item.status !== "RESOLVED")
@@ -391,29 +321,20 @@ export async function getDashboardBreakdown(
     .map((item) => ({
       id: item.id,
       projectName: item.projectId
-        ? projectNames.get(item.projectId) ?? "未关联项目"
+        ? (projectNames.get(item.projectId) ?? "未关联项目")
         : "未关联项目",
       description: item.description,
       severity: item.severity,
     }));
-  const memberDeliverables = [
-    ...deliveries
-      .reduce((map, delivery) => {
-        const task = tasks.find((item) => item.id === delivery.taskId);
-        if (!task) return map;
-        const key = `${task.primaryAssigneeId}:${delivery.unitId}`;
-        const current = map.get(key);
-        map.set(key, {
-          memberId: task.primaryAssigneeId,
-          memberName: memberNames.get(task.primaryAssigneeId) ?? "未知成员",
-          unitId: delivery.unitId,
-          unitName: delivery.unitName,
-          quantity: (current?.quantity ?? 0) + Number(delivery.quantity),
-        });
-        return map;
-      }, new Map<string, { memberId: string; memberName: string; unitId: string; unitName: string; quantity: number }>())
-      .values(),
-  ];
+  const memberDeliverables = data.members.flatMap((member) =>
+    summarizeDeliverables(
+      workRows.filter((entry) => entry.authorId === member.id),
+    ).map((delivery) => ({
+      memberId: member.id,
+      memberName: memberNames.get(member.id) ?? "未知成员",
+      ...delivery,
+    })),
+  );
   return {
     members: memberRows,
     projects: projectRows,
@@ -421,9 +342,9 @@ export async function getDashboardBreakdown(
     blockerResolutionMedianHours,
     planFulfillment: {
       completed: completedPlans,
-      due: duePlans.length,
-      rate: duePlans.length
-        ? Math.round((completedPlans / duePlans.length) * 100)
+      due: planRows.length,
+      rate: planRows.length
+        ? Math.round((completedPlans / planRows.length) * 100)
         : null,
     },
     todayPlanFulfillment: {
@@ -437,11 +358,43 @@ export async function getDashboardBreakdown(
     categoryBreakdown: [...categoryTotals.entries()]
       .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value),
-    deliverableSummary: [...deliverableTotals.values()].sort(
-      (a, b) => b.quantity - a.quantity,
-    ),
+    deliverableSummary,
     blockerItems,
   };
+}
+
+export function summarizeDeliverables(
+  entries: Array<{ deliverables: string[] }>,
+) {
+  const totals = new Map<
+    string,
+    {
+      unitId: string;
+      label: string;
+      unit: string;
+      unitName: string;
+      quantity: number;
+    }
+  >();
+  for (const raw of entries.flatMap((entry) => entry.deliverables)) {
+    const normalized = raw.trim().replace(/^产出[：:]\s*/, "");
+    if (!normalized) continue;
+    const match = normalized.match(/^(.*?)\s*(\d+(?:\.\d+)?)\s*([^\d\s]+)?$/u);
+    const label = match?.[1]?.trim() || normalized;
+    const quantity = match ? Number(match[2]) : 1;
+    const unit = match?.[3]?.trim() ?? "";
+    const unitName = unit ? `${label}（${unit}）` : label;
+    const unitId = `${label}:${unit}`;
+    const current = totals.get(unitId);
+    totals.set(unitId, {
+      unitId,
+      label,
+      unit,
+      unitName,
+      quantity: (current?.quantity ?? 0) + quantity,
+    });
+  }
+  return [...totals.values()].sort((a, b) => b.quantity - a.quantity);
 }
 
 function dateRange(from: string, to: string) {
@@ -470,7 +423,7 @@ export async function getDashboardMetrics(
   const end = dates[6];
   const db = getDb();
   const data = submissionData ?? (await getSubmissionData(actor, now));
-  const [open, urgent, progress, done] = await Promise.all([
+  const [open, urgent, weeklyReports] = await Promise.all([
     db
       .select({ value: count() })
       .from(blocker)
@@ -486,33 +439,28 @@ export async function getDashboardMetrics(
         ),
       ),
     db
-      .select({ value: count() })
-      .from(workTask)
+      .select({ workEntries: report.workEntries })
+      .from(report)
       .where(
         and(
-          eq(workTask.organizationId, organizationId),
-          eq(workTask.status, "IN_PROGRESS"),
-          gte(workTask.workDate, start),
-          lte(workTask.workDate, end),
-        ),
-      ),
-    db
-      .select({ value: count() })
-      .from(workTask)
-      .where(
-        and(
-          eq(workTask.organizationId, organizationId),
-          eq(workTask.status, "DONE"),
-          gte(workTask.workDate, start),
-          lte(workTask.workDate, end),
+          eq(report.organizationId, organizationId),
+          eq(report.type, "DAILY"),
+          eq(report.status, "SUBMITTED"),
+          gte(report.reportDate, start),
+          lte(report.reportDate, end),
         ),
       ),
   ]);
+  const weeklyWorks = weeklyReports.flatMap((item) => {
+    const parsed = dailyEntriesSchema.safeParse(item.workEntries);
+    return parsed.success ? parsed.data : [];
+  });
   return {
     ...weeklySubmissionMetrics(data),
     openBlockers: open[0].value,
     urgentBlockers: urgent[0].value,
-    inProgressTasks: progress[0].value,
-    completedTasks: done[0].value,
+    inProgressTasks: weeklyWorks.filter((item) => item.status === "IN_PROGRESS")
+      .length,
+    completedTasks: weeklyWorks.filter((item) => item.status === "DONE").length,
   };
 }
