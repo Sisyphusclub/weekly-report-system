@@ -115,7 +115,10 @@ function EntryEditor({
   const number = String(index + 1).padStart(2, "0");
 
   return (
-    <li className="group border-b border-border/70 py-4 last:border-b-0">
+    <div
+      role="listitem"
+      className="group border-b border-border/70 py-4 last:border-b-0"
+    >
       <div className="mb-3 flex min-w-0 items-center gap-2">
         <span className="shrink-0 text-xs font-semibold tabular-nums text-primary">
           {number}
@@ -274,7 +277,7 @@ function EntryEditor({
           </Button>
         </div>
       ) : null}
-    </li>
+    </div>
   );
 }
 
@@ -531,7 +534,7 @@ export function DailyForm({
               </Button>
             </div>
             {plans.length ? (
-              <ol>
+              <div role="list">
                 {plans.map((entry, index) => (
                   <EntryEditor
                     key={index}
@@ -550,7 +553,7 @@ export function DailyForm({
                     onReconcile={() => reconcilePlan(index)}
                   />
                 ))}
-              </ol>
+              </div>
             ) : (
               <>
                 <EmptyColumn kind="plan" />
@@ -574,7 +577,7 @@ export function DailyForm({
               </p>
             </div>
             {works.length ? (
-              <ol>
+              <div role="list">
                 {works.map((entry, index) => (
                   <EntryEditor
                     key={index}
@@ -591,7 +594,7 @@ export function DailyForm({
                     }
                   />
                 ))}
-              </ol>
+              </div>
             ) : (
               <>
                 <EmptyColumn kind="work" />
