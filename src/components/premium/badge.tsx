@@ -16,6 +16,7 @@ export type BadgeTone =
   | "pink"
   | "gray"
   | "cyan"
+  | "processing"
   | "project";
 
 const statusByTone: Record<BadgeTone, AnimatedBadgeStatus> = {
@@ -30,6 +31,7 @@ const statusByTone: Record<BadgeTone, AnimatedBadgeStatus> = {
   pink: "danger",
   gray: "neutral",
   cyan: "info",
+  processing: "info",
   project: "neutral",
 };
 
@@ -39,6 +41,7 @@ const toneClass: Partial<Record<BadgeTone, string>> = {
   purple: "border-status-purple-text/25 bg-status-purple-background text-status-purple-text",
   orange: "border-status-orange-text/25 bg-status-orange-background text-status-orange-text",
   project: "border-project-tag-border bg-project-tag-background text-project-tag-text",
+  processing: "border-blue-200 bg-blue-50 text-blue-700",
 };
 
 export interface BadgeProps extends Omit<

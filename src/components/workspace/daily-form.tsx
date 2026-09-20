@@ -6,18 +6,20 @@ import {
   CalendarDays,
   CheckCircle2,
   ClipboardCheck,
+  Pencil,
   Plus,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button, ButtonLink } from "@/components/motion/button/base";
-import { Badge } from "@/components/premium/badge";
+import { Badge, Tag } from "@/components/premium/badge";
 import {
   Card,
   CardBody,
   CardHeader,
 } from "@/components/premium/cards/card";
+import { FooterToolbar } from "@/components/premium/footer-toolbar";
 import {
   Checkbox,
   Input,
@@ -25,6 +27,9 @@ import {
   SelectItem,
   Textarea,
 } from "@/components/premium/forms";
+import { Col, Row } from "@/components/premium/layout";
+import { List, ListItem } from "@/components/premium/list";
+import { Modal } from "@/components/premium/modal";
 import { remoteDailyDraft, type RemoteDailyDraft } from "@/lib/daily-conflict";
 import { DailyDraftController } from "@/lib/daily-draft-controller";
 import {
@@ -36,6 +41,7 @@ import {
 
 type Project = { id: string; name: string };
 type EntryKind = "plan" | "work";
+type EntryModalState = { kind: EntryKind; index: number | null };
 
 const statusOptions = [
   ["TODO", "未开始"],
@@ -90,194 +96,143 @@ function isSameWork(plan: DailyEntry, work: DailyEntry) {
   );
 }
 
-function EntryEditor({
+function projectName(entry: DailyEntry, projects: Project[]) {
+  return projects.find((item) => item.id === entry.projectId)?.name ?? "未关联项目";
+}
+
+function PlanListItem({
   entry,
   index,
-  kind,
   projects,
   disabled,
-  reconciled = false,
-  onChange,
+  reconciled,
+  onEdit,
   onRemove,
   onReconcile,
 }: {
   entry: DailyEntry;
   index: number;
-  kind: EntryKind;
   projects: Project[];
   disabled: boolean;
-  reconciled?: boolean;
-  onChange: (entry: DailyEntry) => void;
+  reconciled: boolean;
+  onEdit: () => void;
   onRemove: () => void;
-  onReconcile?: () => void;
+  onReconcile: () => void;
 }) {
-  const set = (patch: Partial<DailyEntry>) => onChange({ ...entry, ...patch });
-  const number = String(index + 1).padStart(2, "0");
-
   return (
-    <div
-      role="listitem"
-      className="group border-b border-border/70 py-4 last:border-b-0"
-    >
-      <div className="mb-3 flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-xs font-semibold tabular-nums text-primary">
-          {number}
-        </span>
-        <Badge variant="caption" color={kind === "plan" ? "blue" : "lime"}>
-          {entry.category}
-        </Badge>
-        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
-          {projects.find((item) => item.id === entry.projectId)?.name ??
-            "未关联项目"}
-        </span>
-        {kind === "plan" && onReconcile ? (
+    <ListItem
+      index={String(index + 1).padStart(2, "0")}
+      title={
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-slate-800">{entry.content}</p>
+          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
+            <Tag color="neutral">{entry.category}</Tag>
+            <Tag color="neutral">项目：{projectName(entry, projects)}</Tag>
+          </div>
+        </div>
+      }
+      trailing={
+        <div className="flex shrink-0 items-center gap-1">
           <Button
             type="button"
             variant="ghost"
-            size="small"
+            size="xs"
+            disabled={disabled}
+            onClick={onEdit}
+            aria-label={`编辑第 ${index + 1} 项计划`}
+            className="text-slate-500 hover:text-slate-900"
+          >
+            <Pencil className="size-3.5" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
             disabled={disabled || reconciled || !entry.content.trim()}
             onClick={onReconcile}
-            className="shrink-0 text-primary"
+            className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
           >
             {reconciled ? "已核销" : "核销完成"}
             {!reconciled && <ArrowRight className="size-3.5" aria-hidden />}
           </Button>
-        ) : null}
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          iconOnly
-          disabled={disabled}
-          onClick={onRemove}
-          aria-label={`删除第 ${index + 1} 项${kind === "plan" ? "计划" : "工作内容"}`}
-          className="text-muted-foreground"
-        >
-          <Trash2 className="size-4" aria-hidden />
-        </Button>
-      </div>
-
-      <Textarea
-        aria-label={kind === "plan" ? "计划内容" : "工作内容"}
-        value={entry.content}
-        onChange={(content) => set({ content })}
-        placeholder={
-          kind === "plan"
-            ? "填写计划内容和预期结果"
-            : "填写实际完成的工作内容"
-        }
-        isDisabled={disabled}
-        isRequired
-        rows={2}
-        maxLength={5000}
-        className="min-h-20 resize-y"
-      />
-
-      <div className="mt-3 grid gap-2 sm:grid-cols-3">
-        <Select
-          aria-label="工作类型"
-          selectedKey={entry.category}
-          onSelectionChange={(category) => set({ category })}
-          isDisabled={disabled}
-          triggerClassName="min-h-9"
-        >
-          {categoryOptions.map((category) => (
-            <SelectItem key={category} id={category}>
-              {category}
-            </SelectItem>
-          ))}
-        </Select>
-        <Select
-          aria-label="工作进度"
-          selectedKey={entry.status}
-          onSelectionChange={(status) =>
-            set({ status: status as DailyEntry["status"] })
-          }
-          isDisabled={disabled}
-          triggerClassName="min-h-9"
-        >
-          {statusOptions.map(([value, label]) => (
-            <SelectItem key={value} id={value}>
-              {label}
-            </SelectItem>
-          ))}
-        </Select>
-        <Select
-          aria-label="关联项目"
-          selectedKey={entry.projectId ?? "NONE"}
-          onSelectionChange={(projectId) =>
-            set({ projectId: projectId === "NONE" ? null : projectId })
-          }
-          isDisabled={disabled}
-          triggerClassName="min-h-9"
-        >
-          <SelectItem id="NONE">未关联项目</SelectItem>
-          {projects.map((item) => (
-            <SelectItem key={item.id} id={item.id}>
-              {item.name}
-            </SelectItem>
-          ))}
-        </Select>
-      </div>
-
-      {kind === "work" ? (
-        <div className="mt-3 space-y-2">
-          {entry.deliverables.map((deliverable, deliverableIndex) => (
-            <div
-              key={`${index}-${deliverableIndex}`}
-              className="flex items-center gap-2"
-            >
-              <Input
-                aria-label={`第 ${index + 1} 项产出物 ${deliverableIndex + 1}`}
-                value={deliverable}
-                onChange={(value) =>
-                  set({
-                    deliverables: entry.deliverables.map((item, itemIndex) =>
-                      itemIndex === deliverableIndex ? value : item,
-                    ),
-                  })
-                }
-                placeholder="产出，如：教材 1 本、章节 13 章"
-                isDisabled={disabled}
-                size="small"
-                maxLength={200}
-                className="min-w-0 flex-1"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                iconOnly
-                disabled={disabled}
-                onClick={() =>
-                  set({
-                    deliverables: entry.deliverables.filter(
-                      (_, itemIndex) => itemIndex !== deliverableIndex,
-                    ),
-                  })
-                }
-                aria-label={`移除第 ${deliverableIndex + 1} 项产出物`}
-              >
-                <Trash2 className="size-4" aria-hidden />
-              </Button>
-            </div>
-          ))}
           <Button
             type="button"
             variant="ghost"
-            size="small"
-            disabled={disabled || entry.deliverables.length >= 20}
-            onClick={() =>
-              set({ deliverables: [...entry.deliverables, ""] })
-            }
-            className="text-primary"
+            size="xs"
+            iconOnly
+            disabled={disabled}
+            onClick={onRemove}
+            aria-label={`删除第 ${index + 1} 项计划`}
+            className="text-slate-400 hover:text-rose-700"
           >
-            <Plus className="size-3.5" aria-hidden />
-            添加产出
+            <Trash2 className="size-3.5" aria-hidden />
           </Button>
         </div>
-      ) : null}
-    </div>
+      }
+    />
+  );
+}
+
+function WorkListItem({
+  entry,
+  index,
+  projects,
+  disabled,
+  onEdit,
+  onRemove,
+}: {
+  entry: DailyEntry;
+  index: number;
+  projects: Project[];
+  disabled: boolean;
+  onEdit: () => void;
+  onRemove: () => void;
+}) {
+  const deliverables = entry.deliverables.length ? entry.deliverables.join("、") : "未登记产出";
+  return (
+    <ListItem
+      index={String(index + 1).padStart(2, "0")}
+      title={
+        <div className="min-w-0">
+          <div className="flex min-w-0 items-center gap-1.5">
+            <p className="min-w-0 truncate text-sm font-medium text-slate-800">{entry.content}</p>
+            <Tag color="neutral">{entry.category}</Tag>
+          </div>
+          <div className="mt-2 flex min-w-0 items-center gap-2 pl-0.5">
+            <Tag color="processing">产出：{deliverables}</Tag>
+            <Badge status="success" text="已完成" />
+            <Tag color="neutral">项目：{projectName(entry, projects)}</Tag>
+          </div>
+        </div>
+      }
+      trailing={
+        <div className="flex shrink-0 items-center gap-1">
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            disabled={disabled}
+            onClick={onEdit}
+            aria-label={`编辑第 ${index + 1} 项实际工作`}
+            className="text-slate-500 hover:text-slate-900"
+          >
+            <Pencil className="size-3.5" aria-hidden />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="xs"
+            iconOnly
+            disabled={disabled}
+            onClick={onRemove}
+            aria-label={`删除第 ${index + 1} 项实际工作`}
+            className="text-slate-400 hover:text-rose-700"
+          >
+            <Trash2 className="size-3.5" aria-hidden />
+          </Button>
+        </div>
+      }
+    />
   );
 }
 
@@ -339,6 +294,8 @@ export function DailyForm({
   const [remote, setRemote] = useState<RemoteDailyDraft | null>(null);
   const [preview, setPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [entryModal, setEntryModal] = useState<EntryModalState | null>(null);
+  const [entryDraft, setEntryDraft] = useState<DailyEntry | null>(null);
   const [controller] = useState(
     () =>
       new DailyDraftController(
@@ -415,6 +372,34 @@ export function DailyForm({
   const updateWorks = (next: DailyEntry[]) => controller.update({ works: next });
   const updateBlockers = (next: DailyBlocker[]) =>
     controller.update({ blockers: next });
+
+  const openEntryModal = (kind: EntryKind, index: number | null = null) => {
+    const source = kind === "plan" ? plans : works;
+    const entry = index === null ? blankEntry(kind) : source[index];
+    if (!entry) return;
+    setEntryDraft({ ...entry, deliverables: [...entry.deliverables] });
+    setEntryModal({ kind, index });
+  };
+
+  const closeEntryModal = () => {
+    setEntryModal(null);
+    setEntryDraft(null);
+  };
+
+  const saveEntryDraft = () => {
+    if (!entryModal || !entryDraft || !entryDraft.content.trim()) return;
+    const collection = entryModal.kind === "plan" ? plans : works;
+    const next = [...collection];
+    const normalized = {
+      ...entryDraft,
+      deliverables: entryDraft.deliverables.filter((item) => item.trim()),
+    };
+    if (entryModal.index === null) next.push(normalized);
+    else next[entryModal.index] = normalized;
+    if (entryModal.kind === "plan") updatePlans(next);
+    else updateWorks(next);
+    closeEntryModal();
+  };
 
   const reconcilePlan = (index: number) => {
     const plan = plans[index];
@@ -508,13 +493,26 @@ export function DailyForm({
               左侧维护计划，核销后自动带入右侧实际完成。
             </p>
           </div>
-          <span className="text-xs font-medium text-muted-foreground">
-            {date.replaceAll("-", ".")} · {plans.length} 项计划 · {works.length} 项实际
-          </span>
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-xs font-medium text-muted-foreground">
+              {date.replaceAll("-", ".")} · {plans.length} 项计划 · {works.length} 项实际
+            </span>
+            <Button
+              type="button"
+              variant="secondary"
+              size="small"
+              disabled={disabled || plans.length >= 100}
+              onClick={() => openEntryModal("plan")}
+            >
+              <Plus className="size-3.5" aria-hidden />
+              添加计划
+            </Button>
+          </div>
         </CardHeader>
 
-        <CardBody className="grid min-w-0 p-0 lg:grid-cols-2 lg:divide-x lg:divide-border">
-          <section className="min-w-0 border-b border-border p-5 lg:border-b-0">
+        <CardBody className="min-w-0 p-0">
+          <Row className="min-w-0">
+          <Col span={12} lg={6} className="min-w-0 border-b border-border p-5 lg:border-b-0">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">今日工作计划</h3>
@@ -522,38 +520,25 @@ export function DailyForm({
                   {completedPlans}/{plans.length} 项已核销
                 </p>
               </div>
-              <Button
-                type="button"
-                variant="secondary"
-                size="small"
-                disabled={disabled || plans.length >= 100}
-                onClick={() => updatePlans([...plans, blankEntry("plan")])}
-              >
-                <Plus className="size-3.5" aria-hidden />
-                添加计划
-              </Button>
             </div>
             {plans.length ? (
-              <div role="list">
-                {plans.map((entry, index) => (
-                  <EntryEditor
-                    key={index}
+              <List
+                dataSource={plans}
+                rowKey={(_, index) => `plan-${index}`}
+                itemClassName="border-slate-200 bg-slate-50/70"
+                renderItem={(entry, index) => (
+                  <PlanListItem
                     entry={entry}
                     index={index}
-                    kind="plan"
                     projects={projects}
                     disabled={disabled}
                     reconciled={works.some((work) => isSameWork(entry, work))}
-                    onChange={(next) =>
-                      updatePlans(plans.map((item, itemIndex) => itemIndex === index ? next : item))
-                    }
-                    onRemove={() =>
-                      updatePlans(plans.filter((_, itemIndex) => itemIndex !== index))
-                    }
+                    onEdit={() => openEntryModal("plan", index)}
+                    onRemove={() => updatePlans(plans.filter((_, itemIndex) => itemIndex !== index))}
                     onReconcile={() => reconcilePlan(index)}
                   />
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <>
                 <EmptyColumn kind="plan" />
@@ -567,9 +552,9 @@ export function DailyForm({
                 />
               </>
             )}
-          </section>
+          </Col>
 
-          <section className="min-w-0 p-5">
+          <Col span={12} lg={6} className="min-w-0 border-l border-slate-100 p-5">
             <div className="mb-3">
               <h3 className="text-sm font-semibold text-foreground">今日实际完成</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -577,24 +562,21 @@ export function DailyForm({
               </p>
             </div>
             {works.length ? (
-              <div role="list">
-                {works.map((entry, index) => (
-                  <EntryEditor
-                    key={index}
+              <List
+                dataSource={works}
+                rowKey={(_, index) => `work-${index}`}
+                itemClassName="border-slate-200 bg-white shadow-xs"
+                renderItem={(entry, index) => (
+                  <WorkListItem
                     entry={entry}
                     index={index}
-                    kind="work"
                     projects={projects}
                     disabled={disabled}
-                    onChange={(next) =>
-                      updateWorks(works.map((item, itemIndex) => itemIndex === index ? next : item))
-                    }
-                    onRemove={() =>
-                      updateWorks(works.filter((_, itemIndex) => itemIndex !== index))
-                    }
+                    onEdit={() => openEntryModal("work", index)}
+                    onRemove={() => updateWorks(works.filter((_, itemIndex) => itemIndex !== index))}
                   />
-                ))}
-              </div>
+                )}
+              />
             ) : (
               <>
                 <EmptyColumn kind="work" />
@@ -613,13 +595,14 @@ export function DailyForm({
               variant="ghost"
               size="small"
               disabled={disabled || works.length >= 100}
-              onClick={() => updateWorks([...works, blankEntry("work")])}
+              onClick={() => openEntryModal("work")}
               className="mt-3 text-primary"
             >
               <Plus className="size-3.5" aria-hidden />
               插入临时工作
             </Button>
-          </section>
+          </Col>
+          </Row>
         </CardBody>
 
         <div className="border-t border-border bg-muted/20 px-5 py-4">
@@ -802,7 +785,126 @@ export function DailyForm({
         </Card>
       ) : null}
 
-      <div className="sticky bottom-0 z-20 -mx-4 flex flex-col gap-3 border-t border-border bg-card/95 py-3 pr-4 pl-16 shadow-[0_-8px_24px_-20px_rgba(15,23,42,0.45)] backdrop-blur sm:mx-0 sm:flex-row sm:items-center sm:justify-between sm:rounded-t-xl sm:border-x sm:px-4">
+      {entryModal && entryDraft ? (
+        <Modal
+          open
+          onClose={closeEntryModal}
+          title={entryModal.index === null ? (entryModal.kind === "plan" ? "添加工作计划" : "插入临时工作") : "编辑日报条目"}
+          description="保存后条目会回到双栏列表，列表中只展示已保存内容。"
+          footer={
+            <>
+              <Button type="button" variant="secondary" size="small" onClick={closeEntryModal}>
+                取消
+              </Button>
+              <Button
+                type="button"
+                size="small"
+                disabled={!entryDraft.content.trim()}
+                onClick={saveEntryDraft}
+              >
+                保存条目
+              </Button>
+            </>
+          }
+        >
+          <div className="space-y-4">
+            <Textarea
+              label={entryModal.kind === "plan" ? "计划内容" : "实际工作内容"}
+              value={entryDraft.content}
+              onChange={(content) => setEntryDraft({ ...entryDraft, content })}
+              placeholder={entryModal.kind === "plan" ? "填写计划内容和预期结果" : "填写实际完成的工作内容"}
+              isDisabled={disabled}
+              isRequired
+              rows={3}
+              maxLength={5000}
+            />
+            <Row gap="sm">
+              <Col span={12} md={6}>
+                <Select
+                  aria-label="工作类型"
+                  selectedKey={entryDraft.category}
+                  onSelectionChange={(category) => setEntryDraft({ ...entryDraft, category })}
+                  isDisabled={disabled}
+                >
+                  {categoryOptions.map((category) => (
+                    <SelectItem key={category} id={category}>{category}</SelectItem>
+                  ))}
+                </Select>
+              </Col>
+              <Col span={12} md={6}>
+                <Select
+                  aria-label="工作进度"
+                  selectedKey={entryDraft.status}
+                  onSelectionChange={(status) => setEntryDraft({ ...entryDraft, status: status as DailyEntry["status"] })}
+                  isDisabled={disabled}
+                >
+                  {statusOptions.map(([value, label]) => (
+                    <SelectItem key={value} id={value}>{label}</SelectItem>
+                  ))}
+                </Select>
+              </Col>
+              <Col span={12}>
+                <Select
+                  aria-label="关联项目"
+                  selectedKey={entryDraft.projectId ?? "NONE"}
+                  onSelectionChange={(projectId) => setEntryDraft({ ...entryDraft, projectId: projectId === "NONE" ? null : projectId })}
+                  isDisabled={disabled}
+                >
+                  <SelectItem id="NONE">未关联项目</SelectItem>
+                  {projects.map((item) => (
+                    <SelectItem key={item.id} id={item.id}>{item.name}</SelectItem>
+                  ))}
+                </Select>
+              </Col>
+            </Row>
+            {entryModal.kind === "work" ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-slate-800">交付物</p>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="small"
+                    disabled={disabled || entryDraft.deliverables.length >= 20}
+                    onClick={() => setEntryDraft({ ...entryDraft, deliverables: [...entryDraft.deliverables, ""] })}
+                    className="text-blue-600"
+                  >
+                    <Plus className="size-3.5" aria-hidden />
+                    添加交付物
+                  </Button>
+                </div>
+                {entryDraft.deliverables.map((deliverable, deliverableIndex) => (
+                  <div key={deliverableIndex} className="flex items-center gap-2">
+                    <Input
+                      aria-label={`交付物 ${deliverableIndex + 1}`}
+                      value={deliverable}
+                      onChange={(value) => setEntryDraft({ ...entryDraft, deliverables: entryDraft.deliverables.map((item, itemIndex) => itemIndex === deliverableIndex ? value : item) })}
+                      placeholder="如：教材 1 本、章节 13 章"
+                      isDisabled={disabled}
+                      size="small"
+                      maxLength={200}
+                      className="min-w-0 flex-1"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      iconOnly
+                      disabled={disabled}
+                      onClick={() => setEntryDraft({ ...entryDraft, deliverables: entryDraft.deliverables.filter((_, itemIndex) => itemIndex !== deliverableIndex) })}
+                      aria-label={`删除交付物 ${deliverableIndex + 1}`}
+                    >
+                      <Trash2 className="size-4" aria-hidden />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            ) : null}
+          </div>
+        </Modal>
+      ) : null}
+
+      <FooterToolbar>
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">
             今日计划 {plans.length} 项 · 已完成 {completedWorks} 项 · 达成率 {fulfillment}%
@@ -825,7 +927,7 @@ export function DailyForm({
             </Button>
           </div>
         )}
-      </div>
+      </FooterToolbar>
     </form>
   );
 }
