@@ -49,12 +49,25 @@ export type DashboardBreakdown = {
   blockerTrend: Array<{ date: string; opened: number; resolved: number }>;
   blockerResolutionMedianHours: number | null;
   planFulfillment: { completed: number; due: number; rate: number | null };
+  todayPlanFulfillment: { completed: number; due: number; rate: number | null };
   memberDeliverables: Array<{
     memberId: string;
     memberName: string;
     unitId: string;
     unitName: string;
     quantity: number;
+  }>;
+  categoryBreakdown: Array<{ name: string; value: number }>;
+  deliverableSummary: Array<{
+    unitId: string;
+    unitName: string;
+    quantity: number;
+  }>;
+  blockerItems: Array<{
+    id: string;
+    projectName: string;
+    description: string;
+    severity: "NORMAL" | "IMPORTANT" | "URGENT";
   }>;
 };
 export type DashboardDateRange = { from: string; to: string };
@@ -107,6 +120,7 @@ export async function getDashboardBreakdown(
         id: workTask.id,
         primaryAssigneeId: workTask.primaryAssigneeId,
         projectId: workTask.projectId,
+        categoryName: workTask.categoryName,
         status: workTask.status,
         workDate: workTask.workDate,
       })
@@ -122,6 +136,10 @@ export async function getDashboardBreakdown(
       .select({
         reporterId: blocker.reporterId,
         coordinatorId: blocker.coordinatorId,
+        id: blocker.id,
+        projectId: blocker.projectId,
+        description: blocker.description,
+        severity: blocker.severity,
         status: blocker.status,
         createdAt: blocker.createdAt,
         resolvedAt: blocker.resolvedAt,
@@ -305,6 +323,15 @@ export async function getDashboardBreakdown(
     );
     return (history.at(-1)?.toStatus ?? plan.status) === "DONE";
   }).length;
+  const today = shanghaiDate(now);
+  const todayDuePlans = duePlans.filter((plan) => plan.dueDate === today);
+  const todayCompletedPlans = todayDuePlans.filter((plan) => {
+    const cutoff = new Date(`${plan.dueDate}T23:59:59.999+08:00`);
+    const history = planHistory.filter(
+      (entry) => entry.taskId === plan.id && entry.changedAt <= cutoff,
+    );
+    return (history.at(-1)?.toStatus ?? plan.status) === "DONE";
+  }).length;
   const projectRows = projects.map((item) => {
     const projectTasks = tasks.filter((task) => task.projectId === item.id);
     const totals = new Map<
@@ -339,6 +366,36 @@ export async function getDashboardBreakdown(
   const memberNames = new Map(
     data.members.map((member) => [member.id, member.name]),
   );
+  const categoryTotals = tasks.reduce((map, task) => {
+    const name = task.categoryName?.trim() || "未分类";
+    map.set(name, (map.get(name) ?? 0) + 1);
+    return map;
+  }, new Map<string, number>());
+  const deliverableTotals = deliveries.reduce((map, delivery) => {
+    if (!tasks.some((task) => task.id === delivery.taskId)) return map;
+    const current = map.get(delivery.unitId);
+    map.set(delivery.unitId, {
+      unitId: delivery.unitId,
+      unitName: delivery.unitName,
+      quantity: (current?.quantity ?? 0) + Number(delivery.quantity),
+    });
+    return map;
+  }, new Map<string, { unitId: string; unitName: string; quantity: number }>());
+  const projectNames = new Map(projectRows.map((item) => [item.id, item.name]));
+  const blockerItems = blockers
+    .filter((item) => item.status !== "RESOLVED")
+    .sort((a, b) => {
+      const rank = { URGENT: 0, IMPORTANT: 1, NORMAL: 2 } as const;
+      return rank[a.severity] - rank[b.severity];
+    })
+    .map((item) => ({
+      id: item.id,
+      projectName: item.projectId
+        ? projectNames.get(item.projectId) ?? "未关联项目"
+        : "未关联项目",
+      description: item.description,
+      severity: item.severity,
+    }));
   const memberDeliverables = [
     ...deliveries
       .reduce((map, delivery) => {
@@ -369,7 +426,21 @@ export async function getDashboardBreakdown(
         ? Math.round((completedPlans / duePlans.length) * 100)
         : null,
     },
+    todayPlanFulfillment: {
+      completed: todayCompletedPlans,
+      due: todayDuePlans.length,
+      rate: todayDuePlans.length
+        ? Math.round((todayCompletedPlans / todayDuePlans.length) * 100)
+        : null,
+    },
     memberDeliverables,
+    categoryBreakdown: [...categoryTotals.entries()]
+      .map(([name, value]) => ({ name, value }))
+      .sort((a, b) => b.value - a.value),
+    deliverableSummary: [...deliverableTotals.values()].sort(
+      (a, b) => b.quantity - a.quantity,
+    ),
+    blockerItems,
   };
 }
 

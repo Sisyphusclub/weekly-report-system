@@ -31,11 +31,13 @@ import { Badge } from "@/components/premium/badge";
 import { DailySubmissions } from "@/components/workspace/daily-submissions";
 import { MemberCompareCard } from "@/components/dashboard/member-compare-card";
 import { ProjectCollabCard } from "@/components/dashboard/project-collab-card";
+import { BossDashboard } from "@/components/dashboard/boss-dashboard";
 import { PlanStrip } from "@/components/dashboard/plan-strip";
 import { type WorkStatus } from "@/components/dashboard/task-item-row";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
 import { blockerVisibility } from "@/lib/blockers";
 import { cx } from "@/utils/cx";
+import { dailySubmissionStatus } from "@/lib/submission-metrics";
 
 export const metadata = { title: "工作看板" };
 
@@ -173,6 +175,44 @@ export default async function DashboardPage() {
   const rate = submissionRate(metrics.submittedReports, metrics.dueReports);
   const today = shanghaiDate(now).replaceAll("-", ".");
   const isBoss = actor.role === "BOSS";
+  if (isBoss) {
+    const todayStatuses = data.members.map((member) => dailySubmissionStatus(data, member));
+    const todayEligible = todayStatuses.filter(
+      (status) => !["EXEMPT", "REST_DAY", "NOT_STARTED"].includes(status),
+    ).length;
+    const todaySubmitted = todayStatuses.filter(
+      (status) => status === "SUBMITTED" || status === "LATE",
+    ).length;
+    return (
+      <WorkspaceShell actor={actor} selected="dashboard">
+        <PageIntro
+          eyebrow="负责人视角 · 今日"
+          title="团队工作驾驶舱"
+          description="在一屏内查看提交进度、阻塞风险、计划兑现率和核心交付物。"
+          action={
+            <ButtonLink href="/daily" variant="primary">
+              <RiCheckboxCircleLine className="size-4" aria-hidden />
+              填写今日日报
+            </ButtonLink>
+          }
+        />
+        <BossDashboard
+          metrics={metrics}
+          breakdown={breakdown}
+          todaySubmission={{ submitted: todaySubmitted, total: todayEligible }}
+          reports={reports.items.map((item) => ({
+            id: item.id,
+            author: item.author,
+            type: item.type,
+            date: item.date,
+            weekStart: item.weekStart,
+            summary: item.summary,
+            status: item.status,
+          }))}
+        />
+      </WorkspaceShell>
+    );
+  }
   return (
     <WorkspaceShell actor={actor} selected="dashboard">
       <PageIntro
