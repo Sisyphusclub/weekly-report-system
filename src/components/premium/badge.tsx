@@ -1,6 +1,6 @@
 "use client";
 
-import type { ComponentProps } from "react";
+import type { ComponentProps, ReactNode } from "react";
 import { AnimatedBadge, type AnimatedBadgeStatus } from "@/components/motion/animated-badge";
 import { cx } from "@/utils/cx";
 
@@ -34,21 +34,32 @@ const statusByTone: Record<BadgeTone, AnimatedBadgeStatus> = {
 };
 
 const toneClass: Partial<Record<BadgeTone, string>> = {
+  neutral: "border-slate-200 bg-slate-100 text-slate-700",
+  blue: "border-status-blue-text/25 bg-status-blue-background text-status-blue-text",
   purple: "border-status-purple-text/25 bg-status-purple-background text-status-purple-text",
   orange: "border-status-orange-text/25 bg-status-orange-background text-status-orange-text",
   project: "border-project-tag-border bg-project-tag-background text-project-tag-text",
 };
 
-export interface BadgeProps extends Omit<ComponentProps<typeof AnimatedBadge>, "status"> {
+export interface BadgeProps extends Omit<
+  ComponentProps<typeof AnimatedBadge>,
+  "status" | "children"
+> {
   color?: BadgeTone;
   tone?: BadgeTone;
   variant?: "caption" | "subtle" | "bold";
+  status?: AnimatedBadgeStatus;
+  text?: ReactNode;
+  children?: ReactNode;
 }
 
 export function Badge({
   color,
   tone,
   variant: _variant,
+  status,
+  text,
+  children,
   showIcon,
   className,
   ...props
@@ -58,12 +69,20 @@ export function Badge({
   return (
     <AnimatedBadge
       {...props}
-      status={statusByTone[resolved]}
+      status={status ?? statusByTone[resolved]}
       size="sm"
-      showIcon={showIcon ?? isStatus}
+      showIcon={showIcon ?? (Boolean(status) || isStatus)}
       className={cx(toneClass[resolved], className)}
-    />
+    >
+      {text ?? children}
+    </AnimatedBadge>
   );
 }
 
 export const Chip = Badge;
+
+export interface TagProps extends Omit<BadgeProps, "status" | "text"> {}
+
+export function Tag({ showIcon = false, ...props }: TagProps) {
+  return <Badge {...props} showIcon={showIcon} />;
+}
