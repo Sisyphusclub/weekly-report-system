@@ -17,7 +17,7 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 ## 产品与前端架构约束
 
 - 始终以长期可维护的企业级 AI SaaS 产品为目标，遵循统一的 Design System，保持设计语言、交互方式和代码规范一致。
-- 基础组件优先使用本项目的 BoardUI 源码；交互能力优先基于 Radix UI Headless Components 实现，避免重复手写基础控件。
+- 基础组件优先使用本项目的 beUI Pro 源码；交互能力优先基于 Radix UI Headless Components 实现，避免重复手写基础控件。
 - 页面采用简洁、专业、高信息密度和克制的企业级 AI SaaS 风格，可参考火山引擎控制台、飞书、Linear 和 Vercel。
 - 颜色、字体、间距、圆角、阴影和动画统一使用 Design Tokens 管理，禁止在业务页面硬编码视觉值，并为后续主题切换保留扩展空间。
 - 复杂表格和列表优先使用 TanStack Table 管理数据逻辑，图表优先使用 Recharts 或项目已有方案，动画统一使用 Motion。

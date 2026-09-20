@@ -6,10 +6,17 @@ import {
   RiPulseLine,
   RiTimerLine,
 } from "@remixicon/react";
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, ne, or } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { category, deliverableUnit, project, user } from "@/lib/db/schema";
+import {
+  blocker,
+  category,
+  deliverableUnit,
+  project,
+  user,
+  workTask,
+} from "@/lib/db/schema";
 import { listReports } from "@/lib/reports";
 import { getSubmissionData } from "@/lib/submission-data";
 import {
@@ -26,6 +33,8 @@ import { MemberCompareCard } from "@/components/dashboard/member-compare-card";
 import { ProjectCollabCard } from "@/components/dashboard/project-collab-card";
 import { PlanStrip } from "@/components/dashboard/plan-strip";
 import { type WorkStatus } from "@/components/dashboard/task-item-row";
+import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
+import { blockerVisibility } from "@/lib/blockers";
 
 export const metadata = { title: "工作看板" };
 
@@ -90,6 +99,81 @@ export default async function DashboardPage() {
             />
           ))}
         </section>
+      </WorkspaceShell>
+    );
+  }
+  if (actor.role === "EMPLOYEE") {
+    const today = shanghaiDate(now);
+    const [taskRows, reports, blockers] = await Promise.all([
+      db
+        .select({
+          id: workTask.id,
+          content: workTask.content,
+          kind: workTask.kind,
+          status: workTask.status,
+          categoryName: workTask.categoryName,
+          dueDate: workTask.dueDate,
+          projectName: project.name,
+        })
+        .from(workTask)
+        .leftJoin(
+          project,
+          and(
+            eq(project.id, workTask.projectId),
+            eq(project.organizationId, workTask.organizationId),
+          ),
+        )
+        .where(
+          and(
+            eq(workTask.organizationId, actor.organizationId),
+            eq(workTask.primaryAssigneeId, actor.id),
+            or(eq(workTask.workDate, today), eq(workTask.dueDate, today)),
+          ),
+        )
+        .orderBy(workTask.kind, workTask.status, workTask.updatedAt),
+      listReports(actor, "", 1),
+      db
+        .select({ id: blocker.id })
+        .from(blocker)
+        .where(
+          and(
+            blockerVisibility(actor),
+            ne(blocker.status, "RESOLVED"),
+            eq(blocker.reporterId, actor.id),
+          ),
+        ),
+    ]);
+    const todayReport = data.reports.find(
+      (item) =>
+        item.authorId === actor.id &&
+        item.reportDate === today &&
+        item.status === "SUBMITTED",
+    );
+    return (
+      <WorkspaceShell actor={actor} selected="dashboard">
+        <EmployeeDashboard
+          name={actor.name}
+          today={today.replaceAll("-", ".")}
+          submitted={Boolean(todayReport)}
+          openBlockers={blockers.length}
+          recentReports={reports.items.map((item) => ({
+            id: item.id,
+            type: item.type,
+            date: item.date,
+            weekStart: item.weekStart,
+            summary: item.summary,
+            status: item.status,
+          }))}
+          tasks={taskRows.map((task) => ({
+            id: task.id,
+            content: task.content,
+            kind: task.kind,
+            status: task.status as WorkStatus,
+            projectName: task.projectName ?? "未关联项目",
+            categoryName: task.categoryName,
+            dueDate: task.dueDate,
+          }))}
+        />
       </WorkspaceShell>
     );
   }
@@ -296,13 +380,11 @@ export default async function DashboardPage() {
                 member={member}
                 plans={breakdown.projects
                   .flatMap((project) =>
-                    project.nextPlans
-                      .slice(0, 1)
-                      .map((plan) => ({
-                        content: plan.content,
-                        projectName: project.name,
-                        status: "TODO" as WorkStatus,
-                      })),
+                    project.nextPlans.slice(0, 1).map((plan) => ({
+                      content: plan.content,
+                      projectName: project.name,
+                      status: "TODO" as WorkStatus,
+                    })),
                   )
                   .slice(index, index + 2)}
                 hasRisk={member.openBlockers > 0}

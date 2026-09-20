@@ -10,3 +10,4 @@ playwright-report/
 .codex-backups/
 *.tsbuildinfo
 .local/
+debug.log
