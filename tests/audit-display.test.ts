@@ -27,10 +27,7 @@ it.each([
     { label: "操作原因", value: reason },
   ]);
 });
-it("preserves recovery reasons as plain text", () => {
-  expect(
-    auditReasonDetails("OPS_TOTP_RESET", "设备丢失，已核实本人身份"),
-  ).toEqual([{ label: "操作原因", value: "设备丢失，已核实本人身份" }]);
+it("returns no reason details when the event has no reason", () => {
   expect(auditReasonDetails("OLD_ACTION", null)).toEqual([]);
 });
 it("keeps unknown event codes visible", () => {

@@ -51,8 +51,6 @@ export async function writeActor(request: Request) {
     throw new BusinessError("请求来源无效", 403);
   const actor = await currentUser();
   if (!actor) throw new BusinessError("请先登录", 401);
-  if (actor.mustChangePassword)
-    throw new BusinessError("请先完成账号安全设置", 403);
   if (!readOnly) {
     enforceRateLimit(`write:${actor.organizationId}:${actor.id}`, 120, 60_000);
   }

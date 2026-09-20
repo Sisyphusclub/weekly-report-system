@@ -39,8 +39,6 @@ beforeEach(() => {
     id: "employee",
     organizationId: "org",
     role: "EMPLOYEE",
-    mustChangePassword: false,
-    twoFactorEnabled: false,
   });
 });
 
@@ -125,8 +123,6 @@ it("管理员不能调用业务任务写入接口", async () => {
     id: "admin",
     organizationId: "org",
     role: "ADMIN",
-    mustChangePassword: false,
-    twoFactorEnabled: true,
   });
   const response = await POST(request(payload));
   expect(response.status).toBe(403);

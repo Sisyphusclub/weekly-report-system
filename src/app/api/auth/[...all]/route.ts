@@ -1,6 +1,5 @@
 import { getAuth } from "@/lib/auth";
 import { configurationStatus } from "@/lib/config";
-import { guardUsernameLogin } from "@/lib/login-guard";
 
 export const runtime = "nodejs";
 const allowedGet = new Set(["get-session"]);
@@ -8,9 +7,6 @@ const allowedPost = new Set([
   "sign-in/username",
   "sign-out",
   "change-password",
-  "two-factor/enable",
-  "two-factor/verify-totp",
-  "two-factor/verify-backup-code",
   "revoke-sessions",
 ]);
 
@@ -24,9 +20,7 @@ async function handler(request: Request) {
       { status: 503 },
     );
   try {
-    return path === "sign-in/username"
-      ? await guardUsernameLogin(request, () => getAuth().handler(request))
-      : await getAuth().handler(request);
+    return await getAuth().handler(request);
   } catch {
     console.error("AUTH_SERVICE_UNAVAILABLE");
     return Response.json(

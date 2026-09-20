@@ -14,7 +14,7 @@ type UserRow = {
   name: string;
   username: string;
   role: "EMPLOYEE" | "BOSS" | "ADMIN";
-  status: "PENDING" | "ACTIVE" | "LOCKED" | "DISABLED";
+  status: "ACTIVE" | "DISABLED";
   title: string | null;
 };
 
@@ -25,9 +25,7 @@ const roleLabel = {
 } as const;
 
 const statusLabel = {
-  PENDING: "待首次登录",
   ACTIVE: "正常",
-  LOCKED: "锁定",
   DISABLED: "停用",
 } as const;
 
@@ -92,11 +90,7 @@ const columns: ResponsiveDataTableColumn<UserRow>[] = [
         <span
           className={cn(
             "size-2 rounded-full",
-            row.status === "ACTIVE"
-              ? "bg-status-lime-text"
-              : row.status === "PENDING"
-                ? "bg-status-yellow-text"
-                : "bg-destructive",
+            row.status === "ACTIVE" ? "bg-status-lime-text" : "bg-destructive",
           )}
         />
         {statusLabel[row.status]}

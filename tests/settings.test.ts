@@ -17,8 +17,6 @@ beforeEach(() => {
     id: "admin",
     organizationId: "org",
     role: "ADMIN",
-    twoFactorEnabled: true,
-    mustChangePassword: false,
   });
 });
 function request(
@@ -68,7 +66,6 @@ it.each(["EMPLOYEE", "BOSS"])(
       id: "member",
       organizationId: "org",
       role,
-      twoFactorEnabled: true,
     });
     expect((await PATCH(request())).status).toBe(403);
     expect(mocks.getDb).not.toHaveBeenCalled();

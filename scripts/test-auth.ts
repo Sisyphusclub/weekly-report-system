@@ -1,7 +1,6 @@
 import assert from "node:assert/strict";
 import { randomUUID } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
-import { base32 } from "@better-auth/utils/base32";
 import { getAuth } from "../src/lib/auth";
 import { getPool, closePool } from "../src/lib/db";
 
@@ -39,7 +38,7 @@ async function main() {
       [org],
     );
     await pool.query(
-      "INSERT INTO app_user(id,organization_id,name,email,username,status,must_change_password) VALUES($1,$2,'integration',$3,$4,'PENDING',true)",
+      "INSERT INTO app_user(id,organization_id,name,email,username,status) VALUES($1,$2,'integration',$3,$4,'ACTIVE')",
       [id, org, `${id}@test.invalid`, username],
     );
     await pool.query(
@@ -58,10 +57,6 @@ async function main() {
     const session = await (await request("get-session")).json();
     assert.equal(session.user.id, id);
     assert.equal(session.user.organizationId, org);
-    assert.equal(
-      (await request("two-factor/enable", { password })).status,
-      403,
-    );
     const firstDevice = cookie;
     cookie = "";
     assert.equal(
@@ -88,14 +83,6 @@ async function main() {
       ).status,
       200,
     );
-    const changed = await pool.query(
-      "SELECT status,must_change_password FROM app_user WHERE id=$1",
-      [id],
-    );
-    assert.deepEqual(changed.rows[0], {
-      status: "ACTIVE",
-      must_change_password: false,
-    });
     const currentDevice = cookie;
     cookie = firstDevice;
     assert.equal(await (await request("get-session")).json(), null);
@@ -113,64 +100,18 @@ async function main() {
       [id],
     );
     assert.equal(audit.rows[0].count, 1);
-    // The disposable database belongs exclusively to this run. Reset the
-    // shared no-IP rate bucket before exercising the separate MFA scenario.
-    await pool.query("DELETE FROM auth_rate_limit");
     assert.equal(
       (await request("sign-in/username", { username, password })).status,
       200,
     );
-    const enrollment = await request("two-factor/enable", { password });
-    assert.equal(enrollment.status, 200);
-    const setup = await enrollment.json();
-    const secret = new TextDecoder().decode(
-      base32.decode(new URL(setup.totpURI).searchParams.get("secret")!),
-    );
-    const code = await auth.api.generateTOTP({ body: { secret } });
-    assert.equal(
-      (await request("two-factor/verify-totp", { code: code.code })).status,
-      200,
-    );
-    assert.equal(
-      (await (await request("get-session")).json()).user.twoFactorEnabled,
-      true,
-    );
     assert.equal((await request("sign-out", {})).status, 200);
-    const challenge = await request("sign-in/username", { username, password });
-    assert.equal(challenge.status, 200);
-    assert.equal((await challenge.json()).twoFactorRedirect, true);
-    assert.equal(await (await request("get-session")).json(), null);
-    const loginCode = await auth.api.generateTOTP({ body: { secret } });
-    assert.equal(
-      (await request("two-factor/verify-totp", { code: loginCode.code }))
-        .status,
-      200,
-    );
-    assert.equal((await (await request("get-session")).json()).user.id, id);
-    assert.equal((await request("sign-out", {})).status, 200);
-    await request("sign-in/username", { username, password });
-    const recovery = setup.backupCodes[0];
-    assert.equal(
-      (await request("two-factor/verify-backup-code", { code: recovery }))
-        .status,
-      200,
-    );
-    assert.equal((await (await request("get-session")).json()).user.id, id);
-    await request("sign-out", {});
-    await request("sign-in/username", { username, password });
-    assert.ok(
-      (await request("two-factor/verify-backup-code", { code: recovery }))
-        .status >= 400,
-    );
-    assert.equal(await (await request("get-session")).json(), null);
-    await pool.query("DELETE FROM auth_rate_limit");
     await pool.query("UPDATE app_user SET status='DISABLED' WHERE id=$1", [id]);
     assert.equal(
       (await request("sign-in/username", { username, password })).status,
       401,
     );
     console.log(
-      "PASS: login, first password change, session revocation, password audit, TOTP enrollment/login, MFA challenge isolation, one-time recovery codes, logout, disabled account",
+      "PASS: login, password change, session revocation, password audit, logout, disabled account",
     );
   } finally {
     await pool.query("DELETE FROM auth_session WHERE user_id=$1", [id]);

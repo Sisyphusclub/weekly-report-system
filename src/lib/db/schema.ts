@@ -24,12 +24,7 @@ const timestamps = () => ({
     .defaultNow(),
 });
 export const roleEnum = pgEnum("user_role", ["EMPLOYEE", "BOSS", "ADMIN"]);
-export const userStatusEnum = pgEnum("user_status", [
-  "PENDING",
-  "ACTIVE",
-  "LOCKED",
-  "DISABLED",
-]);
+export const userStatusEnum = pgEnum("user_status", ["ACTIVE", "DISABLED"]);
 export const taskStatusEnum = pgEnum("task_status", [
   "TODO",
   "IN_PROGRESS",
@@ -61,11 +56,7 @@ export const user = pgTable(
     username: text("username").notNull().unique(),
     displayUsername: text("display_username"),
     role: roleEnum("role").notNull().default("EMPLOYEE"),
-    status: userStatusEnum("status").notNull().default("PENDING"),
-    mustChangePassword: boolean("must_change_password").notNull().default(true),
-    twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
-    failedLoginCount: integer("failed_login_count").notNull().default(0),
-    loginLockedUntil: timestamp("login_locked_until", { withTimezone: true }),
+    status: userStatusEnum("status").notNull().default("ACTIVE"),
     title: text("title"),
     ...timestamps(),
   },
@@ -124,28 +115,6 @@ export const verification = pgTable(
   },
   (t) => [index("verification_identifier").on(t.identifier)],
 );
-export const twoFactor = pgTable(
-  "auth_two_factor",
-  {
-    id: text("id").primaryKey(),
-    userId: text("user_id")
-      .notNull()
-      .references(() => user.id),
-    secret: text("secret").notNull(),
-    backupCodes: text("backup_codes").notNull(),
-    verified: boolean("verified").default(true),
-    failedVerificationCount: integer("failed_verification_count").default(0),
-    lockedUntil: timestamp("locked_until", { withTimezone: true }),
-  },
-  (t) => [index("two_factor_user").on(t.userId)],
-);
-export const rateLimit = pgTable("auth_rate_limit", {
-  id: text("id").primaryKey(),
-  key: text("key").notNull().unique(),
-  count: integer("count").notNull(),
-  lastRequest: numeric("last_request", { mode: "number" }).notNull(),
-});
-
 export const projectStatusEnum = pgEnum("project_status", [
   "PLANNED",
   "ACTIVE",

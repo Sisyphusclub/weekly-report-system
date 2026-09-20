@@ -128,7 +128,6 @@ async function main() {
         displayUsername: input.username,
         role: input.role,
         status: "ACTIVE" as const,
-        mustChangePassword: false,
         title: input.title,
       };
       await tx.insert(user).values(created);

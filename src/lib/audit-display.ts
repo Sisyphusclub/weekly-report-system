@@ -31,7 +31,7 @@ const labels: Record<string, string> = {
   ATTACHMENT_VERIFY: "确认附件上传",
   ATTACHMENT_DELETE: "删除附件",
   TASK_TRANSFER: "批量转交任务",
-  OPS_TOTP_RESET: "运维重置双因素认证",
+  PASSWORD_CHANGED: "修改密码",
   PASSWORD_RESET: "重置密码",
   USER_DISABLED: "停用账号",
   USER_ENABLED: "启用账号",

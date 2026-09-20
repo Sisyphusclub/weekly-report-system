@@ -14,8 +14,6 @@ beforeEach(() => {
     id: "admin",
     organizationId: "org",
     role: "ADMIN",
-    mustChangePassword: false,
-    twoFactorEnabled: true,
   });
 });
 const payload = {
@@ -98,7 +96,6 @@ it.each(["EMPLOYEE", "BOSS"])(
       id: role,
       organizationId: "org",
       role,
-      twoFactorEnabled: true,
     });
     expect((await POST(request())).status).toBe(403);
     expect(mocks.getDb).not.toHaveBeenCalled();

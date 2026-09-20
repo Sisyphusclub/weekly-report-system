@@ -20,8 +20,6 @@ const actor = {
   id: "author",
   organizationId: "org",
   role: "EMPLOYEE",
-  mustChangePassword: false,
-  twoFactorEnabled: true,
 };
 function item(overrides = {}) {
   return {

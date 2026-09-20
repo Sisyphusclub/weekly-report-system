@@ -16,8 +16,6 @@ export async function GET(request: Request) {
   try {
     const actor = await currentUser();
     if (!actor) throw new BusinessError("请先登录", 401);
-    if (actor.mustChangePassword)
-      throw new BusinessError("请先完成账号安全设置", 403);
     if (actor.role === "ADMIN")
       throw new BusinessError("管理员不能查看业务任务", 403);
     const url = new URL(request.url);

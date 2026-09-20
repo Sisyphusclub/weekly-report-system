@@ -12,7 +12,6 @@ beforeEach(() => {
     id: "coordinator",
     role: "EMPLOYEE",
     organizationId: "org",
-    mustChangePassword: false,
   });
 });
 it.each(["OPEN", "RESOLVED"])(

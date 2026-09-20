@@ -23,7 +23,6 @@ beforeEach(() => {
     id: "employee",
     organizationId: "org",
     role: "EMPLOYEE",
-    mustChangePassword: false,
   });
 });
 function database(verifiedAt: Date | null, assignee = "employee") {

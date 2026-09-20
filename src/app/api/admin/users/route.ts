@@ -1,4 +1,3 @@
-import { randomBytes } from "node:crypto";
 import { hashPassword } from "better-auth/crypto";
 import { eq, sql } from "drizzle-orm";
 import { apiError, BusinessError, writeActor } from "@/lib/api";
@@ -14,10 +13,11 @@ export async function POST(request: Request) {
     const parsed = createUserInput.safeParse(
       await request.json().catch(() => null),
     );
-    if (!parsed.success) throw new BusinessError("请检查用户名、姓名和角色");
+    if (!parsed.success)
+      throw new BusinessError("请检查用户名、姓名、角色和密码");
     const input = parsed.data;
-    const temporaryPassword = randomBytes(24).toString("base64url");
-    const password = await hashPassword(temporaryPassword);
+    const { password: rawPassword, ...profile } = input;
+    const password = await hashPassword(rawPassword);
     const id = crypto.randomUUID();
     await getDb().transaction(async (tx) => {
       await tx.execute(
@@ -32,11 +32,10 @@ export async function POST(request: Request) {
       await tx.insert(user).values({
         id,
         organizationId: actor.organizationId,
-        ...input,
+        ...profile,
         displayUsername: input.username,
         email: `${id}@accounts.invalid`,
-        status: "PENDING",
-        mustChangePassword: true,
+        status: "ACTIVE",
       });
       await tx.insert(account).values({
         id: crypto.randomUUID(),
@@ -56,7 +55,7 @@ export async function POST(request: Request) {
       });
     });
     return Response.json(
-      { id, username: input.username, temporaryPassword },
+      { id, username: input.username },
       { status: 201, headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

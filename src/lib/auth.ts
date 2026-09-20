@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { twoFactor, username } from "better-auth/plugins";
+import { username } from "better-auth/plugins";
 import { and, eq, ne } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import * as schema from "@/lib/db/schema";
@@ -14,6 +14,7 @@ function createAuth() {
     baseURL: config.BETTER_AUTH_URL,
     secret: config.BETTER_AUTH_SECRET,
     database: drizzleAdapter(getDb(), { provider: "pg", schema }),
+    rateLimit: { enabled: false },
     emailAndPassword: {
       enabled: true,
       disableSignUp: true,
@@ -34,14 +35,8 @@ function createAuth() {
           input: false,
         },
         status: {
-          type: ["PENDING", "ACTIVE", "LOCKED", "DISABLED"],
+          type: ["ACTIVE", "DISABLED"],
           required: true,
-          input: false,
-        },
-        mustChangePassword: {
-          type: "boolean",
-          required: true,
-          defaultValue: true,
           input: false,
         },
       },
@@ -55,18 +50,11 @@ function createAuth() {
         create: {
           before: async (value) => {
             const [user] = await getDb()
-              .select({
-                status: schema.user.status,
-                lockedUntil: schema.user.loginLockedUntil,
-              })
+              .select({ status: schema.user.status })
               .from(schema.user)
               .where(eq(schema.user.id, value.userId))
               .limit(1);
-            if (
-              !user ||
-              ["DISABLED", "LOCKED"].includes(user.status) ||
-              (user.lockedUntil && user.lockedUntil > new Date())
-            )
+            if (!user || user.status === "DISABLED")
               throw new APIError("UNAUTHORIZED", {
                 message: "无法登录，请联系管理员",
               });
@@ -77,13 +65,7 @@ function createAuth() {
     },
     hooks: {
       before: createAuthMiddleware(async (ctx) => {
-        if (
-          [
-            "/change-password",
-            "/two-factor/enable",
-            "/revoke-sessions",
-          ].includes(ctx.path)
-        ) {
+        if (["/change-password", "/revoke-sessions"].includes(ctx.path)) {
           const current = await getAuth().api.getSession({
             headers: ctx.headers ?? new Headers(),
           });
@@ -93,10 +75,8 @@ function createAuth() {
             .select()
             .from(schema.user)
             .where(eq(schema.user.id, current.user.id));
-          if (!actor || ["DISABLED", "LOCKED"].includes(actor.status))
+          if (!actor || actor.status === "DISABLED")
             throw new APIError("FORBIDDEN", { message: "账号不可用" });
-          if (ctx.path === "/two-factor/enable" && actor.mustChangePassword)
-            throw new APIError("FORBIDDEN", { message: "请先修改临时密码" });
         }
         if (ctx.path === "/change-password") {
           if (ctx.body?.currentPassword === ctx.body?.newPassword)
@@ -105,33 +85,9 @@ function createAuth() {
             });
           ctx.body = { ...ctx.body, revokeOtherSessions: true };
         }
-        if (
-          ctx.path === "/two-factor/verify-totp" ||
-          ctx.path === "/two-factor/verify-backup-code"
-        )
-          ctx.body = { ...ctx.body, trustDevice: false };
       }),
       after: createAuthMiddleware(async (ctx) => {
         const returned = ctx.context.returned;
-        if (
-          ctx.path === "/two-factor/verify-totp" &&
-          returned &&
-          typeof returned === "object" &&
-          "user" in returned &&
-          ctx.context.newSession &&
-          ctx.context.session &&
-          !ctx.context.session.user.twoFactorEnabled
-        ) {
-          const verified = ctx.context.newSession;
-          await getDb()
-            .delete(schema.session)
-            .where(
-              and(
-                eq(schema.session.userId, verified.user.id),
-                ne(schema.session.id, verified.session.id),
-              ),
-            );
-        }
         if (
           ctx.path !== "/change-password" ||
           !returned ||
@@ -151,14 +107,6 @@ function createAuth() {
                 ne(schema.session.id, current.session.id),
               ),
             );
-          await tx
-            .update(schema.user)
-            .set({
-              mustChangePassword: false,
-              status: "ACTIVE",
-              updatedAt: new Date(),
-            })
-            .where(eq(schema.user.id, current.user.id));
           const [actor] = await tx
             .select({ organizationId: schema.user.organizationId })
             .from(schema.user)
@@ -175,12 +123,7 @@ function createAuth() {
         });
       }),
     },
-    plugins: [
-      username(),
-      twoFactor({
-        issuer: "市场部工作看板",
-      }),
-    ],
+    plugins: [username()],
   });
 }
 

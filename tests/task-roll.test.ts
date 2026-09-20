@@ -24,7 +24,6 @@ beforeEach(() => {
     id: "employee",
     organizationId: "org",
     role: "EMPLOYEE",
-    mustChangePassword: false,
   });
 });
 function request(dueDate = "2026-09-25") {

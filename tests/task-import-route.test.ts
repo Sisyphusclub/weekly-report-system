@@ -14,7 +14,6 @@ beforeEach(() => {
     id: crypto.randomUUID(),
     organizationId: "org",
     role: "EMPLOYEE",
-    mustChangePassword: false,
   });
 });
 function upload(bytes: BlobPart) {
@@ -33,7 +32,6 @@ it.each([false, true])(
       id: "employee",
       organizationId: "org",
       role: "EMPLOYEE",
-      mustChangePassword: false,
     });
     const writes: Array<{ table: unknown; data: Record<string, unknown> }> = [];
     const query = {

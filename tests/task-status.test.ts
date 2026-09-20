@@ -13,7 +13,6 @@ beforeEach(() => {
     id: "employee",
     organizationId: "org",
     role: "EMPLOYEE",
-    mustChangePassword: false,
   });
 });
 function request(status = "DONE", version = 1) {
@@ -118,8 +117,6 @@ it("管理员不能调用状态接口", async () => {
   mocks.currentUser.mockResolvedValue({
     id: "admin",
     role: "ADMIN",
-    mustChangePassword: false,
-    twoFactorEnabled: true,
   });
   expect((await PATCH(request())).status).toBe(403);
   expect(mocks.getDb).not.toHaveBeenCalled();

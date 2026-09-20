@@ -19,24 +19,17 @@ export async function currentUser() {
       status: user.status,
       name: user.name,
       username: user.username,
-      mustChangePassword: user.mustChangePassword,
-      twoFactorEnabled: user.twoFactorEnabled,
     })
     .from(user)
     .innerJoin(organization, eq(organization.id, user.organizationId))
     .where(eq(user.id, session.user.id))
     .limit(1);
-  if (!actor || actor.status === "DISABLED" || actor.status === "LOCKED")
-    return null;
+  if (!actor || actor.status === "DISABLED") return null;
   return actor;
 }
 
-export async function requireUser(
-  options: { allowSecuritySetup?: boolean } = {},
-) {
+export async function requireUser() {
   const actor = await currentUser();
   if (!actor) redirect("/login");
-  if (!options.allowSecuritySetup && actor.mustChangePassword)
-    redirect("/security");
   return actor;
 }

@@ -8,8 +8,6 @@ export async function GET(request: Request) {
   try {
     const actor = await currentUser();
     if (!actor) return Response.json({ error: "请先登录" }, { status: 401 });
-    if (actor.mustChangePassword)
-      throw new BusinessError("请先完成账号安全设置", 403);
     const params = new URL(request.url).searchParams;
     const limit = Number(params.get("limit") ?? 20);
     const offset = Number(params.get("offset") ?? 0);

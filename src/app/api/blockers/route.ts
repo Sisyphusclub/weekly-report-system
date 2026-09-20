@@ -18,11 +18,8 @@ export async function POST(request: Request) {
     )
       return Response.json({ error: "请求来源无效" }, { status: 403 });
     const actor = await currentUser();
-    if (!actor || actor.role === "ADMIN" || actor.mustChangePassword)
-      return Response.json(
-        { error: "请先登录并完成账号安全设置" },
-        { status: 403 },
-      );
+    if (!actor || actor.role === "ADMIN")
+      return Response.json({ error: "请先登录" }, { status: 403 });
     const parsed = schema.safeParse(await request.json().catch(() => null));
     if (!parsed.success)
       return Response.json({ error: "请填写有效的阻塞描述" }, { status: 400 });

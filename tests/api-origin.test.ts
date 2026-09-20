@@ -11,8 +11,6 @@ const actor = {
   id: "member",
   organizationId: "org",
   role: "BOSS",
-  mustChangePassword: false,
-  twoFactorEnabled: true,
 };
 beforeEach(() => {
   mocks.currentUser.mockReset().mockResolvedValue(actor);
@@ -74,14 +72,5 @@ it("requires authentication for same-origin reads", async () => {
   mocks.currentUser.mockResolvedValue(null);
   await expect(writeActor(request("GET"))).rejects.toMatchObject({
     status: 401,
-  });
-});
-it.each([
-  { ...actor, mustChangePassword: true },
-  { ...actor, twoFactorEnabled: false },
-])("requires account security setup for reads", async (user) => {
-  mocks.currentUser.mockResolvedValue(user);
-  await expect(writeActor(request("GET"))).rejects.toMatchObject({
-    status: 403,
   });
 });

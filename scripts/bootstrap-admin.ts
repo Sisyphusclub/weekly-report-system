@@ -53,8 +53,7 @@ async function main() {
         displayUsername: input.username,
         email: `${id}@accounts.invalid`,
         role: "ADMIN",
-        status: "PENDING",
-        mustChangePassword: true,
+        status: "ACTIVE",
       });
       await tx.insert(account).values({
         id: crypto.randomUUID(),
@@ -73,9 +72,7 @@ async function main() {
         result: "SUCCESS",
       });
     });
-    console.log(
-      "Initial administrator created. Password change and TOTP enrollment are required on first login.",
-    );
+    console.log("Initial administrator created and ready to sign in.");
   } finally {
     await pool.end();
   }

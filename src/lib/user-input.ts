@@ -1,4 +1,7 @@
 import { z } from "zod";
+
+export const passwordInput = z.string().min(12).max(128);
+
 export const createUserInput = z
   .object({
     username: z
@@ -9,5 +12,10 @@ export const createUserInput = z
     name: z.string().trim().min(1).max(100),
     title: z.string().trim().max(100).default(""),
     role: z.enum(["EMPLOYEE", "BOSS", "ADMIN"]),
+    password: passwordInput,
   })
+  .strict();
+
+export const resetPasswordInput = z
+  .object({ password: passwordInput })
   .strict();

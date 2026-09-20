@@ -13,7 +13,6 @@ beforeEach(() => {
     id: "author",
     organizationId: "org",
     role: "EMPLOYEE",
-    mustChangePassword: false,
   });
 });
 function request() {

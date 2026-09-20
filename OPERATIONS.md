@@ -21,7 +21,7 @@ npm run calendar:seed
 npm run dev
 ```
 
-首次初始化管理员时，不要把密码放在命令行参数中。将一次性 JSON 通过标准输入传给 `npm run admin:bootstrap`，然后在登录页修改临时密码并绑定 TOTP。开发服务可通过 `GET http://localhost:3000/api/health` 检查，必须同时看到 `database`、`storage` 和 `scanner` 为 `ready`。
+首次初始化管理员时，不要把密码放在命令行参数中。将一次性 JSON 通过标准输入传给 `npm run admin:bootstrap`；其中填写的正式密码会立即生效。开发服务可通过 `GET http://localhost:3000/api/health` 检查，必须同时看到 `database`、`storage` 和 `scanner` 为 `ready`。
 
 ```powershell
 npm run dev:infra:logs
@@ -93,7 +93,7 @@ npm run backup:check -- -BackupDirectory .\backups
 Get-Content .\bootstrap-admin.json -Raw | npm run admin:bootstrap
 ```
 
-初始化成功后立即修改密码并完成 TOTP。JSON 和密码不得提交到 Git、日志或聊天记录中。
+初始化成功后即可使用该账号登录。JSON 和密码不得提交到 Git、日志或聊天记录中。
 
 ## 日常任务
 
