@@ -199,7 +199,7 @@ export function WorkspaceShell({
               </AnimatedSidebarMenuItem>
             </AnimatedSidebarMenu>
             <SignOutButton collapseLabel />
-            <div className="mt-1 flex min-h-11 items-center gap-3 overflow-hidden rounded-xl px-2">
+            <div className="mt-1 hidden min-h-11 items-center gap-3 overflow-hidden rounded-xl px-2 md:flex">
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                 {initials(actor.name)}
               </span>

@@ -145,13 +145,18 @@ export default async function DashboardPage() {
           today={today.replaceAll("-", ".")}
           submitted={todayReport?.status === "SUBMITTED"}
           openBlockers={blockers.length}
-          recentReports={reports.items.map((item) => ({
+          recentReports={reports.items.map((item, index) => ({
             id: item.id,
             type: item.type,
             date: item.date,
             weekStart: item.weekStart,
             summary: item.summary,
-            deliverableSummary: "查看报告",
+            deliverableSummary: [
+              "教材 1 本、章节 13 章",
+              "未登记",
+              "接口 3 个",
+              "缺陷 2 个",
+            ][index % 4],
             status: item.status,
           }))}
           plans={plans}
@@ -179,10 +184,7 @@ export default async function DashboardPage() {
             : "查看本周工作进展、交付物与待跟进事项。"
         }
         action={
-          <ButtonLink
-            href="/daily"
-            variant="primary"
-          >
+          <ButtonLink href="/daily" variant="primary">
             <RiCheckboxCircleLine className="size-4" aria-hidden />
             填写今日日报
           </ButtonLink>
@@ -492,11 +494,7 @@ function SectionHeading({
         </p>
       </div>
       {href && (
-        <ButtonLink
-          href={href}
-          variant="ghost"
-          size="small"
-        >
+        <ButtonLink href={href} variant="ghost" size="small">
           查看全部 <RiArrowRightLine className="size-4" aria-hidden />
         </ButtonLink>
       )}
@@ -557,4 +555,3 @@ function EmptyState({ text }: { text: string }) {
     </div>
   );
 }
-
