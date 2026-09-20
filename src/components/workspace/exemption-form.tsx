@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/premium/forms";
+import { DatePicker, Input } from "@/components/premium/forms";
 import { Select, SelectItem } from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 export function ExemptionForm({
@@ -67,16 +67,14 @@ export function ExemptionForm({
         ))}
       </Select>
       <div className="grid gap-4 md:grid-cols-2">
-        <Input
-          type="date"
+        <DatePicker
           label="开始日期"
           value={startDate}
           onChange={setStartDate}
           isRequired
           isDisabled={pending}
         />
-        <Input
-          type="date"
+        <DatePicker
           label="结束日期"
           value={endDate}
           onChange={setEndDate}
@@ -99,4 +97,3 @@ export function ExemptionForm({
     </form>
   );
 }
-

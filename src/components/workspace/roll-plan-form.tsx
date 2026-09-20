@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/premium/forms";
+import { DatePicker } from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 import { useClientReady } from "@/lib/use-client-ready";
 
@@ -54,9 +54,8 @@ export function RollPlanForm({
   return (
     <form onSubmit={submit} className="flex w-full flex-col gap-3">
       <div className="flex flex-wrap items-end gap-3">
-        <Input
+        <DatePicker
           label="新截止日期"
-          type="date"
           value={date}
           onChange={setDate}
           isRequired
@@ -70,4 +69,3 @@ export function RollPlanForm({
     </form>
   );
 }
-

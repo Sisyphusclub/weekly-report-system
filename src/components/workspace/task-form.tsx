@@ -2,8 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { shanghaiDate } from "@/lib/daily-input";
-import { Input } from "@/components/premium/forms";
-import { Textarea } from "@/components/premium/forms";
+import { DatePicker, Textarea } from "@/components/premium/forms";
 import { Select, SelectItem } from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 export function TaskForm({
@@ -166,19 +165,17 @@ export function TaskForm({
           </Select>
         )}
         {kind === "ACTUAL" && (
-          <Input
+          <DatePicker
             label="工作日期"
-            type="date"
             value={workDate}
             onChange={setWorkDate}
             isRequired
             isDisabled={pending}
           />
         )}
-        <Input
+        <DatePicker
           label="截止日期"
           isRequired={kind === "PLAN"}
-          type="date"
           value={dueDate}
           onChange={setDueDate}
           isDisabled={pending}
@@ -191,4 +188,3 @@ export function TaskForm({
     </form>
   );
 }
-

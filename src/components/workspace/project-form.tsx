@@ -1,7 +1,7 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/premium/forms";
+import { DatePicker, Input } from "@/components/premium/forms";
 import { Textarea } from "@/components/premium/forms";
 import { Select, SelectItem } from "@/components/premium/forms";
 import { Checkbox } from "@/components/premium/forms";
@@ -82,7 +82,9 @@ export function ProjectForm({
       onSubmit={save}
       className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-xl font-medium leading-7">{item ? "编辑项目" : "创建项目"}</h2>
+      <h2 className="text-xl font-medium leading-7">
+        {item ? "编辑项目" : "创建项目"}
+      </h2>
       <Input
         name="name"
         label="项目名称"
@@ -123,16 +125,14 @@ export function ProjectForm({
           </SelectItem>
         ))}
       </Select>
-      <Input
+      <DatePicker
         name="startDate"
-        type="date"
         label="开始日期"
         defaultValue={item?.startDate ?? ""}
         isDisabled={pending}
       />
-      <Input
+      <DatePicker
         name="targetEndDate"
-        type="date"
         label="目标结束日期"
         defaultValue={item?.targetEndDate ?? ""}
         isDisabled={pending}
@@ -166,4 +166,3 @@ export function ProjectForm({
     </form>
   );
 }
-

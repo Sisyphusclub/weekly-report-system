@@ -7,7 +7,7 @@ import { dateInput, shanghaiDate } from "@/lib/daily-input";
 import { isWorkday } from "@/lib/domain";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { CalendarForm } from "@/components/workspace/calendar-form";
-import { Input } from "@/components/premium/forms";
+import { DatePicker } from "@/components/premium/forms";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 
 export const metadata = { title: "工作日历" };
@@ -52,7 +52,7 @@ export default async function CalendarPage({
     <WorkspaceShell actor={actor} selected="calendar">
       <h1 className="text-2xl font-medium leading-8">工作日历</h1>
       <form action="/admin/calendar" className="flex flex-wrap items-end gap-3">
-        <Input name="date" type="date" label="选择日期" defaultValue={date} />
+        <DatePicker name="date" label="选择日期" defaultValue={date} />
         <Button type="submit">查看</Button>
       </form>
       <CalendarForm
@@ -119,4 +119,3 @@ export default async function CalendarPage({
     </WorkspaceShell>
   );
 }
-

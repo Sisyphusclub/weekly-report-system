@@ -11,13 +11,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { FooterToolbar } from "@/components/premium/footer-toolbar";
 import {
   Checkbox,
+  DatePicker,
   Input,
   Select,
   SelectItem,
@@ -117,38 +118,16 @@ function ReportDateControl({
   disabled: boolean;
   onChange: (value: string) => void;
 }) {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const openPicker = () => {
-    const input = inputRef.current as
-      (HTMLInputElement & { showPicker?: () => void }) | null;
-    if (!input) return;
-    if (input.showPicker) input.showPicker();
-    else input.click();
-  };
-
   return (
-    <div className="relative">
-      <Button
-        type="button"
-        variant="secondary"
-        size="small"
-        disabled={disabled}
-        onClick={openPicker}
-        className="h-8 gap-2 border-slate-200 bg-white px-3 text-xs text-slate-700"
-      >
-        <CalendarDays className="size-3.5 text-slate-500" aria-hidden />
-        {formatReportDate(value)}
-      </Button>
-      <input
-        ref={inputRef}
-        type="date"
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        aria-label="报告日期"
-        tabIndex={-1}
-        className="pointer-events-none absolute size-px opacity-0"
-      />
-    </div>
+    <DatePicker
+      value={value}
+      onChange={onChange}
+      aria-label="报告日期"
+      isDisabled={disabled}
+      placeholder="选择报告日期"
+      formatValue={formatReportDate}
+      triggerClassName="h-8 min-h-8 rounded-lg border-slate-200 bg-white px-3 text-xs text-slate-700"
+    />
   );
 }
 

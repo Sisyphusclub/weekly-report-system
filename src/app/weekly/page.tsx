@@ -14,7 +14,7 @@ import { dateInput, shanghaiDate } from "@/lib/daily-input";
 import { weekDates } from "@/lib/domain";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { WeeklyForm } from "@/components/workspace/weekly-form";
-import { Input } from "@/components/premium/forms";
+import { DatePicker } from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 import { Badge } from "@/components/premium/badge";
 
@@ -103,7 +103,7 @@ export default async function WeeklyPage({
         action="/weekly"
         className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs"
       >
-        <Input name="date" type="date" label="本周日期" defaultValue={date} />
+        <DatePicker name="date" label="本周日期" defaultValue={date} />
         <Button type="submit" variant="secondary">
           打开本周
         </Button>
@@ -187,7 +187,11 @@ export default async function WeeklyPage({
             <SectionHeading
               icon={RiCheckboxCircleLine}
               title="未闭环阻塞复盘"
-              detail={openBlockers.length ? `${openBlockers.length} 项待确认` : "确认问题是否带入下周"}
+              detail={
+                openBlockers.length
+                  ? `${openBlockers.length} 项待确认`
+                  : "确认问题是否带入下周"
+              }
             />
             <div className="mt-5 rounded-xl border border-dashed border-slate-200/80 px-4 py-8 text-center">
               <p className="text-sm font-medium leading-5">暂无本周阻塞记录</p>
@@ -268,4 +272,3 @@ function daysMissing(days: string[], submitted: Set<string>) {
     .filter((day) => !submitted.has(day))
     .map((day) => `周${["一", "二", "三", "四", "五"][days.indexOf(day)]}`);
 }
-

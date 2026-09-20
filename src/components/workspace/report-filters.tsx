@@ -3,7 +3,7 @@
 import { RotateCcw, Search } from "lucide-react";
 import type { ComponentProps } from "react";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
-import { Input } from "@/components/premium/forms";
+import { DatePicker, Input } from "@/components/premium/forms";
 import { Select, SelectItem } from "@/components/premium/forms";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 import type { ReportFilter } from "@/lib/report-filter";
@@ -27,7 +27,9 @@ export function ReportFilters({
     <Card className="overflow-visible">
       <CardHeader className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/60">
         <div>
-          <h2 className="text-sm font-semibold leading-5 text-slate-900">筛选报告</h2>
+          <h2 className="text-sm font-semibold leading-5 text-slate-900">
+            筛选报告
+          </h2>
           <p className="mt-0.5 text-xs leading-4 text-slate-500">
             按关键词、日期和报告维度缩小查询范围
           </p>
@@ -55,19 +57,17 @@ export function ReportFilters({
             maxLength={200}
             leadingIcon={Search}
           />
-          <Input
+          <DatePicker
             className="xl:col-span-2"
             size="small"
             name="from"
-            type="date"
             label="开始日期"
             defaultValue={filters.from ?? ""}
           />
-          <Input
+          <DatePicker
             className="xl:col-span-2"
             size="small"
             name="to"
-            type="date"
             label="结束日期"
             defaultValue={filters.to ?? ""}
           />
@@ -80,7 +80,11 @@ export function ReportFilters({
           >
             <SelectItem id="ALL">全部成员</SelectItem>
             {members.map((member) => (
-              <SelectItem key={member.id} id={member.id} textValue={member.name}>
+              <SelectItem
+                key={member.id}
+                id={member.id}
+                textValue={member.name}
+              >
                 {member.name}
               </SelectItem>
             ))}
@@ -166,7 +170,10 @@ function FilterSelect({
 }: ComponentProps<typeof Select> & { id: string; label: string }) {
   return (
     <div className={className}>
-      <span className="mb-1.5 block text-xs font-medium leading-4 text-slate-700" id={id}>
+      <span
+        className="mb-1.5 block text-xs font-medium leading-4 text-slate-700"
+        id={id}
+      >
         {label}
       </span>
       <Select
@@ -177,4 +184,3 @@ function FilterSelect({
     </div>
   );
 }
-
