@@ -47,7 +47,7 @@ import {
 } from "@/components/motion/morphing-search";
 import { SignOutButton } from "@/components/workspace/sign-out-button";
 import type { Role } from "@/lib/domain";
-import { cn } from "@/lib/utils";
+import { cx } from "@/utils/cx";
 
 type NavKey =
   | "dashboard"
@@ -110,7 +110,7 @@ export function WorkspaceShell({
     }));
 
   return (
-    <div className="min-h-svh bg-background text-foreground">
+    <div className="min-h-svh bg-background text-text-regular">
       <a
         href="#main-content"
         className="sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:not-sr-only focus:rounded-xl focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:shadow-lg focus:ring-2 focus:ring-ring"
@@ -219,8 +219,8 @@ export function WorkspaceShell({
           <AnimatedSidebarRail />
         </AnimatedSidebar>
 
-        <AnimatedSidebarInset className="bg-muted/60">
-          <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:px-6 xl:px-8">
+        <AnimatedSidebarInset className="bg-background-full">
+          <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-card/90 px-4 backdrop-blur-xl sm:px-6 xl:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <AnimatedSidebarTrigger className="-ml-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
                 <PanelLeft className="size-4" aria-hidden />
@@ -246,7 +246,7 @@ export function WorkspaceShell({
               <a
                 href="/notifications"
                 aria-label="通知中心"
-                className={cn(
+                className={cx(
                   "relative grid size-10 place-items-center rounded-xl text-muted-foreground outline-none transition-colors",
                   "hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring",
                   selected === "notifications" && "bg-muted text-foreground",
@@ -289,7 +289,7 @@ function WorkspaceSearch({
         shortcut="k"
         iconOnly={state === "collapsed"}
         onSelect={onSelect}
-        className={cn(state === "collapsed" ? "mx-auto" : "h-10 w-full")}
+        className={cx(state === "collapsed" ? "mx-auto" : "h-10 w-full")}
       />
     </AnimatedSidebarMenuItem>
   );

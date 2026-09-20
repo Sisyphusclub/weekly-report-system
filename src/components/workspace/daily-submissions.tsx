@@ -94,7 +94,7 @@ export function DailySubmissions({
   return (
     <section
       id="today-submissions"
-      className="rounded-3xl border border-border-button-default p-6"
+      className="rounded-3xl border border-border-button-default bg-background-primary-default p-6"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
@@ -114,7 +114,7 @@ export function DailySubmissions({
         ].map(([label, value, color]) => (
           <div
             key={label}
-            className="rounded-2xl bg-background-secondary-default p-4"
+            className="rounded-2xl border border-border-button-default bg-background-primary-default p-4"
           >
             <p className="text-caption-1-medium text-text-secondary">{label}</p>
             <div className="mt-2 flex items-end justify-between gap-2">

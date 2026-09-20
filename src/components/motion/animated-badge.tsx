@@ -19,7 +19,7 @@ import {
 } from "motion/react";
 import type { ReactNode } from "react";
 import { EASE_OUT } from "@/lib/ease";
-import { cn } from "@/lib/utils";
+import { cx } from "@/utils/cx";
 
 export type AnimatedBadgeStatus =
   | "neutral"
@@ -49,7 +49,7 @@ const STATUS_CLASS: Record<AnimatedBadgeStatus, string> = {
   info: "border-primary/30 bg-primary/10 text-primary",
   success: "border-status-lime-text/25 bg-status-lime-background text-status-lime-text",
   warning: "border-status-yellow-text/25 bg-status-yellow-background text-status-yellow-text",
-  danger: "border-destructive/30 bg-destructive/10 text-destructive",
+  danger: "border-status-rose-border bg-status-rose-background text-status-rose-text",
   loading: "border-primary/30 bg-primary/10 text-primary",
 };
 
@@ -147,7 +147,7 @@ export function AnimatedBadge({
     <motion.span
       layout
       transition={{ type: "spring", stiffness: 420, damping: 30, mass: 0.7 }}
-      className={cn(
+      className={cx(
         "relative inline-flex shrink-0 items-center overflow-hidden whitespace-nowrap rounded-full border font-medium tabular-nums",
         "transition-colors duration-300",
         STATUS_CLASS[status],

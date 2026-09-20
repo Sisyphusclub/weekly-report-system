@@ -159,12 +159,27 @@
  * Figma. Direction inferred — confirm visually against Figma.
  * --------------------------------------------------------------------------- */
 :root {
+  /* Product color contract. Business UI consumes the semantic aliases below;
+   * these values are the single light-theme source of truth. */
+  --be-bg-canvas:       #f8fafc;
+  --be-bg-card:         #ffffff;
+  --be-border-default:  #e2e8f0;
+  --be-text-primary:    #0f172a;
+  --be-text-regular:    #334155;
+  --be-text-secondary:  #64748b;
+  --be-danger-bg:       #fff1f2;
+  --be-danger-border:   #fecdd3;
+  --be-danger-text:     #be123c;
+  --be-project-bg:      #f1f5f9;
+  --be-project-border:  #e2e8f0;
+  --be-project-text:    #334155;
+
   /* Foreground (icons + on-fill content) */
   --color-foreground-full:               var(--color-white);
-  --color-foreground-icon-primary:       var(--color-neutral-950);
+  --color-foreground-icon-primary:       var(--be-text-primary);
   --color-foreground-icon-hover:         var(--color-black);
-  --color-foreground-icon-secondary:     var(--color-neutral-500);
-  --color-foreground-icon-tertiary:      var(--color-neutral-400);
+  --color-foreground-icon-secondary:     var(--be-text-secondary);
+  --color-foreground-icon-tertiary:      var(--be-text-secondary);
   --color-foreground-icon-quaternary:    var(--color-neutral-300);
   --color-foreground-icon-error:         var(--color-red-600);
   --color-foreground-icon-disabled:      var(--color-neutral-300);
@@ -175,18 +190,19 @@
   --color-button-primary-disabled-foreground: var(--color-neutral-400);
 
   /* Text */
-  --color-text-primary:         var(--color-neutral-950);
-  --color-text-secondary:       var(--color-neutral-500);
-  --color-text-tertiary:        var(--color-neutral-400);
+  --color-text-primary:         var(--be-text-primary);
+  --color-text-regular:         var(--be-text-regular);
+  --color-text-secondary:       var(--be-text-secondary);
+  --color-text-tertiary:        var(--be-text-secondary);
   --color-text-disabled:        var(--color-neutral-300);
   --color-text-disabled-danger: var(--color-red-300);
-  --color-text-placeholder:     var(--color-neutral-400);
+  --color-text-placeholder:     var(--be-text-secondary);
   --color-text-error-primary:   var(--color-red-500);
   --color-input-disabled-text:  var(--color-neutral-300);
   --color-text-white:           var(--color-white);
 
   /* Background */
-  --color-background-full:              var(--color-white);
+  --color-background-full:              var(--be-bg-canvas);
   /* Ticket detail, Figma 4509:12272. The raw #fafafa surface matches neutral/50. */
   --color-ticket-detail-surface: var(--color-white);
   --color-ticket-detail-low-background: var(--color-indigo-200);
@@ -204,8 +220,8 @@
   --color-project-board-empty-middle: #e5e5e5;
   --color-project-board-empty-back: #ededed;
   --color-project-board-empty-detail: var(--color-white);
-  --color-background-primary-default:   var(--color-white);
-  --color-background-inner-default:     var(--color-white);
+  --color-background-primary-default:   var(--be-bg-card);
+  --color-background-inner-default:     var(--be-bg-card);
   --color-background-primary-hover:     var(--color-neutral-100);
   --color-background-primary-active:    var(--color-neutral-200);
   --color-background-primary-disabled:  var(--color-neutral-100);
@@ -227,7 +243,7 @@
   --color-file-upload-icon-foreground-hover: var(--color-neutral-500);
 
   /* Border */
-  --color-border-button-default:   var(--color-neutral-200);
+  --color-border-button-default:   var(--be-border-default);
   --color-border-button-hover:     var(--color-neutral-300);
   --color-border-button-active:    var(--color-neutral-400);
   --color-border-button-white:     var(--color-white);
@@ -238,13 +254,13 @@
   --color-border-checkbox-hover:   var(--color-neutral-400);
   --color-border-checkbox-active:  var(--color-neutral-400);
   --color-border-checkbox-white:   var(--color-white);
-  --color-border-component-detail-container: var(--color-neutral-200);
-  --color-border-ai-profile-card:             var(--color-neutral-200);
-  --color-border-table:            var(--color-neutral-200);
-  --color-border-button-group:     var(--color-neutral-200);
+  --color-border-component-detail-container: var(--be-border-default);
+  --color-border-ai-profile-card:             var(--be-border-default);
+  --color-border-table:            var(--be-border-default);
+  --color-border-button-group:     var(--be-border-default);
   --color-border-sidebar-profile-hover: var(--color-neutral-300);
-  --color-separator-border:        var(--color-neutral-200);
-  --color-separator-border-strong: var(--color-neutral-200);
+  --color-separator-border:        var(--be-border-default);
+  --color-separator-border-strong: var(--be-border-default);
   --color-border-focus-ring:       var(--color-accent-500);
 
   /* State */
@@ -327,8 +343,8 @@
   --color-notification-information-foreground: var(--color-blue-600);
   --color-notification-success-background:     var(--color-lime-100);
   --color-notification-success-foreground:     var(--color-lime-600);
-  --color-notification-error-background:       var(--color-rose-100);
-  --color-notification-error-foreground:       var(--color-rose-600);
+  --color-notification-error-background:       var(--be-danger-bg);
+  --color-notification-error-foreground:       var(--be-danger-text);
   --color-notification-center-background:      var(--color-white);
 
   /* Table status chips. Dark mappings come from the medical dashboard table
@@ -337,8 +353,9 @@
   --color-status-lime-text:         var(--color-lime-800);
   --color-status-yellow-background: var(--color-yellow-200);
   --color-status-yellow-text:       var(--color-yellow-800);
-  --color-status-rose-background:   var(--color-rose-200);
-  --color-status-rose-text:         var(--color-rose-800);
+  --color-status-rose-background:   var(--be-danger-bg);
+  --color-status-rose-border:       var(--be-danger-border);
+  --color-status-rose-text:         var(--be-danger-text);
   --color-status-cyan-background:   var(--color-cyan-200);
   --color-status-cyan-text:         var(--color-cyan-800);
   --color-status-orange-background: var(--color-orange-200);
@@ -347,6 +364,9 @@
   --color-status-blue-text:         var(--color-blue-800);
   --color-status-purple-background: var(--color-purple-100);
   --color-status-purple-text:       var(--color-purple-600);
+  --color-project-tag-background:   var(--be-project-bg);
+  --color-project-tag-border:       var(--be-project-border);
+  --color-project-tag-text:         var(--be-project-text);
   --color-status-dot-green-halo:    var(--color-green-100);
   --color-status-dot-yellow-halo:   var(--color-yellow-200);
   --color-status-dot-indigo-halo:   var(--color-indigo-100);
@@ -436,7 +456,9 @@
 
   /* Text */
   --color-text-primary:  var(--color-neutral-50);
-  --color-text-tertiary: var(--color-neutral-600);
+  --color-text-regular: var(--color-neutral-200);
+  --color-text-secondary: var(--color-neutral-400);
+  --color-text-tertiary: var(--color-neutral-400);
   --color-text-disabled: var(--color-neutral-800);
   --color-text-error-primary: var(--color-red-400);
   --color-input-disabled-text: color-mix(in srgb, var(--color-neutral-500) 40%, transparent);
@@ -573,6 +595,7 @@
   --color-status-yellow-background: color-mix(in srgb, var(--color-yellow-950) 60%, transparent);
   --color-status-yellow-text:       var(--color-yellow-500);
   --color-status-rose-background:   color-mix(in srgb, var(--color-rose-950) 60%, transparent);
+  --color-status-rose-border:       var(--color-rose-800);
   --color-status-rose-text:         var(--color-rose-500);
   --color-status-cyan-background:   color-mix(in srgb, var(--color-cyan-950) 60%, transparent);
   --color-status-cyan-text:         var(--color-cyan-400);
@@ -582,6 +605,9 @@
   --color-status-blue-text:         var(--color-blue-300);
   --color-status-purple-background: color-mix(in srgb, var(--color-purple-900) 50%, transparent);
   --color-status-purple-text:       var(--color-purple-300);
+  --color-project-tag-background:   var(--color-neutral-800);
+  --color-project-tag-border:       var(--color-neutral-700);
+  --color-project-tag-text:         var(--color-neutral-200);
   --color-status-dot-green-halo:    color-mix(in srgb, var(--color-green-800) 40%, transparent);
   --color-status-dot-yellow-halo:   color-mix(in srgb, var(--color-yellow-800) 40%, transparent);
   --color-status-dot-indigo-halo:   color-mix(in srgb, var(--color-indigo-800) 40%, transparent);
@@ -642,7 +668,7 @@
 @theme inline {
   /* beUI Pro / shadcn semantic aliases. Keep the existing product tokens as
    * the source of truth so both component systems follow the same theme. */
-  --color-background: var(--color-background-primary-default);
+  --color-background: var(--color-background-full);
   --color-foreground: var(--color-text-primary);
   --color-card: var(--color-background-primary-default);
   --color-card-foreground: var(--color-text-primary);
@@ -673,6 +699,7 @@
   --color-button-primary-disabled-foreground: var(--color-button-primary-disabled-foreground);
 
   --color-text-primary:         var(--color-text-primary);
+  --color-text-regular:         var(--color-text-regular);
   --color-text-secondary:       var(--color-text-secondary);
   --color-text-tertiary:        var(--color-text-tertiary);
   --color-text-disabled:        var(--color-text-disabled);
@@ -789,6 +816,7 @@
   --color-status-yellow-background: var(--color-status-yellow-background);
   --color-status-yellow-text:       var(--color-status-yellow-text);
   --color-status-rose-background:   var(--color-status-rose-background);
+  --color-status-rose-border:       var(--color-status-rose-border);
   --color-status-rose-text:         var(--color-status-rose-text);
   --color-status-cyan-background:   var(--color-status-cyan-background);
   --color-status-cyan-text:         var(--color-status-cyan-text);
@@ -798,6 +826,9 @@
   --color-status-blue-text:         var(--color-status-blue-text);
   --color-status-purple-background: var(--color-status-purple-background);
   --color-status-purple-text:       var(--color-status-purple-text);
+  --color-project-tag-background:   var(--color-project-tag-background);
+  --color-project-tag-border:       var(--color-project-tag-border);
+  --color-project-tag-text:         var(--color-project-tag-text);
   --color-status-dot-green-halo:    var(--color-status-dot-green-halo);
   --color-status-dot-yellow-halo:   var(--color-status-dot-yellow-halo);
   --color-status-dot-indigo-halo:   var(--color-status-dot-indigo-halo);

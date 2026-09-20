@@ -33,6 +33,7 @@ import {
 } from "@/components/premium/data-table";
 import type { WorkStatus } from "./task-item-row";
 import { employeeDailyMetrics, type EmployeeDailyMetrics } from "@/lib/employee-metrics";
+import { cx } from "@/utils/cx";
 
 type TaskDeliverable = {
   unitName: string;
@@ -316,10 +317,10 @@ export function EmployeeDashboard({
           <p className="font-semibold text-primary text-xs uppercase tracking-[0.08em]">
             {today} · 我的工作
           </p>
-          <h1 className="mt-1.5 text-2xl font-bold text-foreground">
+          <h1 className="mt-1.5 text-2xl font-bold text-text-primary">
             你好，{name}
           </h1>
-          <p className="mt-1 text-sm text-foreground/75">
+          <p className="mt-1 text-sm text-text-secondary">
             查看计划、核销结果和需要协调的卡点。
           </p>
         </div>
@@ -343,21 +344,21 @@ export function EmployeeDashboard({
           label="今日计划数"
           value={plans.length}
           suffix="项"
-          iconClassName="bg-blue-50 text-blue-600"
+          iconClassName="bg-status-blue-background text-status-blue-text"
         />
         <MetricStat
           icon={CheckCircle2}
           label="今日已完成"
           value={completed}
           suffix="项"
-          iconClassName="bg-emerald-50 text-emerald-600"
+          iconClassName="bg-status-lime-background text-status-lime-text"
         />
         <MetricStat
           icon={Gauge}
           label="今日达成率"
           value={fulfillment}
           suffix="%"
-          iconClassName="bg-indigo-50 text-indigo-600"
+          iconClassName="bg-background-secondary-default text-accent-700"
           progress={fulfillment}
         />
         <MetricStat
@@ -374,14 +375,14 @@ export function EmployeeDashboard({
         <CardHeader className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-status-blue-background text-status-blue-text">
                 <ListChecks className="size-4" aria-hidden />
               </span>
-              <h2 className="text-base font-semibold text-foreground">
+              <h2 className="text-base font-semibold text-text-primary">
                 今日工作规划与核销
               </h2>
             </div>
-            <p className="mt-1.5 pl-10 text-sm text-foreground/70">
+            <p className="mt-1.5 pl-10 text-sm text-text-secondary">
               {plans.length
                 ? `${planDone}/${plans.length} 项计划已核销，达成率 ${fulfillment}%`
                 : "添加今日计划后，可直接核销为实际完成项"}
@@ -411,7 +412,7 @@ export function EmployeeDashboard({
         </CardHeader>
 
         {quickOpen && (
-          <div id="quick-task" className="border-border/80 border-b bg-muted/25 px-5 py-4">
+          <div id="quick-task" className="border-border border-b bg-background-full px-5 py-4">
             <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_150px_auto] lg:items-end">
               <Textarea label="临时任务" value={quickContent} onChange={setQuickContent} rows={2} isRequired />
               <Select aria-label="项目" selectedKey={quickProjectId} onSelectionChange={setQuickProjectId} placeholder="选择项目">
@@ -436,7 +437,7 @@ export function EmployeeDashboard({
         )}
 
         {openBlockers > 0 && (
-          <div className="flex flex-wrap items-center justify-between gap-2 border-status-rose-text/25 border-b bg-status-rose-background px-5 py-2.5 text-status-rose-text">
+          <div className="flex flex-wrap items-center justify-between gap-2 border-status-rose-border border-b bg-status-rose-background px-5 py-2.5 text-status-rose-text">
             <div className="flex min-w-0 items-center gap-2 text-sm font-medium">
               <CircleAlert className="size-4 shrink-0" aria-hidden />
               <span>{openBlockers} 项卡点正在等待协调，请及时跟进。</span>
@@ -454,7 +455,7 @@ export function EmployeeDashboard({
         )}
 
         <CardBody className="grid min-w-0 p-0 lg:grid-cols-2">
-          <div className="min-w-0 border-border/80 border-b lg:border-r lg:border-b-0">
+          <div className="min-w-0 border-border border-b lg:border-r lg:border-b-0">
             <WorkColumnHeader
               icon={CalendarDays}
               title="今日待办计划"
@@ -475,16 +476,16 @@ export function EmployeeDashboard({
                             <div className="flex min-w-0 items-center gap-2">
                               <Badge
                                 variant="caption"
-                                color="blue"
+                                color="project"
                                 className="max-w-32 shrink-0 truncate rounded-full"
                               >
                                 {task.projectName}
                               </Badge>
-                              <p className="min-w-0 truncate text-sm font-semibold text-foreground">
+                              <p className="min-w-0 truncate text-sm font-semibold text-text-primary">
                                 {task.content}
                               </p>
                             </div>
-                            <p className="mt-1.5 truncate text-foreground/70 text-xs">
+                            <p className="mt-1.5 truncate text-text-secondary text-xs">
                               预估产出：{deliverableText(task.deliverables)}
                             </p>
                           </div>
@@ -536,12 +537,12 @@ export function EmployeeDashboard({
               {error && (
                 <p
                   role="alert"
-                  className="mt-3 rounded-lg bg-status-rose-background px-3 py-2 text-status-rose-text text-xs"
+                  className="mt-3 rounded-lg border border-status-rose-border bg-status-rose-background px-3 py-2 text-status-rose-text text-xs"
                 >
                   {error}
                 </p>
               )}
-              {statusError && <p role="alert" className="mt-2 rounded-lg bg-status-rose-background px-3 py-2 text-status-rose-text text-xs">{statusError}</p>}
+              {statusError && <p role="alert" className="mt-2 rounded-lg border border-status-rose-border bg-status-rose-background px-3 py-2 text-status-rose-text text-xs">{statusError}</p>}
             </div>
           </div>
 
@@ -565,12 +566,12 @@ export function EmployeeDashboard({
                       <div className="flex min-w-0 items-center gap-2">
                         <Badge
                           variant="caption"
-                          color="blue"
+                          color="project"
                           className="max-w-28 shrink-0 truncate rounded-full"
                         >
                           {task.projectName}
                         </Badge>
-                        <span className="min-w-0 truncate text-sm text-foreground">
+                        <span className="min-w-0 truncate text-sm text-text-regular">
                           {task.content}
                         </span>
                       </div>
@@ -614,14 +615,14 @@ export function EmployeeDashboard({
         <CardHeader className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2.5">
-              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
+              <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-status-blue-background text-status-blue-text">
                 <FileText className="size-4" aria-hidden />
               </span>
-              <h2 className="text-base font-semibold text-foreground">
+              <h2 className="text-base font-semibold text-text-primary">
                 最近报告
               </h2>
             </div>
-            <p className="mt-1.5 pl-10 text-foreground/70 text-xs">
+            <p className="mt-1.5 pl-10 text-text-secondary text-xs">
               最近的日报与周报记录
             </p>
           </div>
@@ -652,7 +653,7 @@ export function EmployeeDashboard({
               visibleReports.map((report) => (
                 <article
                   key={report.id}
-                  className="px-4 py-3.5 transition-colors hover:bg-muted/60"
+                  className="px-4 py-3.5 transition-colors hover:bg-background-primary-hover"
                 >
                   <div className="flex min-w-0 items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2">
@@ -675,11 +676,11 @@ export function EmployeeDashboard({
                       {report.status === "SUBMITTED" ? "已提交" : "草稿"}
                     </Badge>
                   </div>
-                  <p className="mt-2 truncate text-sm text-foreground">
+                  <p className="mt-2 truncate text-sm text-text-regular">
                     {report.summary || "未填写工作总结"}
                   </p>
                   <div className="mt-2 flex min-w-0 items-center justify-between gap-3">
-                    <span className="truncate text-foreground/70 text-xs">
+                    <span className="truncate text-text-secondary text-xs">
                       交付物：{report.deliverableSummary}
                     </span>
                     <ButtonLink
@@ -727,22 +728,27 @@ function MetricStat({
 }) {
   return (
     <Card
-      className={
-        danger
-          ? "border-status-rose-text/30 bg-status-rose-background text-status-rose-text"
-          : undefined
-      }
+      className={cx(
+        danger &&
+          "border-status-rose-border bg-status-rose-background text-status-rose-text",
+      )}
     >
       <CardBody className="flex min-h-24 items-center justify-between gap-2 p-3 sm:gap-3 sm:p-4">
         <div className="flex min-w-0 items-center gap-2 sm:gap-3">
           <span
-            className={`grid size-9 shrink-0 place-items-center rounded-lg ${danger ? "bg-card text-status-rose-text" : iconClassName}`}
+            className={cx(
+              "grid size-9 shrink-0 place-items-center rounded-lg",
+              danger ? "bg-card text-status-rose-text" : iconClassName,
+            )}
           >
             <Icon className="size-4.5" aria-hidden />
           </span>
           <div className="min-w-0">
             <p
-              className={`text-xs font-medium leading-4 ${danger ? "text-status-rose-text" : "text-foreground/70"}`}
+              className={cx(
+                "text-xs font-medium leading-4",
+                danger ? "text-status-rose-text" : "text-text-secondary",
+              )}
             >
               {label}
             </p>
@@ -805,11 +811,11 @@ function WorkColumnHeader({
     <div className="flex items-center justify-between gap-3 px-5 py-4">
       <div className="flex min-w-0 items-center gap-2">
         <Icon className="size-4 shrink-0 text-primary" aria-hidden />
-        <h3 className="truncate text-sm font-semibold text-foreground">
+        <h3 className="truncate text-sm font-semibold text-text-primary">
           {title}
         </h3>
       </div>
-      <span className="shrink-0 text-foreground/65 text-xs">{detail}</span>
+      <span className="shrink-0 text-text-secondary text-xs">{detail}</span>
     </div>
   );
 }
@@ -832,8 +838,8 @@ function WorkEmptyState({
       <span className="grid size-10 place-items-center rounded-full bg-muted text-muted-foreground">
         <Check className="size-4" aria-hidden />
       </span>
-      <p className="mt-3 text-sm font-semibold text-foreground">{title}</p>
-      <p className="mt-1 text-foreground/70 text-xs">{description}</p>
+      <p className="mt-3 text-sm font-semibold text-text-primary">{title}</p>
+      <p className="mt-1 text-text-secondary text-xs">{description}</p>
       <ButtonLink
         href={href}
         variant="ghost"

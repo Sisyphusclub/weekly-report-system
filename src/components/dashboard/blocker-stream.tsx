@@ -24,7 +24,7 @@ export function BlockerStream({
       {items.map((item) => (
         <article
           key={item.id}
-          className="rounded-xl border border-status-rose-text/30 bg-status-rose-background p-4"
+          className="rounded-xl border border-status-rose-border bg-status-rose-background p-4"
         >
           <div className="flex items-center justify-between gap-2">
             <Badge
@@ -46,9 +46,12 @@ export function BlockerStream({
           <p className="mt-3 line-clamp-2 text-body-medium text-status-rose-text">
             {item.description}
           </p>
-          <p className="mt-2 text-caption-1-regular text-status-rose-text">
-            {item.projectName ?? "未关联项目"} · {item.reporter}
-          </p>
+          <div className="mt-2 flex min-w-0 items-center gap-2 text-caption-1-regular text-status-rose-text">
+            <Badge color="project" variant="caption" showIcon={false}>
+              {item.projectName ?? "未关联项目"}
+            </Badge>
+            <span className="truncate">{item.reporter}</span>
+          </div>
           <div className="mt-4 flex items-center justify-between gap-2">
             <Button
               size="small"

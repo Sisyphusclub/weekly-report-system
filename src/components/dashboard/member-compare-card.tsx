@@ -6,6 +6,7 @@ import {
 import { Avatar } from "@/components/premium/avatar";
 import { ButtonLink } from "@/components/motion/button/base";
 import { Badge } from "@/components/premium/badge";
+import { cx } from "@/utils/cx";
 import { TaskItemRow, type WorkStatus } from "./task-item-row";
 
 export function MemberCompareCard({
@@ -29,13 +30,16 @@ export function MemberCompareCard({
     : 100;
   return (
     <article
-      className={`flex min-w-0 flex-col rounded-2xl border bg-background-primary-default p-5 shadow-xs ${hasRisk ? "border-status-rose-text/40" : "border-border-button-default"}`}
+      className={cx(
+        "flex min-w-0 flex-col rounded-2xl border bg-background-primary-default p-5 shadow-xs",
+        hasRisk ? "border-status-rose-border" : "border-border-button-default",
+      )}
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar
             initials={member.name.slice(0, 1)}
-            color={hasRisk ? "pink" : "blue"}
+            color={hasRisk ? "neutral" : "blue"}
             size="lg"
           />
           <div className="min-w-0">
@@ -63,7 +67,7 @@ export function MemberCompareCard({
         </Badge>
       </div>
       {hasRisk && (
-        <div className="mt-4 flex items-start gap-2 rounded-lg bg-status-rose-background px-3 py-2 text-caption-1-medium text-status-rose-text">
+        <div className="mt-4 flex items-start gap-2 rounded-lg border border-status-rose-border bg-status-rose-background px-3 py-2 text-caption-1-medium text-status-rose-text">
           <RiTimeLine className="mt-0.5 size-4 shrink-0" aria-hidden />
           {member.openBlockers} 项阻塞需要协调
         </div>
@@ -75,7 +79,7 @@ export function MemberCompareCard({
               今日实际
             </h4>
             <RiCheckboxCircleLine
-              className="size-4 text-state-success-base"
+              className="size-4 text-state-success-text"
               aria-hidden
             />
           </div>
@@ -131,7 +135,10 @@ export function MemberCompareCard({
         </div>
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-background-tertiary-default">
           <div
-            className={`h-full rounded-full ${hasRisk ? "bg-status-rose-text" : "bg-state-success-base"}`}
+            className={cx(
+              "h-full rounded-full",
+              hasRisk ? "bg-status-rose-text" : "bg-state-success-base",
+            )}
             style={{ width: `${fulfillment}%` }}
           />
         </div>

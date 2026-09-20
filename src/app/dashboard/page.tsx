@@ -40,6 +40,7 @@ import { type WorkStatus } from "@/components/dashboard/task-item-row";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
 import { blockerVisibility } from "@/lib/blockers";
 import { taskSnapshot } from "@/lib/task-snapshot";
+import { cx } from "@/utils/cx";
 
 export const metadata = { title: "工作看板" };
 
@@ -389,7 +390,7 @@ export default async function DashboardPage() {
             {breakdown.members.map((member) => (
               <div
                 key={member.id}
-                className="w-[230px] shrink-0 rounded-xl border border-border-button-default bg-background-secondary-default p-4"
+                className="w-[230px] shrink-0 rounded-xl border border-border-button-default bg-background-primary-default p-4"
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate text-body-semibold">
@@ -460,7 +461,7 @@ export default async function DashboardPage() {
         </section>
       </div>
       {isBoss && (
-        <section className="rounded-2xl border border-status-rose-text/30 bg-background-primary-default p-5 shadow-xs">
+        <section className="rounded-2xl border border-status-rose-border bg-background-primary-default p-5 shadow-xs">
           <SectionHeading
             title="阻塞作战室"
             detail={`${metrics.openBlockers} 项待协调`}
@@ -474,12 +475,17 @@ export default async function DashboardPage() {
               .map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl bg-status-rose-background p-4"
+                  className="rounded-xl border border-status-rose-border bg-status-rose-background p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
-                    <p className="truncate text-body-semibold text-status-rose-text">
+                    <Badge
+                      variant="caption"
+                      color="project"
+                      showIcon={false}
+                      className="max-w-full truncate"
+                    >
                       {item.name}
-                    </p>
+                    </Badge>
                     <Badge variant="caption" color="rose">
                       {item.blocked} 项
                     </Badge>
@@ -639,7 +645,10 @@ function SectionHeading({
     <div className="flex items-center justify-between gap-3">
       <div className="min-w-0">
         <h2
-          className={`text-title-3-semibold ${tone === "danger" ? "text-status-rose-text" : "text-text-primary"}`}
+          className={cx(
+            "text-title-3-semibold",
+            tone === "danger" ? "text-status-rose-text" : "text-text-primary",
+          )}
         >
           {title}
         </h2>
@@ -676,7 +685,7 @@ function MetricCard({
 }) {
   const toneClass = {
     neutral: "text-text-primary",
-    success: "text-state-success-base",
+    success: "text-state-success-text",
     danger: "text-status-rose-text",
     warning: "text-status-yellow-text",
     info: "text-status-blue-text",
@@ -685,9 +694,9 @@ function MetricCard({
     <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
       <div className="flex items-start justify-between gap-3">
         <p className="text-caption-1-medium text-text-secondary">{label}</p>
-        {Icon && <Icon className={`size-5 ${toneClass}`} aria-hidden />}
+        {Icon && <Icon className={cx("size-5", toneClass)} aria-hidden />}
       </div>
-      <p className={`mt-4 text-display-4-semibold tabular-nums ${toneClass}`}>
+      <p className={cx("mt-4 text-display-4-semibold tabular-nums", toneClass)}>
         {value}
       </p>
       {note && (
