@@ -2,14 +2,15 @@
 
 import { Eye, EyeOff, LockKeyhole, UserRound } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   StatefulButton,
   type ButtonState,
 } from "@/components/motion/button/stateful";
+import { Button } from "@/components/motion/button/base";
+import { Input } from "@/components/premium/forms";
 import { authClient } from "@/lib/auth-client";
-import { cn } from "@/lib/utils";
 
 type DemoAccount = {
   label: string;
@@ -73,59 +74,48 @@ export function LoginForm({
       className="flex flex-col gap-5"
       aria-label="账号登录"
     >
-      <Field
+      <Input
+        name="username"
         label="用户名"
-        icon={<UserRound className="size-4" aria-hidden />}
-        disabled={!configured || busy}
-      >
-        <input
-          name="username"
-          value={username}
-          onChange={(event) => {
-            setUsername(event.target.value);
-            resetFeedback();
-          }}
-          autoComplete="username"
-          placeholder="输入用户名"
-          required
-          disabled={!configured || busy}
-          className={inputClass}
-        />
-      </Field>
+        value={username}
+        onChange={(value) => {
+          setUsername(value);
+          resetFeedback();
+        }}
+        leadingIcon={UserRound}
+        autoComplete="username"
+        placeholder="输入用户名"
+        isRequired
+        isDisabled={!configured || busy}
+      />
 
-      <Field
+      <Input
+        name="password"
         label="密码"
-        icon={<LockKeyhole className="size-4" aria-hidden />}
-        disabled={!configured || busy}
-      >
-        <input
-          name="password"
-          type={showPassword ? "text" : "password"}
-          value={password}
-          onChange={(event) => {
-            setPassword(event.target.value);
-            resetFeedback();
-          }}
-          autoComplete="current-password"
-          placeholder="输入密码"
-          required
-          disabled={!configured || busy}
-          className={inputClass}
-        />
-        <button
-          type="button"
-          onClick={() => setShowPassword((current) => !current)}
-          disabled={!configured || busy}
-          aria-label={showPassword ? "隐藏密码" : "显示密码"}
-          className="grid size-8 shrink-0 place-items-center rounded-lg text-muted-foreground outline-none transition-colors hover:bg-muted hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-50"
-        >
-          {showPassword ? (
-            <EyeOff className="size-4" aria-hidden />
-          ) : (
-            <Eye className="size-4" aria-hidden />
-          )}
-        </button>
-      </Field>
+        type={showPassword ? "text" : "password"}
+        value={password}
+        onChange={(value) => {
+          setPassword(value);
+          resetFeedback();
+        }}
+        leadingIcon={LockKeyhole}
+        rightIcon={
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            iconOnly
+            leadingIcon={showPassword ? EyeOff : Eye}
+            aria-label={showPassword ? "隐藏密码" : "显示密码"}
+            disabled={!configured || busy}
+            onClick={() => setShowPassword((current) => !current)}
+          />
+        }
+        autoComplete="current-password"
+        placeholder="输入密码"
+        isRequired
+        isDisabled={!configured || busy}
+      />
 
       <AnimatePresence initial={false}>
         {error ? (
@@ -159,19 +149,20 @@ export function LoginForm({
           <p className="text-xs text-muted-foreground">演示账号</p>
           <div className="mt-2 flex flex-wrap gap-2">
             {demoAccounts.map((account) => (
-              <button
+              <Button
                 key={account.username}
                 type="button"
+                variant="outline"
+                size="small"
                 onClick={() => {
                   setUsername(account.username);
                   setPassword(account.password);
                   setButtonState("idle");
                   setError("");
                 }}
-                className="min-h-9 rounded-lg border border-border px-3 text-xs font-medium text-foreground outline-none transition-colors hover:bg-muted focus-visible:ring-2 focus-visible:ring-ring"
               >
                 {account.label}
-              </button>
+              </Button>
             ))}
           </div>
         </div>
@@ -183,34 +174,3 @@ export function LoginForm({
     </form>
   );
 }
-
-function Field({
-  label,
-  icon,
-  disabled,
-  children,
-}: {
-  label: string;
-  icon: ReactNode;
-  disabled: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <label className="grid gap-2">
-      <span className="text-sm font-medium text-foreground">{label}</span>
-      <span
-        className={cn(
-          "flex h-11 items-center gap-2.5 rounded-xl border border-border bg-background px-3.5 text-muted-foreground transition-colors",
-          "focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/20",
-          disabled && "cursor-not-allowed bg-muted/50 opacity-70",
-        )}
-      >
-        {icon}
-        {children}
-      </span>
-    </label>
-  );
-}
-
-const inputClass =
-  "min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed";

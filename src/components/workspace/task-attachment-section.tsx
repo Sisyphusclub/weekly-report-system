@@ -1,5 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
+import { Button, ButtonLink } from "@/components/motion/button/base";
+import { FileUploadButton } from "@/components/premium/forms";
 
 type Attachment = {
   id: string;
@@ -81,13 +83,11 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
         附件{items.length ? `（${items.length}）` : ""}
       </summary>
       <div className="mt-2 flex flex-col gap-2">
-        <input
-          type="file"
+        <FileUploadButton
           accept="image/jpeg,image/png,image/webp,application/pdf,text/plain"
-          onChange={(event) => {
-            const file = event.target.files?.[0];
+          label="上传附件"
+          onFileChange={(file) => {
             if (file) void upload(file);
-            event.currentTarget.value = "";
           }}
         />
         <span className="text-sm font-normal leading-5 text-slate-500">
@@ -97,21 +97,25 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
         <ul>
           {items.map((item) => (
             <li key={item.id}>
-              <a
-                className="text-blue-600 underline"
+              <ButtonLink
+                variant="ghost"
+                size="small"
+                className="justify-start px-0 text-blue-600 underline hover:bg-transparent"
                 href={item.url}
                 target="_blank"
                 rel="noreferrer"
               >
                 {item.fileName}
-              </a>
-              <button
+              </ButtonLink>
+              <Button
                 type="button"
-                className="ml-2 text-slate-500 underline"
+                variant="ghost"
+                size="small"
+                className="ml-2 px-0 text-slate-500 underline hover:bg-transparent"
                 onClick={() => void remove(item.id)}
               >
                 删除
-              </button>
+              </Button>
             </li>
           ))}
         </ul>

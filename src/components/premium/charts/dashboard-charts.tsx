@@ -17,6 +17,7 @@ import {
   YAxis,
 } from "recharts";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
+import { Button } from "@/components/motion/button/base";
 import { EASE_OUT } from "@/lib/ease";
 import { cx } from "@/utils/cx";
 
@@ -150,9 +151,11 @@ export function DonutBreakdownChart({
           const share = total ? Math.round((item.value / total) * 100) : 0;
           const active = selected?.name === item.name;
           return (
-            <button
+            <Button
               key={item.name}
               type="button"
+              variant="ghost"
+              size="small"
               aria-pressed={active}
               onClick={() =>
                 setSelectedName((current) =>
@@ -177,7 +180,7 @@ export function DonutBreakdownChart({
               <span className="shrink-0 font-semibold tabular-nums text-foreground">
                 {share}%
               </span>
-            </button>
+            </Button>
           );
         })}
       </div>

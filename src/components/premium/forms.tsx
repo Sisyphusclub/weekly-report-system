@@ -5,6 +5,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  Upload,
 } from "lucide-react";
 import {
   type ComponentType,
@@ -17,6 +18,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { Button } from "@/components/motion/button/base";
 import { Checkbox as BeuiCheckbox } from "@/components/motion/checkbox";
 import {
   Input as BeuiInput,
@@ -63,6 +65,52 @@ export interface DatePickerProps {
   className?: string;
   triggerClassName?: string;
   "aria-label"?: string;
+}
+
+export interface FileUploadButtonProps {
+  onFileChange: (file: File | null) => void;
+  accept?: string;
+  disabled?: boolean;
+  label?: ReactNode;
+  className?: string;
+}
+
+/** Shared BEUI file trigger. The native file input stays inside the design-system component. */
+export function FileUploadButton({
+  onFileChange,
+  accept,
+  disabled = false,
+  label = "选择文件",
+  className,
+}: FileUploadButtonProps) {
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  return (
+    <>
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        disabled={disabled}
+        className="sr-only"
+        onChange={(event) => {
+          onFileChange(event.target.files?.[0] ?? null);
+          event.currentTarget.value = "";
+        }}
+      />
+      <Button
+        type="button"
+        variant="secondary"
+        size="small"
+        leadingIcon={Upload}
+        disabled={disabled}
+        className={className}
+        onClick={() => inputRef.current?.click()}
+      >
+        {label}
+      </Button>
+    </>
+  );
 }
 
 function formatDateValue(value: string, placeholder: string) {

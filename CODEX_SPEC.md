@@ -127,6 +127,8 @@ BEUI Pro 通过授权私有 Registry 提供组件源码，不作为运行时黑�
 - 高级业务组件放在 `src/components/premium`，动画基础组件放在 `src/components/motion`，共享 Hook 与工具放在 `src/lib`。
 - 工作台壳层优先使用 Animated Sidebar；登录使用 Auth Split；项目摘要使用 Compact Card；管理列表优先使用 Responsive Data Table；空数据和无搜索结果使用对应 Empty State。
 - Button、Select、Input、Textarea、Dialog、Card、Badge、Tabs、DatePicker、Dropdown 和 Table 等基础控件不得在业务页面重复手写。
+- 组件来源长期规则：业务代码先复用本地 BEUI Pro 源码（`src/components/premium`、`src/components/motion`），本地没有时再从 BEUI Pro Registry 获取；BEUI Pro 未覆盖的基础控件使用 shadcn/Radix。新增或迁移前必须先完成本地组件审计，不能因为缺少一个业务变体就在页面内重写基础控件。
+- 业务页面和业务表单禁止直接渲染基础 HTML 控件。原生 HTML 仅允许出现在共享设计系统组件内部（例如 DatePicker、FileUpload、Table 的语义实现），并且必须保留键盘、焦点、禁用、加载、错误和响应式状态。
 - 交互底层优先复用 Radix UI Headless Components；复杂数据逻辑优先使用 TanStack 系列能力，图表使用 Recharts，动画统一使用 Motion。
 - 业务代码只从本地 `@/components/...` 路径导入 BEUI Pro 源码，避免页面依赖远程 Registry 的运行时可用性。
 - Registry 组件必须适配简体中文、现有权限与真实接口；不得保留英文演示文案、静态提交成功、无效按钮或与业务无关的 Mock 状态。

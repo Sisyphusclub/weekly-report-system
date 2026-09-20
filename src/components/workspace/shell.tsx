@@ -44,6 +44,7 @@ import {
   MorphingSearch,
   type MorphingSearchItem,
 } from "@/components/motion/morphing-search";
+import { ButtonLink } from "@/components/motion/button/base";
 import { SignOutButton } from "@/components/workspace/sign-out-button";
 import type { Role } from "@/lib/domain";
 import { cx } from "@/utils/cx";
@@ -241,8 +242,11 @@ export function WorkspaceShell({
               <div className="hidden px-2 text-xs text-muted-foreground md:block">
                 {formatToday()}
               </div>
-              <a
+              <ButtonLink
                 href="/notifications"
+                variant="ghost"
+                size="icon"
+                leadingIcon={Bell}
                 aria-label="通知中心"
                 className={cx(
                   "relative grid size-10 place-items-center rounded-xl text-muted-foreground outline-none transition-colors",
@@ -250,11 +254,10 @@ export function WorkspaceShell({
                   selected === "notifications" && "bg-muted text-foreground",
                 )}
               >
-                <Bell className="size-4" aria-hidden />
                 {actor.role === "BOSS" && (
                   <span className="absolute right-2.5 top-2.5 size-1.5 rounded-full bg-destructive" />
                 )}
-              </a>
+              </ButtonLink>
             </div>
           </header>
 
@@ -318,12 +321,7 @@ function navigationForRole(
             SlidersHorizontal,
           ),
           nav("calendar", "工作日历", "/admin/calendar", CalendarDays),
-          nav(
-            "exemptions",
-            "请假与免报",
-            "/admin/exemptions",
-            ClipboardCheck,
-          ),
+          nav("exemptions", "请假与免报", "/admin/exemptions", ClipboardCheck),
           nav("audit", "审计日志", "/admin/audit", ShieldCheck),
           nav("settings", "系统设置", "/admin/settings", Settings),
         ],

@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/motion/button/base";
-import { Textarea } from "@/components/premium/forms";
+import { FileUploadButton, Textarea } from "@/components/premium/forms";
 const example =
   '{"items":[{"projectId":"项目编号","categoryId":"分类编号","primaryAssigneeId":"负责人编号","content":"任务内容","kind":"ACTUAL","status":"TODO","workDate":"2026-09-18","dueDate":null}]}';
 export function TaskImportForm() {
@@ -80,10 +80,10 @@ export function TaskImportForm() {
           rows={8}
           isDisabled={pending}
         />
-        <input
-          type="file"
+        <FileUploadButton
           accept=".xlsx"
-          onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+          label={file ? `已选择：${file.name}` : "选择 Excel 文件"}
+          onFileChange={setFile}
           disabled={pending}
         />
         <Button type="submit" disabled={pending || (!value.trim() && !file)}>
@@ -94,4 +94,3 @@ export function TaskImportForm() {
     </details>
   );
 }
-

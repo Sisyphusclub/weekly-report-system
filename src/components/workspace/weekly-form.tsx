@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Textarea } from "@/components/premium/forms";
-import { Button } from "@/components/motion/button/base";
+import { Button, ButtonLink } from "@/components/motion/button/base";
 export function WeeklyForm({
   date,
   version,
@@ -85,11 +85,16 @@ export function WeeklyForm({
           </>
         )}
         {reportId && submitted && (
-          <a href={`/reports/${reportId}`}>查看已提交周报</a>
+          <ButtonLink
+            href={`/reports/${reportId}`}
+            variant="secondary"
+            size="small"
+          >
+            查看已提交周报
+          </ButtonLink>
         )}
       </div>
       {message && <p role="status">{message}</p>}
     </form>
   );
 }
-

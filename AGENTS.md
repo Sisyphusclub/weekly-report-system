@@ -18,6 +18,8 @@ This block is written and re-added by `next dev` — verify at `node_modules/nex
 
 - 始终以长期可维护的企业级 AI SaaS 产品为目标，遵循统一的 Design System，保持设计语言、交互方式和代码规范一致。
 - 基础组件优先使用本项目的 beUI Pro 源码；交互能力优先基于 Radix UI Headless Components 实现，避免重复手写基础控件。
+- 组件来源遵循固定优先级：先查本地 `src/components/premium` 与 `src/components/motion` 中的 BEUI Pro 源码，再查 BEUI Pro 私有 Registry；BEUI Pro 没有的基础能力使用 shadcn/Radix 方案，禁止在业务页面直接裸写基础控件。
+- 业务页面不得直接平铺 `<button>`、`<input>`、`<select>`、`<textarea>`、`<dialog>`、`<table>` 等基础控件；允许共享设计系统组件内部使用原生 HTML 完成语义和可访问性。
 - 页面采用简洁、专业、高信息密度和克制的企业级 AI SaaS 风格，可参考火山引擎控制台、飞书、Linear 和 Vercel。
 - 颜色、字体、间距、圆角、阴影和动画统一使用 Design Tokens 管理，禁止在业务页面硬编码视觉值，并为后续主题切换保留扩展空间。
 - 复杂表格和列表优先使用 TanStack Table 管理数据逻辑，图表优先使用 Recharts 或项目已有方案，动画统一使用 Motion。

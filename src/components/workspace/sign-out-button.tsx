@@ -2,6 +2,7 @@
 import { LogOut } from "lucide-react";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { Button } from "@/components/motion/button/base";
 import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
 
@@ -17,8 +18,11 @@ export function SignOutButton({
   const [failed, setFailed] = useState(false);
   return (
     <div className="flex flex-col gap-1">
-      <button
+      <Button
         type="button"
+        variant="ghost"
+        size="small"
+        leadingIcon={LogOut}
         disabled={busy}
         className={cn(
           "flex min-h-9 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-medium text-muted-foreground outline-none transition-colors",
@@ -42,7 +46,6 @@ export function SignOutButton({
           }
         }}
       >
-        <LogOut className="size-4 shrink-0" aria-hidden />
         <span
           className={cn(
             "truncate",
@@ -51,7 +54,7 @@ export function SignOutButton({
         >
           {busy ? "正在退出..." : "退出登录"}
         </span>
-      </button>
+      </Button>
       {failed && (
         <p role="alert" className="px-3 text-xs text-destructive">
           退出失败，请重试
