@@ -13,6 +13,7 @@ import {
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useSyncExternalStore } from "react";
 import { Button, ButtonLink } from "@/components/motion/button/base";
+import { useAnimatedSidebar } from "@/components/motion/animated-sidebar";
 import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { FooterToolbar } from "@/components/premium/footer-toolbar";
@@ -328,6 +329,7 @@ export function DailyForm({
   } | null;
 }) {
   const router = useRouter();
+  const { state: sidebarState } = useAnimatedSidebar();
   const initialPlans = dailyEntriesSchema.safeParse(draft?.planEntries).success
     ? dailyEntriesSchema.parse(draft?.planEntries)
     : [];
@@ -1096,7 +1098,9 @@ export function DailyForm({
       ) : null}
 
       {!preview ? (
-        <FooterToolbar className="fixed inset-x-0 bottom-0 z-40 mx-0 rounded-none border-x-0 px-0 py-0 sm:mx-0 sm:rounded-none md:left-[var(--sidebar-width)]">
+        <FooterToolbar
+          className={`fixed inset-x-0 bottom-0 z-40 mx-0 rounded-none border-x-0 px-0 py-0 sm:mx-0 sm:rounded-none ${sidebarState === "collapsed" ? "md:left-[var(--sidebar-width-icon)]" : "md:left-[var(--sidebar-width)]"}`}
+        >
           <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 xl:px-8">
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">
