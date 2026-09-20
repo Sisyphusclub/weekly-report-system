@@ -139,10 +139,9 @@ export function MemberCompareCard({
           href={`/reports?member=${encodeURIComponent(member.id)}`}
           variant="ghost"
           size="small"
-          trailingIcon={RiArrowRightSLine}
           className="mt-3 self-start"
         >
-          查看成员详情
+          查看成员详情 <RiArrowRightSLine className="size-4" aria-hidden />
         </ButtonLink>
       </div>
     </article>

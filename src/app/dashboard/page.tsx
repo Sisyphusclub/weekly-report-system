@@ -331,8 +331,8 @@ export default async function DashboardPage() {
           <ButtonLink
             href="/daily"
             variant="primary"
-            leadingIcon={RiCheckboxCircleLine}
           >
+            <RiCheckboxCircleLine className="size-4" aria-hidden />
             填写今日日报
           </ButtonLink>
         }
@@ -652,9 +652,8 @@ function SectionHeading({
           href={href}
           variant="ghost"
           size="small"
-          trailingIcon={RiArrowRightLine}
         >
-          查看全部
+          查看全部 <RiArrowRightLine className="size-4" aria-hidden />
         </ButtonLink>
       )}
     </div>

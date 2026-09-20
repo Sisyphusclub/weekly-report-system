@@ -53,17 +53,16 @@ export function BlockerStream({
             <Button
               size="small"
               variant="secondary"
-              leadingIcon={RiUserAddLine}
             >
+              <RiUserAddLine className="size-4" aria-hidden />
               指派协调人
             </Button>
             <ButtonLink
               size="small"
               variant="ghost"
               href={`/blockers/${item.id}`}
-              trailingIcon={RiArrowRightLine}
             >
-              详情
+              详情 <RiArrowRightLine className="size-4" aria-hidden />
             </ButtonLink>
           </div>
         </article>

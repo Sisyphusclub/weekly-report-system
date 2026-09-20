@@ -143,9 +143,8 @@ export default async function DailyPage({
               href="/tasks"
               variant="ghost"
               size="small"
-              trailingIcon={RiArrowRightLine}
             >
-              管理任务
+              管理任务 <RiArrowRightLine className="size-4" aria-hidden />
             </ButtonLink>
           </div>
           <DailyForm

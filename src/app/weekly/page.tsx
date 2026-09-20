@@ -141,7 +141,8 @@ export default async function WeeklyPage({
             title="本周实际工作聚合"
             detail="从周一至周五日报提炼项目成果"
             action={
-              <Button variant="secondary" leadingIcon={RiSparklingLine}>
+              <Button variant="secondary">
+                <RiSparklingLine className="size-4" aria-hidden />
                 从日报一键汇总
               </Button>
             }
