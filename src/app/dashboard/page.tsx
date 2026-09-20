@@ -232,7 +232,7 @@ export default async function DashboardPage() {
         />
       </section>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
-        <section className="min-w-0 rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <SectionHeading
             title="今日计划横向矩阵"
             detail="按成员查看计划完成情况"
@@ -242,28 +242,28 @@ export default async function DashboardPage() {
             {breakdown.members.map((member) => (
               <div
                 key={member.id}
-                className="w-[230px] shrink-0 rounded-xl border border-border-button-default bg-background-primary-default p-4"
+                className="w-[230px] shrink-0 rounded-xl border border-slate-200/80 bg-white p-4"
               >
                 <div className="flex items-center justify-between gap-2">
-                  <span className="truncate text-body-semibold">
+                  <span className="truncate text-sm font-semibold leading-5">
                     {member.name}
                   </span>
                   <Badge
                     variant="caption"
-                    color={member.openBlockers ? "rose" : "soft"}
+                    color={member.openBlockers ? "danger" : "neutral"}
                   >
                     {member.completed} 完成
                   </Badge>
                 </div>
-                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-background-tertiary-default">
+                <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-slate-100">
                   <div
-                    className="h-full rounded-full bg-accent-500"
+                    className="h-full rounded-full bg-blue-600"
                     style={{
                       width: `${member.due ? Math.min(100, Math.round((member.submitted / member.due) * 100)) : 0}%`,
                     }}
                   />
                 </div>
-                <p className="mt-2 text-caption-1-regular text-text-tertiary">
+                <p className="mt-2 text-xs font-normal leading-4 text-slate-500">
                   计划履约 ·{" "}
                   {member.due
                     ? Math.round((member.submitted / member.due) * 100)
@@ -274,7 +274,7 @@ export default async function DashboardPage() {
             ))}
           </PlanStrip>
         </section>
-        <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+        <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <SectionHeading title="交付物与分类" detail="本周累计产出" />
           <div className="mt-5 space-y-3">
             {breakdown.memberDeliverables.slice(0, 6).map((item) => (
@@ -283,14 +283,14 @@ export default async function DashboardPage() {
                 className="flex items-center justify-between gap-3"
               >
                 <div className="flex min-w-0 items-center gap-2">
-                  <span className="size-2 rounded-full bg-accent-500" />
-                  <span className="truncate text-body-regular">
+                  <span className="size-2 rounded-full bg-blue-600" />
+                  <span className="truncate text-sm font-normal leading-5">
                     {item.memberName}
                   </span>
                 </div>
-                <span className="shrink-0 text-body-semibold tabular-nums">
+                <span className="shrink-0 text-sm font-semibold leading-5 tabular-nums">
                   {item.quantity}{" "}
-                  <span className="text-caption-1-regular text-text-tertiary">
+                  <span className="text-xs font-normal leading-4 text-slate-500">
                     {item.unitName}
                   </span>
                 </span>
@@ -300,10 +300,10 @@ export default async function DashboardPage() {
               <EmptyState text="本周暂无交付物记录" />
             )}
           </div>
-          <div className="mt-5 border-t border-separator-border pt-4">
-            <div className="flex items-center justify-between text-caption-1-medium">
-              <span className="text-text-secondary">阻塞解决中位时长</span>
-              <span className="tabular-nums text-text-primary">
+          <div className="mt-5 border-t border-slate-200 pt-4">
+            <div className="flex items-center justify-between text-xs font-medium leading-4">
+              <span className="text-slate-500">阻塞解决中位时长</span>
+              <span className="tabular-nums text-slate-900">
                 {breakdown.blockerResolutionMedianHours === null
                   ? "—"
                   : `${breakdown.blockerResolutionMedianHours}h`}
@@ -313,7 +313,7 @@ export default async function DashboardPage() {
         </section>
       </div>
       {isBoss && (
-        <section className="rounded-2xl border border-status-rose-border bg-background-primary-default p-5 shadow-xs">
+        <section className="rounded-xl border border-rose-200 bg-white p-5 shadow-xs">
           <SectionHeading
             title="阻塞作战室"
             detail={`${metrics.openBlockers} 项待协调`}
@@ -327,22 +327,22 @@ export default async function DashboardPage() {
               .map((item) => (
                 <div
                   key={item.id}
-                  className="rounded-xl border border-status-rose-border bg-status-rose-background p-4"
+                  className="rounded-xl border border-rose-200 bg-rose-50 p-4"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <Badge
                       variant="caption"
-                      color="project"
+                      color="neutral"
                       showIcon={false}
                       className="max-w-full truncate"
                     >
                       {item.name}
                     </Badge>
-                    <Badge variant="caption" color="rose">
+                    <Badge variant="caption" color="danger">
                       {item.blocked} 项
                     </Badge>
                   </div>
-                  <p className="mt-2 text-caption-1-regular text-status-rose-text">
+                  <p className="mt-2 text-xs font-normal leading-4 text-rose-700">
                     项目内存在阻塞，需要负责人介入协调。
                   </p>
                 </div>
@@ -399,7 +399,7 @@ export default async function DashboardPage() {
           </div>
         </section>
       </div>
-      <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+      <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
         <SectionHeading
           title="最近报告"
           detail={`${reports.total} 份可查看`}
@@ -412,17 +412,17 @@ export default async function DashboardPage() {
               className="flex flex-wrap items-center justify-between gap-3 py-3"
             >
               <div className="min-w-0">
-                <p className="truncate text-body-medium">
+                <p className="truncate text-sm font-medium leading-5">
                   {item.author} · {item.type === "DAILY" ? "日报" : "周报"} ·{" "}
                   {item.date ?? item.weekStart}
                 </p>
-                <p className="mt-1 truncate text-caption-1-regular text-text-tertiary">
+                <p className="mt-1 truncate text-xs font-normal leading-4 text-slate-500">
                   {item.summary || "未填写总结"}
                 </p>
               </div>
               <Badge
                 variant="caption"
-                color={item.status === "SUBMITTED" ? "lime" : "yellow"}
+                color={item.status === "SUBMITTED" ? "success" : "warning"}
               >
                 {item.status === "SUBMITTED" ? "已提交" : "草稿"}
               </Badge>
@@ -453,13 +453,13 @@ function PageIntro({
   return (
     <header className="flex flex-wrap items-end justify-between gap-4">
       <div>
-        <p className="text-caption-1-semibold uppercase tracking-[0.08em] text-accent-600">
+        <p className="text-xs font-semibold leading-4 uppercase tracking-[0.08em] text-blue-600">
           {eyebrow}
         </p>
-        <h1 className="mt-2 text-title-1-semibold tracking-[-0.02em]">
+        <h1 className="mt-2 text-2xl font-semibold leading-8 tracking-[-0.02em]">
           {title}
         </h1>
-        <p className="mt-2 max-w-2xl text-body-regular text-text-secondary">
+        <p className="mt-2 max-w-2xl text-sm font-normal leading-5 text-slate-500">
           {description}
         </p>
       </div>
@@ -483,13 +483,13 @@ function SectionHeading({
       <div className="min-w-0">
         <h2
           className={cx(
-            "text-title-3-semibold",
-            tone === "danger" ? "text-status-rose-text" : "text-text-primary",
+            "text-lg font-semibold leading-6",
+            tone === "danger" ? "text-rose-700" : "text-slate-900",
           )}
         >
           {title}
         </h2>
-        <p className="mt-1 text-caption-1-regular text-text-tertiary">
+        <p className="mt-1 text-xs font-normal leading-4 text-slate-500">
           {detail}
         </p>
       </div>
@@ -517,23 +517,23 @@ function MetricCard({
   tone?: "neutral" | "success" | "danger" | "warning" | "info";
 }) {
   const toneClass = {
-    neutral: "text-text-primary",
-    success: "text-state-success-text",
-    danger: "text-status-rose-text",
-    warning: "text-status-yellow-text",
-    info: "text-status-blue-text",
+    neutral: "text-slate-900",
+    success: "text-emerald-700",
+    danger: "text-rose-700",
+    warning: "text-amber-700",
+    info: "text-blue-700",
   }[tone];
   return (
-    <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+    <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-caption-1-medium text-text-secondary">{label}</p>
+        <p className="text-xs font-medium leading-4 text-slate-500">{label}</p>
         {Icon && <Icon className={cx("size-5", toneClass)} aria-hidden />}
       </div>
-      <p className={cx("mt-4 text-display-4-semibold tabular-nums", toneClass)}>
+      <p className={cx("mt-4 text-3xl font-semibold leading-9 tabular-nums", toneClass)}>
         {value}
       </p>
       {note && (
-        <p className="mt-1 text-caption-1-regular text-text-tertiary">{note}</p>
+        <p className="mt-1 text-xs font-normal leading-4 text-slate-500">{note}</p>
       )}
       {href && (
         <ButtonLink
@@ -550,7 +550,7 @@ function MetricCard({
 }
 function EmptyState({ text }: { text: string }) {
   return (
-    <div className="rounded-xl border border-dashed border-border-button-default px-4 py-8 text-center text-body-regular text-text-tertiary">
+    <div className="rounded-xl border border-dashed border-slate-200/80 px-4 py-8 text-center text-sm font-normal leading-5 text-slate-500">
       {text}
     </div>
   );

@@ -37,7 +37,7 @@ const reportColumns: TableColumn<RecentReport>[] = [
     width: "14rem",
     render: (item) => (
       <Inline gap="sm" className="whitespace-nowrap">
-        <Tag tone={item.type === "DAILY" ? "blue" : "purple"}>
+        <Tag tone={item.type === "DAILY" ? "info" : "neutral"}>
           {item.type === "DAILY" ? "日报" : "周报"}
         </Tag>
         <time className="truncate font-mono font-semibold text-foreground tabular-nums">
@@ -334,7 +334,7 @@ function WorkColumn({
               ) : (
                 <>
                   <Tag
-                    tone={entry.deliverables.length ? "blue" : "soft"}
+                    tone={entry.deliverables.length ? "info" : "neutral"}
                     className="max-w-full rounded-md"
                   >
                     产出：{entry.deliverables.join("、") || "未登记"}

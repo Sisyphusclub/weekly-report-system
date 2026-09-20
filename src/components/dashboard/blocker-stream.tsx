@@ -24,30 +24,30 @@ export function BlockerStream({
       {items.map((item) => (
         <article
           key={item.id}
-          className="rounded-xl border border-status-rose-border bg-status-rose-background p-4"
+          className="rounded-xl border border-rose-200 bg-rose-50 p-4"
         >
           <div className="flex items-center justify-between gap-2">
             <Badge
               variant="caption"
               color={
                 item.severity === "URGENT"
-                  ? "rose"
+                  ? "danger"
                   : item.severity === "IMPORTANT"
-                    ? "yellow"
-                    : "soft"
+                    ? "warning"
+                    : "neutral"
               }
             >
               {severityLabel[item.severity]}
             </Badge>
-            <span className="text-caption-2-regular text-status-rose-text">
+            <span className="text-[11px] font-normal leading-4 text-rose-700">
               {item.age}
             </span>
           </div>
-          <p className="mt-3 line-clamp-2 text-body-medium text-status-rose-text">
+          <p className="mt-3 line-clamp-2 text-sm font-medium leading-5 text-rose-700">
             {item.description}
           </p>
-          <div className="mt-2 flex min-w-0 items-center gap-2 text-caption-1-regular text-status-rose-text">
-            <Badge color="project" variant="caption" showIcon={false}>
+          <div className="mt-2 flex min-w-0 items-center gap-2 text-xs font-normal leading-4 text-rose-700">
+            <Badge color="neutral" variant="caption" showIcon={false}>
               {item.projectName ?? "未关联项目"}
             </Badge>
             <span className="truncate">{item.reporter}</span>
@@ -71,7 +71,7 @@ export function BlockerStream({
         </article>
       ))}
       {items.length === 0 && (
-        <div className="lg:col-span-3 rounded-xl border border-dashed border-border-button-default px-4 py-8 text-center text-body-regular text-text-tertiary">
+        <div className="lg:col-span-3 rounded-xl border border-dashed border-slate-200/80 px-4 py-8 text-center text-sm font-normal leading-5 text-slate-500">
           当前没有待协调阻塞
         </div>
       )}

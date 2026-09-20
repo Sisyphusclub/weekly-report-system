@@ -76,10 +76,10 @@ export function TaskTransferForm({ people }: { people: Person[] }) {
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-title-2-medium">批量转交任务</h2>
-      <p className="text-body-regular text-text-secondary">
+      <h2 className="text-xl font-medium leading-7">批量转交任务</h2>
+      <p className="text-sm font-normal leading-5 text-slate-500">
         转交待开始、进行中和阻塞的任务，每批最多 200
         条。历史报告署名与快照保留。
       </p>
@@ -148,7 +148,7 @@ export function TaskTransferForm({ people }: { people: Person[] }) {
             ) && (
               <p
                 role="status"
-                className="text-body-regular text-text-secondary"
+                className="text-sm font-normal leading-5 text-slate-500"
               >
                 暂无可接收任务的成员，请先在账号管理中启用接收账号。
               </p>
@@ -184,7 +184,7 @@ export function TaskTransferForm({ people }: { people: Person[] }) {
         </>
       )}
       {message && (
-        <p role="status" className="text-body-regular text-text-secondary">
+        <p role="status" className="text-sm font-normal leading-5 text-slate-500">
           {message}
         </p>
       )}

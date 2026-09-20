@@ -18,22 +18,15 @@ const statusLabels: Record<DailySubmissionStatus, string> = {
 };
 const statusColors: Record<
   DailySubmissionStatus,
-  | "orange"
-  | "lime"
-  | "rose"
-  | "yellow"
-  | "cyan"
-  | "blue"
-  | "purple"
-  | "neutral"
+  "warning" | "success" | "danger" | "info" | "neutral"
 > = {
-  SUBMITTED: "lime",
-  LATE: "yellow",
-  PENDING: "orange",
-  OVERDUE: "rose",
-  EXEMPT: "blue",
+  SUBMITTED: "success",
+  LATE: "warning",
+  PENDING: "warning",
+  OVERDUE: "danger",
+  EXEMPT: "info",
   REST_DAY: "neutral",
-  NOT_STARTED: "purple",
+  NOT_STARTED: "neutral",
 };
 const statusOrder: Record<DailySubmissionStatus, number> = {
   OVERDUE: 0,
@@ -94,34 +87,34 @@ export function DailySubmissions({
   return (
     <section
       id="today-submissions"
-      className="rounded-3xl border border-border-button-default bg-background-primary-default p-6"
+      className="rounded-xl border border-slate-200/80 bg-white p-6"
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-caption-1-medium text-text-tertiary">日报看板</p>
-          <h2 className="mt-1 text-title-2-medium">今日提交 · {displayDate}</h2>
+          <p className="text-xs font-medium leading-4 text-slate-500">日报看板</p>
+          <h2 className="mt-1 text-xl font-medium leading-7">今日提交 · {displayDate}</h2>
         </div>
-        <p className="text-body-regular text-text-secondary">
+        <p className="text-sm font-normal leading-5 text-slate-500">
           按当前有效成员统计
         </p>
       </div>
       <div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          ["应提交", due, "soft"],
-          ["已提交", completed, "lime"],
-          ["待跟进", followUp, "rose"],
-          ["无需提交", rows.length - due, "blue"],
+          ["应提交", due, "neutral"],
+          ["已提交", completed, "success"],
+          ["待跟进", followUp, "danger"],
+          ["无需提交", rows.length - due, "info"],
         ].map(([label, value, color]) => (
           <div
             key={label}
-            className="rounded-2xl border border-border-button-default bg-background-primary-default p-4"
+            className="rounded-xl border border-slate-200/80 bg-white p-4"
           >
-            <p className="text-caption-1-medium text-text-secondary">{label}</p>
+            <p className="text-xs font-medium leading-4 text-slate-500">{label}</p>
             <div className="mt-2 flex items-end justify-between gap-2">
-              <p className="text-title-2-medium">{value}</p>
+              <p className="text-xl font-medium leading-7">{value}</p>
               <Badge
                 variant="caption"
-                color={color as "soft" | "lime" | "rose" | "blue"}
+                color={color as "neutral" | "success" | "danger" | "info"}
               >
                 人
               </Badge>
@@ -136,7 +129,7 @@ export function DailySubmissions({
               key={row.id}
               className="flex flex-wrap items-center justify-between gap-3 py-3"
             >
-              <span className="text-body-medium">{row.name}</span>
+              <span className="text-sm font-medium leading-5">{row.name}</span>
               <Badge
                 variant="caption"
                 color={statusColors[row.status]}
@@ -152,7 +145,7 @@ export function DailySubmissions({
           ))}
         </ul>
       ) : (
-        <p className="mt-4 text-body-regular text-text-secondary">
+        <p className="mt-4 text-sm font-normal leading-5 text-slate-500">
           暂无需要填报的成员
         </p>
       )}
@@ -169,7 +162,7 @@ export function DailySubmissions({
               上一页
             </ButtonLink>
           )}
-          <span className="text-body-regular">
+          <span className="text-sm font-normal leading-5">
             第 {page} / {pageCount} 页
           </span>
           {page < pageCount && (

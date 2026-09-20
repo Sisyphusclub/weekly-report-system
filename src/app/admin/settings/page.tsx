@@ -46,22 +46,22 @@ export default async function SettingsPage() {
   ];
   return (
     <WorkspaceShell actor={actor} selected="settings">
-      <h1 className="text-title-1-medium">系统设置</h1>
+      <h1 className="text-2xl font-medium leading-8">系统设置</h1>
       <SettingsForm name={settings.name} version={settings.version} />
-      <section className="rounded-3xl border border-border-button-default p-6">
-        <h2 className="text-title-2-medium">运行配置</h2>
+      <section className="rounded-xl border border-slate-200/80 p-6">
+        <h2 className="text-xl font-medium leading-7">运行配置</h2>
         <dl className="mt-4 divide-y divide-separator-border">
           {details.map(([label, value]) => (
             <div
               key={label}
               className="flex flex-wrap justify-between gap-3 py-3"
             >
-              <dt className="text-body-regular text-text-secondary">{label}</dt>
-              <dd className="text-body-medium">{value}</dd>
+              <dt className="text-sm font-normal leading-5 text-slate-500">{label}</dt>
+              <dd className="text-sm font-medium leading-5">{value}</dd>
             </div>
           ))}
         </dl>
-        <p className="mt-4 text-body-regular text-text-secondary">
+        <p className="mt-4 text-sm font-normal leading-5 text-slate-500">
           服务连接状态由部署检查确认。运行配置变更由运维人员执行。
         </p>
       </section>

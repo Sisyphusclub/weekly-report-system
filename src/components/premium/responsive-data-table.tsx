@@ -228,7 +228,7 @@ export function ResponsiveDataTable<T>({
   return (
     <section
       className={cn(
-        "w-full overflow-hidden rounded-2xl border border-border bg-background",
+        "w-full overflow-hidden rounded-xl border border-border bg-background",
         className,
       )}
     >

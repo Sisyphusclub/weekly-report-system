@@ -90,7 +90,7 @@ const columns: ResponsiveDataTableColumn<UserRow>[] = [
         <span
           className={cn(
             "size-2 rounded-full",
-            row.status === "ACTIVE" ? "bg-status-lime-text" : "bg-destructive",
+            row.status === "ACTIVE" ? "bg-emerald-700" : "bg-destructive",
           )}
         />
         {statusLabel[row.status]}

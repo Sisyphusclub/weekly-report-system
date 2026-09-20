@@ -52,9 +52,9 @@ export function SettingsForm({
   return (
     <form
       onSubmit={save}
-      className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-title-2-medium">组织信息</h2>
+      <h2 className="text-xl font-medium leading-7">组织信息</h2>
       <Input
         name="name"
         label="组织名称"
@@ -87,7 +87,7 @@ export function SettingsForm({
         )}
       </div>
       {message && (
-        <p role="status" className="text-body-regular text-text-secondary">
+        <p role="status" className="text-sm font-normal leading-5 text-slate-500">
           {message}
         </p>
       )}

@@ -7,8 +7,6 @@ export default defineConfig([
   globalIgnores([
     ".next/**",
     ".next-browser-test/**",
-    "src/components/base/**",
-    "src/components/application/**",
     "src/components/motion/**",
     "src/components/premium/**",
     ".agents/**",

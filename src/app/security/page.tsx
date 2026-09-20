@@ -7,10 +7,10 @@ export default async function SecurityPage() {
   return (
     <main className="mx-auto flex min-h-screen max-w-xl flex-col justify-center gap-8 p-6">
       <header className="flex items-center justify-between">
-        <h1 className="text-title-1-medium">账号安全</h1>
+        <h1 className="text-2xl font-medium leading-8">账号安全</h1>
         <SignOutButton />
       </header>
-      <section className="rounded-3xl border border-border-button-default p-6">
+      <section className="rounded-xl border border-slate-200/80 p-6">
         <SecurityForm />
       </section>
     </main>

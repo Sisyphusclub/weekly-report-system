@@ -40,7 +40,7 @@ export function ReportFilters({
         defaultValue={filters.to ?? ""}
       />
       <div className="flex flex-col gap-2">
-        <span className="text-body-medium" id="report-member-label">
+        <span className="text-sm font-medium leading-5" id="report-member-label">
           成员
         </span>
         <Select
@@ -61,11 +61,11 @@ export function ReportFilters({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-body-medium" id="report-project-label">
+        <span className="text-sm font-medium leading-5" id="report-project-label">
           项目
         </span>
         <Select
-          name="project"
+          name="neutral"
           aria-labelledby="report-project-label"
           defaultSelectedKey={filters.project ?? "ALL"}
         >
@@ -78,7 +78,7 @@ export function ReportFilters({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-body-medium" id="report-category-label">
+        <span className="text-sm font-medium leading-5" id="report-category-label">
           分类
         </span>
         <Select
@@ -95,7 +95,7 @@ export function ReportFilters({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-body-medium" id="report-type-label">
+        <span className="text-sm font-medium leading-5" id="report-type-label">
           报告类型
         </span>
         <Select
@@ -109,7 +109,7 @@ export function ReportFilters({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-body-medium" id="report-status-label">
+        <span className="text-sm font-medium leading-5" id="report-status-label">
           报告状态
         </span>
         <Select

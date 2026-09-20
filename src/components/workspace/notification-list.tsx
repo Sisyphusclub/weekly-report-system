@@ -40,7 +40,7 @@ export function NotificationList({ items: initial }: { items: Item[] }) {
   return items.length ? (
     <div>
       {error && <p role="alert">{error}</p>}
-      <ul className="divide-y divide-separator-border rounded-3xl border border-border-button-default">
+      <ul className="divide-y divide-separator-border rounded-xl border border-slate-200/80">
         {items.map((item) => (
           <li
             key={item.id}
@@ -49,12 +49,12 @@ export function NotificationList({ items: initial }: { items: Item[] }) {
             <div>
               <p
                 className={
-                  item.readAt ? "text-body-regular" : "text-body-medium"
+                  item.readAt ? "text-sm font-normal leading-5" : "text-sm font-medium leading-5"
                 }
               >
                 {item.title}
               </p>
-              <time className="mt-2 block text-body-regular text-text-secondary">
+              <time className="mt-2 block text-sm font-normal leading-5 text-slate-500">
                 {item.createdAt.toLocaleString("zh-CN", {
                   timeZone: "Asia/Shanghai",
                 })}
@@ -82,8 +82,8 @@ export function NotificationList({ items: initial }: { items: Item[] }) {
       </ul>
     </div>
   ) : (
-    <div className="rounded-3xl border border-border-button-default p-12 text-center">
-      <p className="text-headline-medium">暂无通知</p>
+    <div className="rounded-xl border border-slate-200/80 p-12 text-center">
+      <p className="text-base font-medium leading-6">暂无通知</p>
     </div>
   );
 }

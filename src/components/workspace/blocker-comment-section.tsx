@@ -76,16 +76,16 @@ export function BlockerCommentSection({
     setPending(false);
   }
   return (
-    <section className="mt-6 flex flex-col gap-3 rounded-3xl border border-border-button-default p-6">
-      <h2 className="text-title-2-medium">
+    <section className="mt-6 flex flex-col gap-3 rounded-xl border border-slate-200/80 p-6">
+      <h2 className="text-xl font-medium leading-7">
         阻塞评论{items.length ? `（${items.length}）` : ""}
       </h2>
       {items.length ? (
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
-            <li key={item.id} className="border-b border-separator-border pb-2">
+            <li key={item.id} className="border-b border-slate-200 pb-2">
               <strong>{item.authorName}</strong>
-              <span className="ml-2 text-body-regular text-text-secondary">
+              <span className="ml-2 text-sm font-normal leading-5 text-slate-500">
                 {new Date(item.createdAt).toLocaleString("zh-CN")}
               </span>
               {editing === item.id ? (
@@ -150,7 +150,7 @@ export function BlockerCommentSection({
           ))}
         </ul>
       ) : (
-        <p className="text-text-secondary">暂无评论</p>
+        <p className="text-slate-500">暂无评论</p>
       )}
       <Textarea
         label={replyTo ? "回复内容" : "评论内容"}

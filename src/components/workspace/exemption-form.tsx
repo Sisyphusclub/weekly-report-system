@@ -50,9 +50,9 @@ export function ExemptionForm({
   return (
     <form
       onSubmit={submit}
-      className="flex max-w-2xl flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex max-w-2xl flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-title-2-medium">登记免报</h2>
+      <h2 className="text-xl font-medium leading-7">登记免报</h2>
       {!people.length && <p>暂无可登记的有效成员</p>}
       <Select
         aria-label="免报成员"

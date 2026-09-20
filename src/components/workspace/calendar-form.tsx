@@ -58,9 +58,9 @@ export function CalendarForm({
   return (
     <form
       onSubmit={save}
-      className="flex max-w-2xl flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex max-w-2xl flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-title-2-medium">{date}</h2>
+      <h2 className="text-xl font-medium leading-7">{date}</h2>
       <Checkbox
         isSelected={isWorkday}
         onChange={setWorkday}

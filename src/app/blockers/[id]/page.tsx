@@ -39,7 +39,7 @@ export default async function BlockerPage({
       <ButtonLink href="/blockers" variant="ghost">
         返回阻塞中心
       </ButtonLink>
-      <h1 className="text-title-1-medium">阻塞详情</h1>
+      <h1 className="text-2xl font-medium leading-8">阻塞详情</h1>
       <p>
         {{ NORMAL: "一般", IMPORTANT: "重要", URGENT: "紧急" }[item.severity]} ·{" "}
         {

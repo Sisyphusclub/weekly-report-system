@@ -13,12 +13,12 @@ const statusLabel: Record<WorkStatus, string> = {
 };
 const statusColor: Record<
   WorkStatus,
-  "lime" | "blue" | "rose" | "yellow" | "neutral"
+  "success" | "info" | "danger" | "warning" | "neutral"
 > = {
-  DONE: "lime",
-  IN_PROGRESS: "blue",
-  BLOCKED: "rose",
-  TODO: "yellow",
+  DONE: "success",
+  IN_PROGRESS: "info",
+  BLOCKED: "danger",
+  TODO: "warning",
   CANCELED: "neutral",
 };
 
@@ -43,16 +43,16 @@ export function TaskItemRow({
     <li
       className={cx(
         "grid min-w-0 grid-cols-[20px_minmax(0,1fr)_auto] gap-x-2 gap-y-1 py-2.5",
-        isPlan && "rounded-lg bg-background-secondary-default px-2",
+        isPlan && "rounded-lg bg-slate-50 px-2",
       )}
     >
-      <span className="pt-0.5 text-caption-1-semibold tabular-nums text-accent-600">
+      <span className="pt-0.5 text-xs font-semibold leading-4 tabular-nums text-blue-600">
         {String(index + 1).padStart(2, "0")}
       </span>
-      <div className="min-w-0 break-words text-body-regular leading-5 text-text-primary">
+      <div className="min-w-0 break-words text-sm font-normal leading-5 leading-5 text-slate-900">
         {projectName && (
           <Badge
-            color="project"
+            color="neutral"
             variant="caption"
             showIcon={false}
             className="mr-1.5 align-middle"
@@ -62,12 +62,12 @@ export function TaskItemRow({
         )}
         {content}
       </div>
-      <Badge variant="caption" color={isPlan ? "yellow" : "soft"}>
+      <Badge variant="caption" color={isPlan ? "warning" : "neutral"}>
         {category}
       </Badge>
       <div className="col-[2/-1] flex min-w-0 items-center gap-2 pl-0">
         {deliverableText && (
-          <span className="min-w-0 flex-1 truncate rounded bg-status-blue-background px-2 py-1 text-caption-2-medium text-status-blue-text">
+          <span className="min-w-0 flex-1 truncate rounded bg-blue-50 px-2 py-1 text-[11px] font-medium leading-4 text-blue-700">
             产出：{deliverableText}
           </span>
         )}

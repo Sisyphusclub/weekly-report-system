@@ -55,15 +55,15 @@ export async function RevisionRequests({
     .limit(21)
     .offset((page - 1) * 20);
   return (
-    <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6">
-      <h2 className="text-title-2-medium">修订申请</h2>
-      {!rows.length && <p className="text-text-secondary">暂无修订申请</p>}
+    <section className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6">
+      <h2 className="text-xl font-medium leading-7">修订申请</h2>
+      {!rows.length && <p className="text-slate-500">暂无修订申请</p>}
       <ul className="divide-y divide-separator-border">
         {rows.slice(0, 20).map((row) => {
           const changes = row.changes as { summary?: unknown } | null;
           return (
             <li key={row.id} className="flex flex-col gap-3 py-4">
-              <p className="text-body-medium">
+              <p className="text-sm font-medium leading-5">
                 {row.requester} ·{" "}
                 {row.status === "PENDING"
                   ? "待审核"
@@ -71,7 +71,7 @@ export async function RevisionRequests({
                     ? "已通过"
                     : "已拒绝"}
               </p>
-              <p className="text-text-secondary">
+              <p className="text-slate-500">
                 {row.createdAt.toLocaleString("zh-CN", {
                   timeZone: "Asia/Shanghai",
                 })}
@@ -93,7 +93,7 @@ export async function RevisionRequests({
                 </p>
               )}
               {row.reviewedAt && (
-                <p className="text-text-secondary">
+                <p className="text-slate-500">
                   审核时间：
                   {row.reviewedAt.toLocaleString("zh-CN", {
                     timeZone: "Asia/Shanghai",

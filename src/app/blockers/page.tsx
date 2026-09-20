@@ -102,8 +102,8 @@ export default async function BlockersPage({
   return (
     <WorkspaceShell actor={actor} selected="blockers">
       <header>
-        <h1 className="text-title-1-medium">阻塞中心</h1>
-        <p className="mt-2 text-body-regular text-text-secondary">
+        <h1 className="text-2xl font-medium leading-8">阻塞中心</h1>
+        <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
           集中查看需要协调的事项，敏感内容只向相关人员展示。
         </p>
       </header>
@@ -139,7 +139,7 @@ export default async function BlockersPage({
           </ButtonLink>
         ))}
       </nav>
-      <section className="rounded-3xl border border-border-button-default p-6">
+      <section className="rounded-xl border border-slate-200/80 p-6">
         {visible.length ? (
           <ul className="divide-y divide-separator-border">
             {visible.map(
@@ -150,14 +150,14 @@ export default async function BlockersPage({
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-headline-medium">
+                      <span className="text-base font-medium leading-6">
                         {severityLabel[item.severity]}
                       </span>
-                      <span className="text-body-regular text-text-secondary">
+                      <span className="text-sm font-normal leading-5 text-slate-500">
                         {statusLabel[item.status]}
                       </span>
                       {item.isSensitive && (
-                        <span className="text-body-regular text-text-secondary">
+                        <span className="text-sm font-normal leading-5 text-slate-500">
                           敏感
                         </span>
                       )}
@@ -165,13 +165,13 @@ export default async function BlockersPage({
                     <p className="mt-2 whitespace-pre-wrap break-words">
                       {item.description}
                     </p>
-                    <p className="mt-2 text-body-regular text-text-secondary">
+                    <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
                       提出人：{reporter}
                       {` · 协调人：${coordinatorName ?? "待分配"}`}
                       {projectName ? ` · 项目：${projectName}` : ""}
                     </p>
                     {item.resolution && (
-                      <p className="mt-2 text-body-regular text-text-secondary">
+                      <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
                         处理说明：{item.resolution}
                       </p>
                     )}
@@ -190,8 +190,8 @@ export default async function BlockersPage({
           </ul>
         ) : (
           <div className="py-12 text-center">
-            <p className="text-headline-medium">暂无可见阻塞</p>
-            <p className="mt-2 text-body-regular text-text-secondary">
+            <p className="text-base font-medium leading-6">暂无可见阻塞</p>
+            <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
               新的协调事项会显示在这里。
             </p>
           </div>

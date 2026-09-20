@@ -47,9 +47,9 @@ export interface AnimatedBadgeProps extends Omit<
 const STATUS_CLASS: Record<AnimatedBadgeStatus, string> = {
   neutral: "border-border bg-card text-muted-foreground",
   info: "border-primary/30 bg-primary/10 text-primary",
-  success: "border-status-lime-text/25 bg-status-lime-background text-status-lime-text",
-  warning: "border-status-yellow-text/25 bg-status-yellow-background text-status-yellow-text",
-  danger: "border-status-rose-border bg-status-rose-background text-status-rose-text",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  danger: "border-rose-200 bg-rose-50 text-rose-700",
   loading: "border-primary/30 bg-primary/10 text-primary",
 };
 

@@ -50,7 +50,7 @@ export default async function CalendarPage({
     .offset((page - 1) * 20);
   return (
     <WorkspaceShell actor={actor} selected="calendar">
-      <h1 className="text-title-1-medium">工作日历</h1>
+      <h1 className="text-2xl font-medium leading-8">工作日历</h1>
       <form action="/admin/calendar" className="flex flex-wrap items-end gap-3">
         <Input name="date" type="date" label="选择日期" defaultValue={date} />
         <Button type="submit">查看</Button>
@@ -62,13 +62,13 @@ export default async function CalendarPage({
         initialWorkday={current?.isWorkday ?? isWorkday(date)}
         initialDescription={current?.description ?? ""}
       />
-      <p className="text-body-regular text-text-secondary">
+      <p className="text-sm font-normal leading-5 text-slate-500">
         {current
           ? `该日期已有 ${current.version} 次设置记录。`
           : "该日期尚未调整，当前按周一至周五为工作日。"}
       </p>
       <section aria-label="日期调整记录" className="flex flex-col gap-3">
-        <h2 className="text-title-2-medium">调整记录</h2>
+        <h2 className="text-xl font-medium leading-7">调整记录</h2>
         {history.length ? (
           <ol className="divide-y divide-separator-border">
             {history.slice(0, 20).map((item) => (
@@ -79,7 +79,7 @@ export default async function CalendarPage({
                 <p className="break-words">{item.description}</p>
                 <time
                   dateTime={item.createdAt.toISOString()}
-                  className="text-body-regular text-text-secondary"
+                  className="text-sm font-normal leading-5 text-slate-500"
                 >
                   {new Intl.DateTimeFormat("zh-CN", {
                     timeZone: "Asia/Shanghai",

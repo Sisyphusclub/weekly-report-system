@@ -63,7 +63,7 @@ export default async function ProjectsPage({
     : [];
   return (
     <WorkspaceShell actor={actor} selected="projects">
-      <h1 className="text-title-1-medium">项目管理</h1>
+      <h1 className="text-2xl font-medium leading-8">项目管理</h1>
       {editing && (
         <ButtonLink href="/admin/projects" variant="secondary">
           创建新项目
@@ -82,7 +82,7 @@ export default async function ProjectsPage({
         {rows.slice(0, 20).map((row) => (
           <div
             key={row.id}
-            className="flex items-center justify-between gap-4 rounded-3xl border border-border-button-default p-4"
+            className="flex items-center justify-between gap-4 rounded-xl border border-slate-200/80 p-4"
           >
             <span>
               {row.name} ·{" "}

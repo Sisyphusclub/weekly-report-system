@@ -18,19 +18,19 @@ export function ProjectCollabCard({
   };
 }) {
   return (
-    <details className="group rounded-2xl border border-border-button-default bg-background-primary-default shadow-xs">
+    <details className="group rounded-xl border border-slate-200/80 bg-white shadow-xs">
       <summary className="flex cursor-pointer list-none items-center gap-4 p-5">
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2">
-            <h3 className="truncate text-headline-semibold">{project.name}</h3>
+            <h3 className="truncate text-base font-semibold leading-6">{project.name}</h3>
             {project.blocked > 0 && (
               <RiAlertLine
-                className="size-4 shrink-0 text-status-rose-text"
+                className="size-4 shrink-0 text-rose-700"
                 aria-label="项目存在阻塞"
               />
             )}
           </div>
-          <p className="mt-1 text-caption-1-regular text-text-tertiary">
+          <p className="mt-1 text-xs font-normal leading-4 text-slate-500">
             负责人：{project.owner?.name ?? "未设置"}
           </p>
         </div>
@@ -39,18 +39,18 @@ export function ProjectCollabCard({
             <Avatar
               key={member.id}
               initials={member.name.slice(0, 1)}
-              color={index % 2 ? "lime" : "blue"}
+              color={index % 2 ? "success" : "info"}
               size="sm"
               className={
-                index > 0 ? "-ml-2 ring-2 ring-background-primary-default" : ""
+                index > 0 ? "-ml-2 ring-2 ring-white" : ""
               }
             />
           ))}
         </div>
-        <div className="flex shrink-0 items-center gap-2 text-caption-1-medium text-text-secondary">
+        <div className="flex shrink-0 items-center gap-2 text-xs font-medium leading-4 text-slate-500">
           <span>{project.completed} 完成</span>
           <span>·</span>
-          <span className={project.blocked ? "text-status-rose-text" : ""}>
+          <span className={project.blocked ? "text-rose-700" : ""}>
             {project.blocked} 阻塞
           </span>
           <RiArrowDownSLine
@@ -59,9 +59,9 @@ export function ProjectCollabCard({
           />
         </div>
       </summary>
-      <div className="grid gap-5 border-t border-separator-border px-5 py-4 md:grid-cols-2">
+      <div className="grid gap-5 border-t border-slate-200 px-5 py-4 md:grid-cols-2">
         <div>
-          <h4 className="text-caption-1-semibold text-text-secondary">
+          <h4 className="text-xs font-semibold leading-4 text-slate-500">
             成员协同
           </h4>
           <ul className="mt-3 space-y-2">
@@ -69,7 +69,7 @@ export function ProjectCollabCard({
               project.members.map((member) => (
                 <li
                   key={member.id}
-                  className="flex items-center gap-2 text-body-regular"
+                  className="flex items-center gap-2 text-sm font-normal leading-5"
                 >
                   <Avatar
                     initials={member.name.slice(0, 1)}
@@ -80,24 +80,24 @@ export function ProjectCollabCard({
                 </li>
               ))
             ) : (
-              <li className="text-caption-1-regular text-text-tertiary">
+              <li className="text-xs font-normal leading-4 text-slate-500">
                 暂无协同成员
               </li>
             )}
           </ul>
         </div>
         <div>
-          <h4 className="text-caption-1-semibold text-text-secondary">
+          <h4 className="text-xs font-semibold leading-4 text-slate-500">
             今日项目计划
           </h4>
           <ul className="mt-3 space-y-2">
             {project.nextPlans.slice(0, 4).map((plan) => (
-              <li key={plan.id} className="break-words text-body-regular">
+              <li key={plan.id} className="break-words text-sm font-normal leading-5">
                 {plan.content}
               </li>
             ))}
             {!project.nextPlans.length && (
-              <li className="text-caption-1-regular text-text-tertiary">
+              <li className="text-xs font-normal leading-4 text-slate-500">
                 暂无计划
               </li>
             )}
@@ -107,7 +107,7 @@ export function ProjectCollabCard({
           <div className="md:col-span-2">
             <div className="flex flex-wrap gap-2">
               {project.deliverables.map((item) => (
-                <Badge key={item.unitId} variant="caption" color="blue">
+                <Badge key={item.unitId} variant="caption" color="info">
                   {item.unitName} {item.quantity}
                 </Badge>
               ))}

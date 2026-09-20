@@ -37,8 +37,8 @@ export default async function DictionariesPage({
     .where(eq(dictionaryMerge.organizationId, actor.organizationId));
   return (
     <WorkspaceShell actor={actor} selected="dictionaries">
-      <h1 className="text-title-1-medium">分类与交付物单位</h1>
-      <p className="text-body-regular text-text-secondary">
+      <h1 className="text-2xl font-medium leading-8">分类与交付物单位</h1>
+      <p className="text-sm font-normal leading-5 text-slate-500">
         停用后不能用于新的日报条目，历史记录中的名称快照保留。
       </p>
       <nav aria-label="资料类型" className="flex gap-3">

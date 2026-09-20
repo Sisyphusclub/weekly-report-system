@@ -59,7 +59,7 @@ export function DeliverableForm({
   }
   return (
     <details className="w-full">
-      <summary className="cursor-pointer text-body-medium">
+      <summary className="cursor-pointer text-sm font-medium leading-5">
         交付物{items.length ? `（${items.length} 项）` : ""}
       </summary>
       <ul className="my-3 flex flex-wrap gap-3">
@@ -106,7 +106,7 @@ export function DeliverableForm({
           {message && <p role="status">{message}</p>}
         </form>
       ) : (
-        <p className="text-text-secondary">
+        <p className="text-slate-500">
           暂无可用交付物单位，请联系管理员配置。
         </p>
       )}

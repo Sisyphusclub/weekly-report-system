@@ -158,7 +158,7 @@ function ProgressTexture({ project }: { project: CollaborationProject }) {
     {
       label: "进行中",
       value: project.inProgress,
-      className: "bg-status-yellow-text",
+      className: "bg-amber-700",
     },
     {
       label: "阻塞",

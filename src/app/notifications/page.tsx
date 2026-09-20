@@ -36,7 +36,7 @@ export default async function NotificationsPage({
     .offset((page - 1) * 20);
   return (
     <WorkspaceShell actor={actor} selected="notifications">
-      <h1 className="text-title-1-medium">通知中心</h1>
+      <h1 className="text-2xl font-medium leading-8">通知中心</h1>
       <NotificationList key={page} items={items.slice(0, 20)} />
       <nav aria-label="通知分页" className="flex flex-wrap items-center gap-3">
         {page > 1 && (

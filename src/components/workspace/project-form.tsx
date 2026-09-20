@@ -80,9 +80,9 @@ export function ProjectForm({
   return (
     <form
       onSubmit={save}
-      className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-title-2-medium">{item ? "编辑项目" : "创建项目"}</h2>
+      <h2 className="text-xl font-medium leading-7">{item ? "编辑项目" : "创建项目"}</h2>
       <Input
         name="name"
         label="项目名称"
@@ -138,7 +138,7 @@ export function ProjectForm({
         isDisabled={pending}
       />
       <fieldset className="flex flex-wrap gap-4">
-        <legend className="mb-3 text-body-medium">
+        <legend className="mb-3 text-sm font-medium leading-5">
           参与成员（负责人自动加入）
         </legend>
         {people.map((person) => (

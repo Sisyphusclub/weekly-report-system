@@ -177,7 +177,7 @@ export function SidebarWorkspace({
 
   return (
     <div className={cn("w-full px-0 py-2 sm:p-3", className)}>
-      <AnimatedSidebarProvider className="h-[720px] min-h-0 overflow-hidden rounded-2xl border border-foreground/[0.08] bg-background">
+      <AnimatedSidebarProvider className="h-[720px] min-h-0 overflow-hidden rounded-xl border border-foreground/[0.08] bg-background">
         <AnimatedSidebar
           ariaLabel={`${activeWorkspace} workspace`}
           collapsible="icon"

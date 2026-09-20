@@ -77,7 +77,7 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
   };
   return (
     <details className="w-full">
-      <summary className="cursor-pointer text-body-medium">
+      <summary className="cursor-pointer text-sm font-medium leading-5">
         附件{items.length ? `（${items.length}）` : ""}
       </summary>
       <div className="mt-2 flex flex-col gap-2">
@@ -90,7 +90,7 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
             event.currentTarget.value = "";
           }}
         />
-        <span className="text-body-regular text-text-secondary">
+        <span className="text-sm font-normal leading-5 text-slate-500">
           单个文件不超过 10 MB
         </span>
         {message && <span>{message}</span>}
@@ -107,7 +107,7 @@ export function TaskAttachmentSection({ taskId }: { taskId: string }) {
               </a>
               <button
                 type="button"
-                className="ml-2 text-text-secondary underline"
+                className="ml-2 text-slate-500 underline"
                 onClick={() => void remove(item.id)}
               >
                 删除

@@ -94,11 +94,11 @@ export default async function ReportPage({
         返回报告查询
       </ButtonLink>
       <header>
-        <h1 className="text-title-1-medium">
+        <h1 className="text-2xl font-medium leading-8">
           {item.type === "DAILY" ? "日报" : "周报"} ·{" "}
           {item.reportDate ?? item.weekStart}
         </h1>
-        <p className="mt-2 text-body-regular text-text-secondary">
+        <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
           {item.status === "DRAFT"
             ? "本人草稿"
             : `已提交 · 版本 ${item.revisionNumber}`}
@@ -107,9 +107,9 @@ export default async function ReportPage({
       {changedSources.length > 0 && (
         <section
           aria-label="来源更新"
-          className="flex flex-col gap-3 rounded-3xl border border-border-button-default p-6"
+          className="flex flex-col gap-3 rounded-xl border border-slate-200/80 p-6"
         >
-          <h2 className="text-title-2-medium">来源已更新</h2>
+          <h2 className="text-xl font-medium leading-7">来源已更新</h2>
           <p>来源日报已有新版本，本周报仍保留提交时的内容。</p>
           <div className="flex flex-wrap gap-3">
             {changedSources.map((sourceId, index) => (
@@ -124,8 +124,8 @@ export default async function ReportPage({
           </div>
         </section>
       )}
-      <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6">
-        <h2 className="text-title-2-medium">工作总结</h2>
+      <section className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6">
+        <h2 className="text-xl font-medium leading-7">工作总结</h2>
         <p className="whitespace-pre-wrap break-words">
           {item.summary || "未填写总结"}
         </p>
@@ -133,28 +133,28 @@ export default async function ReportPage({
         {item.noPlanReason && <p>无计划原因：{item.noPlanReason}</p>}
       </section>
       {item.type === "DAILY" && (
-        <section className="rounded-3xl border border-border-button-default p-6">
-          <h2 className="text-title-2-medium">日报明细</h2>
+        <section className="rounded-xl border border-slate-200/80 p-6">
+          <h2 className="text-xl font-medium leading-7">日报明细</h2>
           <DailyEntrySection title="工作计划 / 进度" entries={dailyPlans} />
           <DailyEntrySection title="工作内容 / 产出" entries={dailyWorks} />
           <div className="mt-6">
-            <h3 className="text-body-medium">阻塞事项</h3>
+            <h3 className="text-sm font-medium leading-5">阻塞事项</h3>
             {dailyBlockers.length ? (
               <ul className="mt-3 flex flex-col gap-2">
                 {dailyBlockers.map((blocker, index) => (
-                  <li key={index} className="rounded-lg bg-status-rose-background p-3">
+                  <li key={index} className="rounded-lg bg-rose-50 p-3">
                     {blocker.description} · 关联项目 {blocker.projectName ?? blocker.projectId}
                   </li>
                 ))}
               </ul>
             ) : (
-              <p className="mt-3 text-text-secondary">无阻塞事项</p>
+              <p className="mt-3 text-slate-500">无阻塞事项</p>
             )}
           </div>
         </section>
       )}
-      {tasks.length > 0 && <section className="rounded-3xl border border-border-button-default p-6">
-        <h2 className="text-title-2-medium">任务与交付物</h2>
+      {tasks.length > 0 && <section className="rounded-xl border border-slate-200/80 p-6">
+        <h2 className="text-xl font-medium leading-7">任务与交付物</h2>
         {tasks.length ? (
           <ul className="mt-4 divide-y divide-separator-border">
             {tasks.map((row) => {
@@ -171,7 +171,7 @@ export default async function ReportPage({
                   <p className="whitespace-pre-wrap break-words">
                     {task.content}
                   </p>
-                  <p className="text-body-regular text-text-secondary">
+                  <p className="text-sm font-normal leading-5 text-slate-500">
                     {task.kind === "PLAN" ? "计划" : "实际工作"} ·{" "}
                     {task.categoryName} ·{" "}
                     {
@@ -208,11 +208,11 @@ export default async function ReportPage({
             })}
           </ul>
         ) : (
-          <p className="mt-4 text-text-secondary">未关联任务</p>
+          <p className="mt-4 text-slate-500">未关联任务</p>
         )}
       </section>}
-      <section className="rounded-3xl border border-border-button-default p-6">
-        <h2 className="text-title-2-medium">最近修订记录</h2>
+      <section className="rounded-xl border border-slate-200/80 p-6">
+        <h2 className="text-xl font-medium leading-7">最近修订记录</h2>
         {versions.length > 0 && (
           <ButtonLink href={`/reports/${id}/history`} variant="ghost">
             查看历史版本与变更
@@ -236,7 +236,7 @@ export default async function ReportPage({
             ))}
           </ul>
         ) : (
-          <p className="mt-4 text-text-secondary">暂无修订记录</p>
+          <p className="mt-4 text-slate-500">暂无修订记录</p>
         )}
       </section>
       {item.status === "SUBMITTED" &&
@@ -277,21 +277,21 @@ function DailyEntrySection({
 }) {
   return (
     <div className="mt-5">
-      <h3 className="text-body-medium">{title}</h3>
+      <h3 className="text-sm font-medium leading-5">{title}</h3>
       {entries.length ? (
         <ol className="mt-3 flex flex-col gap-2">
           {entries.map((entry, index) => (
-            <li key={index} className="rounded-lg border border-border-button-default p-3">
+            <li key={index} className="rounded-lg border border-slate-200/80 p-3">
               <p>{index + 1}、{entry.content}</p>
-              <p className="mt-1 text-body-regular text-text-secondary">
+              <p className="mt-1 text-sm font-normal leading-5 text-slate-500">
                 {entry.status === "DONE" ? "已完成" : entry.status === "IN_PROGRESS" ? "进行中" : entry.status === "TODO" ? "未开始" : entry.status === "BLOCKED" ? "阻塞" : "已取消"} · 类型：{entry.category}
               </p>
-              {entry.deliverables.length > 0 && <p className="mt-1 text-body-regular text-text-secondary">产出：{entry.deliverables.join(" ")}</p>}
+              {entry.deliverables.length > 0 && <p className="mt-1 text-sm font-normal leading-5 text-slate-500">产出：{entry.deliverables.join(" ")}</p>}
             </li>
           ))}
         </ol>
       ) : (
-        <p className="mt-3 text-text-secondary">暂无条目</p>
+        <p className="mt-3 text-slate-500">暂无条目</p>
       )}
     </div>
   );

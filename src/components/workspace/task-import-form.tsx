@@ -68,7 +68,7 @@ export function TaskImportForm() {
   }
   return (
     <details className="w-full">
-      <summary className="cursor-pointer text-body-medium">
+      <summary className="cursor-pointer text-sm font-medium leading-5">
         导入任务 JSON
       </summary>
       <form onSubmit={submit} className="mt-3 flex flex-col gap-3">

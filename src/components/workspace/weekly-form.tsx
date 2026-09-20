@@ -57,9 +57,9 @@ export function WeeklyForm({
         e.preventDefault();
         void save(false);
       }}
-      className="flex max-w-3xl flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex max-w-3xl flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <p className="text-headline-medium">
+      <p className="text-base font-medium leading-6">
         {date} 周 · {submitted ? "已提交" : "草稿"}
       </p>
       <Textarea

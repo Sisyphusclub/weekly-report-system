@@ -40,8 +40,8 @@ export function CreateUserForm() {
     }
   }
   return (
-    <section className="rounded-3xl border border-border-button-default p-6">
-      <h2 className="text-title-2-medium">创建账号</h2>
+    <section className="rounded-xl border border-slate-200/80 p-6">
+      <h2 className="text-xl font-medium leading-7">创建账号</h2>
       <form onSubmit={save} className="mt-4 flex flex-col gap-4">
         <Input
           name="username"

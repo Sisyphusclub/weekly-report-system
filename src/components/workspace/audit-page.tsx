@@ -56,7 +56,7 @@ export async function AuditPage({
   });
   return (
     <WorkspaceShell actor={actor} selected={business ? "activity" : "audit"}>
-      <h1 className="text-title-1-medium">{title}</h1>
+      <h1 className="text-2xl font-medium leading-8">{title}</h1>
       <form action={path} className="flex flex-wrap items-end gap-3">
         <Input
           name="resourceId"
@@ -70,26 +70,26 @@ export async function AuditPage({
         </ButtonLink>
       </form>
       {rows.length ? (
-        <ol className="divide-y divide-separator-border rounded-3xl border border-border-button-default">
+        <ol className="divide-y divide-separator-border rounded-xl border border-slate-200/80">
           {rows.slice(0, 20).map(({ item, name }) => (
             <li key={item.id} className="flex flex-col gap-2 p-5">
-              <p className="text-body-medium">
+              <p className="text-sm font-medium leading-5">
                 {name} · {auditActionLabel(item.action)} ·{" "}
                 {item.result === "SUCCESS" ? "成功" : item.result}
               </p>
-              <p className="break-all text-body-regular text-text-secondary">
+              <p className="break-all text-sm font-normal leading-5 text-slate-500">
                 {item.resourceType} · {item.resourceId}
               </p>
               {item.reason &&
                 (!business || item.action === "TASK_TRANSFER") && (
-                  <dl className="flex flex-col gap-2 text-body-regular">
+                  <dl className="flex flex-col gap-2 text-sm font-normal leading-5">
                     {auditReasonDetails(item.action, item.reason).map(
                       (detail) => (
                         <div
                           key={detail.label}
                           className="flex flex-col gap-1 sm:flex-row sm:gap-3"
                         >
-                          <dt className="shrink-0 text-text-secondary">
+                          <dt className="shrink-0 text-slate-500">
                             {detail.label}
                           </dt>
                           <dd className="whitespace-pre-wrap break-all">
@@ -102,7 +102,7 @@ export async function AuditPage({
                 )}
               <time
                 dateTime={item.createdAt.toISOString()}
-                className="text-body-regular text-text-secondary"
+                className="text-sm font-normal leading-5 text-slate-500"
               >
                 {time.format(item.createdAt)}
               </time>

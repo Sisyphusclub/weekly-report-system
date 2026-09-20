@@ -87,7 +87,7 @@ export function StatisticCard({
           className={cx(
             "grid size-10 shrink-0 place-items-center rounded-lg border border-transparent bg-muted text-muted-foreground",
             tone === "info" &&
-              "border-status-blue-text/20 bg-status-blue-background text-status-blue-text",
+              "border-blue-200 bg-blue-50 text-blue-700",
             tone === "success" &&
               "border-emerald-200 bg-emerald-50 text-emerald-700",
             tone === "danger" &&

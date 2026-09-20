@@ -68,9 +68,9 @@ export function DictionaryForm({
   return (
     <form
       onSubmit={save}
-      className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-headline-medium">
+      <h2 className="text-base font-medium leading-6">
         {entry
           ? entry.name
           : `新增${kind === "category" ? "分类" : "交付物单位"}`}

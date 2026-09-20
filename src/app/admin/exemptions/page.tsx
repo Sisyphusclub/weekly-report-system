@@ -47,10 +47,10 @@ export default async function ExemptionsPage({
   ]);
   return (
     <WorkspaceShell actor={actor} selected="exemptions">
-      <h1 className="text-title-1-medium">请假与免报</h1>
+      <h1 className="text-2xl font-medium leading-8">请假与免报</h1>
       <ExemptionForm people={people} />
       <section aria-label="免报记录" className="flex flex-col gap-3">
-        <h2 className="text-title-2-medium">登记记录</h2>
+        <h2 className="text-xl font-medium leading-7">登记记录</h2>
         {rows.length ? (
           <ul className="divide-y divide-separator-border">
             {rows.slice(0, 20).map(({ item, name }) => (
@@ -58,7 +58,7 @@ export default async function ExemptionsPage({
                 <p>
                   {name} · {item.startDate} 至 {item.endDate}
                 </p>
-                <p className="break-words text-body-regular text-text-secondary">
+                <p className="break-words text-sm font-normal leading-5 text-slate-500">
                   {item.reason}
                 </p>
               </li>

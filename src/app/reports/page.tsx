@@ -84,10 +84,10 @@ export default async function ReportsPage({
   return (
     <WorkspaceShell actor={actor} selected="reports">
       <header>
-        <h1 className="text-title-1-medium">
+        <h1 className="text-2xl font-medium leading-8">
           {actor.role === "ADMIN" ? "我的报告" : "报告查询"}
         </h1>
-        <p className="mt-2 text-body-regular text-text-secondary">
+        <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
           共 {result.total} 份可查看的报告
         </p>
       </header>
@@ -127,7 +127,7 @@ export default async function ReportsPage({
         }))}
       />
       <footer className="flex items-center justify-between">
-        <span className="text-body-regular text-text-secondary">
+        <span className="text-sm font-normal leading-5 text-slate-500">
           第 {page} 页 · 每页 {PAGE_SIZE} 份
         </span>
         <div className="flex gap-3">

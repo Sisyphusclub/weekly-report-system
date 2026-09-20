@@ -74,9 +74,9 @@ export default async function ReportHistoryPage({
       >
         返回报告
       </ButtonLink>
-      <h1 className="text-title-1-medium">历史版本</h1>
-      <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6">
-        <h2 className="text-title-2-medium">版本记录</h2>
+      <h1 className="text-2xl font-medium leading-8">历史版本</h1>
+      <section className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6">
+        <h2 className="text-xl font-medium leading-7">版本记录</h2>
         <ul className="flex flex-col gap-3">
           {versions.slice(0, 20).map((row) => (
             <li key={row.number} className="flex flex-wrap items-center gap-3">
@@ -119,9 +119,9 @@ export default async function ReportHistoryPage({
           )}
         </nav>
       </section>
-      <article className="flex flex-col gap-6 rounded-3xl border border-border-button-default p-6">
+      <article className="flex flex-col gap-6 rounded-xl border border-slate-200/80 p-6">
         <header className="flex flex-col gap-2">
-          <h2 className="text-title-2-medium">版本 {selected.number}</h2>
+          <h2 className="text-xl font-medium leading-7">版本 {selected.number}</h2>
           <p>
             {selected.editor} ·{" "}
             {selected.createdAt.toLocaleString("zh-CN", {

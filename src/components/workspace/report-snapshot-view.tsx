@@ -16,16 +16,16 @@ export function ReportSnapshotView({
     <div className="flex flex-col gap-6">
       {changes.success && changes.data.summary && (
         <section className="flex flex-col gap-3">
-          <h2 className="text-title-2-medium">总结变更</h2>
+          <h2 className="text-xl font-medium leading-7">总结变更</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <div>
-              <h3 className="text-body-medium">修订前</h3>
+              <h3 className="text-sm font-medium leading-5">修订前</h3>
               <p className="mt-2 whitespace-pre-wrap break-words">
                 {changes.data.summary[0] || "未填写总结"}
               </p>
             </div>
             <div>
-              <h3 className="text-body-medium">修订后</h3>
+              <h3 className="text-sm font-medium leading-5">修订后</h3>
               <p className="mt-2 whitespace-pre-wrap break-words">
                 {changes.data.summary[1] || "未填写总结"}
               </p>
@@ -34,7 +34,7 @@ export function ReportSnapshotView({
         </section>
       )}
       <section className="flex flex-col gap-3">
-        <h2 className="text-title-2-medium">版本内容</h2>
+        <h2 className="text-xl font-medium leading-7">版本内容</h2>
         <p className="whitespace-pre-wrap break-words">
           {data.summary || "未填写总结"}
         </p>
@@ -42,15 +42,15 @@ export function ReportSnapshotView({
         {data.noPlanReason && <p>无计划原因：{data.noPlanReason}</p>}
       </section>
       <section>
-        <h2 className="text-title-2-medium">任务与交付物</h2>
+        <h2 className="text-xl font-medium leading-7">任务与交付物</h2>
         {!data.tasks.length && (
-          <p className="mt-3 text-text-secondary">未关联任务</p>
+          <p className="mt-3 text-slate-500">未关联任务</p>
         )}
         <ul className="mt-3 divide-y divide-separator-border">
           {data.tasks.map((task, index) => (
             <li key={index} className="flex flex-col gap-2 py-4">
               <p className="whitespace-pre-wrap break-words">{task.content}</p>
-              <p className="text-text-secondary">
+              <p className="text-slate-500">
                 {task.kind === "PLAN" ? "计划" : "实际工作"} ·{" "}
                 {task.categoryName} ·{" "}
                 {

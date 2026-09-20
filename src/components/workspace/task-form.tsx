@@ -91,9 +91,9 @@ export function TaskForm({
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6"
+      className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
     >
-      <h2 className="text-title-2-medium">创建任务</h2>
+      <h2 className="text-xl font-medium leading-7">创建任务</h2>
       {(!projects.length || !categories.length) && (
         <p role="status">暂无可用项目或分类，请联系管理员配置后创建任务。</p>
       )}

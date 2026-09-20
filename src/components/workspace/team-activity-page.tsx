@@ -58,7 +58,7 @@ export async function TeamActivityPage({
       </header>
 
       {items.length ? (
-        <ol className="divide-y divide-border rounded-2xl border border-border bg-background">
+        <ol className="divide-y divide-border rounded-xl border border-border bg-background">
           {items.map((item) => {
             const date = item.date ?? item.weekStart ?? "未设置日期";
             return (
@@ -69,7 +69,7 @@ export async function TeamActivityPage({
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="font-medium text-foreground">{item.author}</span>
-                    <Badge tone={item.type === "DAILY" ? "blue" : "purple"}>
+                    <Badge tone={item.type === "DAILY" ? "info" : "neutral"}>
                       {item.type === "DAILY" ? "日报" : "周报"}
                     </Badge>
                     <time className="font-mono text-xs text-muted-foreground" dateTime={item.submittedAt?.toISOString()}>
@@ -88,7 +88,7 @@ export async function TeamActivityPage({
           })}
         </ol>
       ) : (
-        <div className="grid min-h-48 place-items-center rounded-2xl border border-dashed border-border bg-background px-6 text-center">
+        <div className="grid min-h-48 place-items-center rounded-xl border border-dashed border-border bg-background px-6 text-center">
           <div>
             <p className="font-medium text-foreground">还没有团队动态</p>
             <p className="mt-1 text-sm text-muted-foreground">团队成员提交报告后，会在这里显示。</p>

@@ -40,9 +40,9 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
   return (
     <form
       onSubmit={submit}
-      className={`flex flex-col gap-4 ${compact ? "" : "rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs"}`}
+      className={`flex flex-col gap-4 ${compact ? "" : "rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs"}`}
     >
-      <h2 className={compact ? "sr-only" : "text-title-2-medium"}>提交阻塞</h2>
+      <h2 className={compact ? "sr-only" : "text-xl font-medium leading-7"}>提交阻塞</h2>
       <Textarea
         label="阻塞描述"
         isRequired

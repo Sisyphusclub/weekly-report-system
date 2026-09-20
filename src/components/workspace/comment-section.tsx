@@ -54,20 +54,20 @@ export function CommentSection({ reportId }: { reportId: string }) {
     setSaving(false);
   }
   return (
-    <section className="flex flex-col gap-4 rounded-3xl border border-border-button-default p-6">
-      <h2 className="text-title-2-medium">评论</h2>
+    <section className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6">
+      <h2 className="text-xl font-medium leading-7">评论</h2>
       {loading ? (
-        <p className="text-text-secondary">加载中...</p>
+        <p className="text-slate-500">加载中...</p>
       ) : items.length ? (
         <ul className="flex flex-col gap-4">
           {items.map((item) => (
             <li
               key={item.id}
-              className="border-b border-separator-border pb-4 last:border-0"
+              className="border-b border-slate-200 pb-4 last:border-0"
             >
               <div className="flex items-center justify-between">
                 <strong>{item.authorName}</strong>
-                <time className="text-body-regular text-text-secondary">
+                <time className="text-sm font-normal leading-5 text-slate-500">
                   {new Date(item.createdAt).toLocaleString("zh-CN")}
                 </time>
               </div>
@@ -83,10 +83,10 @@ export function CommentSection({ reportId }: { reportId: string }) {
           ))}
         </ul>
       ) : (
-        <p className="text-text-secondary">暂无评论</p>
+        <p className="text-slate-500">暂无评论</p>
       )}
       {replyTo && (
-        <p className="text-body-regular text-text-secondary">
+        <p className="text-sm font-normal leading-5 text-slate-500">
           正在回复评论{" "}
           <Button variant="ghost" onClick={() => setReplyTo(null)}>
             取消

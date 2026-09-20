@@ -84,24 +84,24 @@ export default async function WeeklyPage({
     <WorkspaceShell actor={actor} selected="weekly">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <p className="text-caption-1-semibold uppercase tracking-[0.08em] text-accent-600">
+          <p className="text-xs font-semibold leading-4 uppercase tracking-[0.08em] text-blue-600">
             周报周期 · {weekStart.replaceAll("-", ".")}
           </p>
-          <h1 className="mt-2 text-title-1-semibold">本周周报</h1>
-          <p className="mt-2 text-body-regular text-text-secondary">
+          <h1 className="mt-2 text-2xl font-semibold leading-8">本周周报</h1>
+          <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
             汇总本周日报，复盘阻塞，并明确下周重点里程碑。
           </p>
         </div>
         <Badge
           variant="caption"
-          color={item?.status === "SUBMITTED" ? "lime" : "yellow"}
+          color={item?.status === "SUBMITTED" ? "success" : "warning"}
         >
           {item?.status === "SUBMITTED" ? "已提交快照" : "草稿待提交"}
         </Badge>
       </header>
       <form
         action="/weekly"
-        className="flex flex-wrap items-end gap-3 rounded-xl border border-border-button-default bg-background-primary-default p-4 shadow-xs"
+        className="flex flex-wrap items-end gap-3 rounded-xl border border-slate-200/80 bg-white p-4 shadow-xs"
       >
         <Input name="date" type="date" label="本周日期" defaultValue={date} />
         <Button type="submit" variant="secondary">
@@ -109,23 +109,23 @@ export default async function WeeklyPage({
         </Button>
       </form>
       <section
-        className={`rounded-2xl border p-4 ${missingDays.length ? "border-status-yellow-text/30 bg-status-yellow-background" : "border-status-lime-text/30 bg-status-lime-background"}`}
+        className={`rounded-xl border p-4 ${missingDays.length ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
       >
         <div className="flex items-start gap-3">
           <RiFlagLine
-            className={`mt-0.5 size-5 shrink-0 ${missingDays.length ? "text-status-yellow-text" : "text-status-lime-text"}`}
+            className={`mt-0.5 size-5 shrink-0 ${missingDays.length ? "text-amber-700" : "text-emerald-700"}`}
             aria-hidden
           />
           <div>
             <p
-              className={`text-body-semibold ${missingDays.length ? "text-status-yellow-text" : "text-status-lime-text"}`}
+              className={`text-sm font-semibold leading-5 ${missingDays.length ? "text-amber-700" : "text-emerald-700"}`}
             >
               {missingDays.length
                 ? `还有 ${missingDays.length} 个工作日未提交日报`
                 : "本周日报已全部提交"}
             </p>
             <p
-              className={`mt-1 text-caption-1-regular ${missingDays.length ? "text-status-yellow-text" : "text-status-lime-text"}`}
+              className={`mt-1 text-xs font-normal leading-4 ${missingDays.length ? "text-amber-700" : "text-emerald-700"}`}
             >
               {missingDays.length
                 ? `缺少：${missingDays.join("、")}。提交周报前请先补齐。`
@@ -135,7 +135,7 @@ export default async function WeeklyPage({
         </div>
       </section>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.2fr)_minmax(340px,0.8fr)]">
-        <section className="min-w-0 rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+        <section className="min-w-0 rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
           <SectionHeading
             icon={RiFileCopy2Line}
             title="本周实际工作聚合"
@@ -151,15 +151,15 @@ export default async function WeeklyPage({
             {days.map((day, index) => (
               <div key={day} className="flex gap-4 py-4">
                 <div className="w-16 shrink-0">
-                  <p className="text-caption-1-semibold text-text-primary">
+                  <p className="text-xs font-semibold leading-4 text-slate-900">
                     周{["一", "二", "三", "四", "五"][index]}
                   </p>
-                  <p className="mt-1 text-caption-2-regular text-text-tertiary">
+                  <p className="mt-1 text-[11px] font-normal leading-4 text-slate-500">
                     {day.slice(5).replace("-", ".")}
                   </p>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-body-regular text-text-secondary">
+                  <p className="text-sm font-normal leading-5 text-slate-500">
                     {index < 3
                       ? "日报已提交，工作内容将在生成快照后展示。"
                       : "等待日报提交后自动汇总。"}
@@ -167,12 +167,12 @@ export default async function WeeklyPage({
                   <div className="mt-2 flex flex-wrap gap-2">
                     <Badge
                       variant="caption"
-                      color={index < 3 ? "lime" : "yellow"}
+                      color={index < 3 ? "success" : "warning"}
                     >
                       {index < 3 ? "已提交" : "待提交"}
                     </Badge>
                     {index < 3 && (
-                      <Badge variant="caption" color="blue">
+                      <Badge variant="caption" color="info">
                         项目成果待润色
                       </Badge>
                     )}
@@ -183,38 +183,38 @@ export default async function WeeklyPage({
           </div>
         </section>
         <aside className="flex flex-col gap-4">
-          <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+          <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
             <SectionHeading
               icon={RiCheckboxCircleLine}
               title="未闭环阻塞复盘"
               detail={openBlockers.length ? `${openBlockers.length} 项待确认` : "确认问题是否带入下周"}
             />
-            <div className="mt-5 rounded-xl border border-dashed border-border-button-default px-4 py-8 text-center">
-              <p className="text-body-medium">暂无本周阻塞记录</p>
-              <p className="mt-1 text-caption-1-regular text-text-tertiary">
+            <div className="mt-5 rounded-xl border border-dashed border-slate-200/80 px-4 py-8 text-center">
+              <p className="text-sm font-medium leading-5">暂无本周阻塞记录</p>
+              <p className="mt-1 text-xs font-normal leading-4 text-slate-500">
                 日报中的阻塞会自动出现在这里。
               </p>
             </div>
           </section>
-          <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+          <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
             <SectionHeading
               icon={RiArrowRightLine}
               title="下周重点规划"
               detail="先写清工作计划与预期产出"
             />
-            <div className="mt-4 grid gap-2 text-caption-1-medium text-text-tertiary sm:grid-cols-[1fr_1.5fr_1fr_100px]">
+            <div className="mt-4 grid gap-2 text-xs font-medium leading-4 text-slate-500 sm:grid-cols-[1fr_1.5fr_1fr_100px]">
               <span>归属项目</span>
               <span>里程碑计划</span>
               <span>预期产出物</span>
               <span>截止日</span>
             </div>
-            <div className="mt-3 rounded-lg bg-background-secondary-default px-3 py-3 text-caption-1-regular text-text-tertiary">
+            <div className="mt-3 rounded-lg bg-slate-50 px-3 py-3 text-xs font-normal leading-4 text-slate-500">
               提交周报后可继续补充下周计划。
             </div>
           </section>
         </aside>
       </div>
-      <section className="rounded-2xl border border-border-button-default bg-background-primary-default p-5 shadow-xs">
+      <section className="rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs">
         <SectionHeading
           icon={RiSparklingLine}
           title="周报总结"
@@ -249,12 +249,12 @@ function SectionHeading({
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex min-w-0 items-start gap-3">
-        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-background-secondary-default text-accent-600">
+        <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-blue-600">
           <Icon className="size-4" aria-hidden />
         </span>
         <div>
-          <h2 className="text-title-3-semibold">{title}</h2>
-          <p className="mt-1 text-caption-1-regular text-text-tertiary">
+          <h2 className="text-lg font-semibold leading-6">{title}</h2>
+          <p className="mt-1 text-xs font-normal leading-4 text-slate-500">
             {detail}
           </p>
         </div>

@@ -550,8 +550,8 @@ export const AnimatedSidebar = forwardRef<HTMLElement, AnimatedSidebarProps>(
                 ? "border-border border-r"
                 : "border-border border-l"),
             variant === "floating" &&
-              "m-2 h-[calc(100svh-1rem)] rounded-2xl border border-border shadow-sm",
-            variant === "inset" && "m-2 h-[calc(100svh-1rem)] rounded-2xl",
+              "m-2 h-[calc(100svh-1rem)] rounded-xl border border-border shadow-sm",
+            variant === "inset" && "m-2 h-[calc(100svh-1rem)] rounded-xl",
             panelClassName,
           )}
         >
@@ -687,7 +687,7 @@ export const AnimatedSidebarInset = forwardRef<
       data-slot="sidebar-inset"
       className={cn(
         "relative flex min-h-svh min-w-0 flex-1 flex-col bg-background",
-        "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-2xl md:peer-data-[variant=inset]:shadow-sm",
+        "md:peer-data-[variant=inset]:m-2 md:peer-data-[variant=inset]:ml-0 md:peer-data-[variant=inset]:rounded-xl md:peer-data-[variant=inset]:shadow-sm",
         className,
       )}
     />

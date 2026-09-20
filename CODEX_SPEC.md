@@ -152,12 +152,12 @@ BEUI Pro 通过授权私有 Registry 提供组件源码，不作为运行时黑�
 - 状态不得只依靠颜色表达，必须同时有图标和文本。
 - 键盘操作、焦点状态、表单错误和读屏语义达到 WCAG 2.1 AA。
 
-状态色必须使用语义 Token：
+状态色必须使用 BEUI Pro 语义 Token：
 
-- 完成：`status-lime-text`
-- 推进中 / 常规计划：`primary` 或 `status-blue-text`
-- 待跟进 / 延期：`status-yellow-text` 或 `status-orange-text`
-- 风险 / 阻塞 / 需协调：`destructive` 或 `status-rose-text`
+- 完成：`success` / Emerald 语义色
+- 推进中 / 常规计划：`primary` / `info` / Blue 语义色
+- 待跟进 / 延期：`warning` / Amber 语义色
+- 风险 / 阻塞 / 需协调：`destructive` / `danger` / Rose 语义色
 
 ## 6. 角色与权限
 

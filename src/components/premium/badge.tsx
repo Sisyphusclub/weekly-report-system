@@ -5,42 +5,28 @@ import { AnimatedBadge, type AnimatedBadgeStatus } from "@/components/motion/ani
 import { cx } from "@/utils/cx";
 
 export type BadgeTone =
-  | "soft"
   | "neutral"
-  | "blue"
-  | "purple"
-  | "lime"
-  | "yellow"
-  | "orange"
-  | "rose"
-  | "pink"
-  | "gray"
-  | "cyan"
-  | "processing"
-  | "project";
+  | "info"
+  | "success"
+  | "warning"
+  | "danger"
+  | "processing";
 
 const statusByTone: Record<BadgeTone, AnimatedBadgeStatus> = {
-  soft: "neutral",
   neutral: "neutral",
-  blue: "info",
-  purple: "info",
-  lime: "success",
-  yellow: "warning",
-  orange: "warning",
-  rose: "danger",
-  pink: "danger",
-  gray: "neutral",
-  cyan: "info",
+  info: "info",
+  success: "success",
+  warning: "warning",
+  danger: "danger",
   processing: "info",
-  project: "neutral",
 };
 
-const toneClass: Partial<Record<BadgeTone, string>> = {
+const toneClass: Record<BadgeTone, string> = {
   neutral: "border-slate-200 bg-slate-100 text-slate-700",
-  blue: "border-status-blue-text/25 bg-status-blue-background text-status-blue-text",
-  purple: "border-status-purple-text/25 bg-status-purple-background text-status-purple-text",
-  orange: "border-status-orange-text/25 bg-status-orange-background text-status-orange-text",
-  project: "border-project-tag-border bg-project-tag-background text-project-tag-text",
+  info: "border-blue-200 bg-blue-50 text-blue-700",
+  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
+  warning: "border-amber-200 bg-amber-50 text-amber-700",
+  danger: "border-rose-200 bg-rose-50 text-rose-700",
   processing: "border-blue-200 bg-blue-50 text-blue-700",
 };
 
@@ -67,8 +53,8 @@ export function Badge({
   className,
   ...props
 }: BadgeProps) {
-  const resolved = tone ?? color ?? "soft";
-  const isStatus = ["lime", "yellow", "orange", "rose", "pink"].includes(resolved);
+  const resolved = tone ?? color ?? "neutral";
+  const isStatus = ["success", "warning", "danger"].includes(resolved);
   return (
     <AnimatedBadge
       {...props}

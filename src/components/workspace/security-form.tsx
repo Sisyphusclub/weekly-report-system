@@ -42,8 +42,8 @@ export function SecurityForm() {
 
   return (
     <form onSubmit={submit} className="flex flex-col gap-5">
-      <h2 className="text-title-2-medium">修改密码</h2>
-      <p className="text-body-regular text-text-secondary">
+      <h2 className="text-xl font-medium leading-7">修改密码</h2>
+      <p className="text-sm font-normal leading-5 text-slate-500">
         新密码为 12–128 位，保存后其他设备会话将退出。
       </p>
       <Input
@@ -67,7 +67,7 @@ export function SecurityForm() {
         isDisabled={busy}
       />
       {message && (
-        <p role="status" className="text-body-regular">
+        <p role="status" className="text-sm font-normal leading-5">
           {message}
         </p>
       )}

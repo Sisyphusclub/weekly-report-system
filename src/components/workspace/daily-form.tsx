@@ -519,7 +519,7 @@ export function DailyForm({
             <p className="text-xs font-semibold text-primary">今日工作</p>
             <Badge
               variant="caption"
-              color={state.submitted ? "lime" : "yellow"}
+              color={state.submitted ? "success" : "warning"}
             >
               {state.submitted
                 ? "已提交"
@@ -711,7 +711,7 @@ export function DailyForm({
           </div>
 
           {blockerOpen ? (
-            <div className="mt-3 rounded-lg border border-status-rose-border bg-status-rose-background p-4">
+            <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-4">
               {projects.length ? (
                 <div className="space-y-3">
                   {blockers.map((blocker, index) => (
@@ -796,7 +796,7 @@ export function DailyForm({
                           if (!next.length) setBlockerOpen(false);
                         }}
                         aria-label={`删除卡点 ${index + 1}`}
-                        className="text-status-rose-text"
+                        className="text-rose-700"
                       >
                         <Trash2 className="size-4" aria-hidden />
                       </Button>
@@ -810,14 +810,14 @@ export function DailyForm({
                     onClick={() =>
                       updateBlockers([...blockers, blankBlocker(projects)])
                     }
-                    className="text-status-rose-text"
+                    className="text-rose-700"
                   >
                     <Plus className="size-3.5" aria-hidden />
                     添加卡点
                   </Button>
                 </div>
               ) : (
-                <p className="flex items-center gap-2 text-sm text-status-rose-text">
+                <p className="flex items-center gap-2 text-sm text-rose-700">
                   <AlertTriangle className="size-4 shrink-0" aria-hidden />
                   暂无可关联项目，请联系管理员配置项目。
                 </p>
@@ -863,8 +863,8 @@ export function DailyForm({
             <PreviewEntries title="工作计划 / 进度" entries={plans} />
             <PreviewEntries title="工作内容 / 产出" entries={works} />
             {blockers.length ? (
-              <div className="border-t border-status-rose-border pt-3 lg:col-span-2">
-                <h3 className="text-sm font-semibold text-status-rose-text">
+              <div className="border-t border-rose-200 pt-3 lg:col-span-2">
+                <h3 className="text-sm font-semibold text-rose-700">
                   阻塞事项
                 </h3>
                 <ul className="mt-2 space-y-1 text-sm text-foreground">
@@ -892,7 +892,7 @@ export function DailyForm({
       ) : null}
 
       {remote ? (
-        <Card className="border-status-rose-border">
+        <Card className="border-rose-200">
           <CardBody>
             <h2 className="text-base font-semibold text-foreground">
               远端已有更新

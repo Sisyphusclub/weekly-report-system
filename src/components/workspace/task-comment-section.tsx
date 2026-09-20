@@ -77,15 +77,15 @@ export function TaskCommentSection({
   }
   return (
     <details className="w-full">
-      <summary className="cursor-pointer text-body-medium">
+      <summary className="cursor-pointer text-sm font-medium leading-5">
         任务评论{items.length ? `（${items.length}）` : ""}
       </summary>
       {items.length ? (
         <ul className="my-3 flex flex-col gap-2">
           {items.map((item) => (
-            <li key={item.id} className="border-b border-separator-border pb-2">
+            <li key={item.id} className="border-b border-slate-200 pb-2">
               <strong>{item.authorName}</strong>
-              <span className="ml-2 text-body-regular text-text-secondary">
+              <span className="ml-2 text-sm font-normal leading-5 text-slate-500">
                 {new Date(item.createdAt).toLocaleString("zh-CN")}
               </span>
               {editing === item.id ? (
@@ -150,7 +150,7 @@ export function TaskCommentSection({
           ))}
         </ul>
       ) : (
-        <p className="my-3 text-text-secondary">暂无评论</p>
+        <p className="my-3 text-slate-500">暂无评论</p>
       )}
       <Textarea
         label={replyTo ? "回复内容" : "评论内容"}
