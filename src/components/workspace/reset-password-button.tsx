@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/base/buttons/button";
+import { EyeOff, KeyRound } from "lucide-react";
+import { Button } from "@/components/motion/button/base";
 export function ResetPasswordButton({
   id,
   username,
@@ -34,9 +35,17 @@ export function ResetPasswordButton({
     }
   }
   return credential ? (
-    <span className="text-body-regular">
-      临时密码：<code>{credential}</code>{" "}
-      <Button type="button" variant="ghost" onClick={() => setCredential(null)}>
+    <span className="flex flex-wrap items-center gap-2 text-sm">
+      临时密码：
+      <code className="rounded bg-muted px-1.5 py-1">{credential}</code>
+      <Button
+        type="button"
+        variant="ghost"
+        size="sm"
+        className="rounded-lg"
+        onClick={() => setCredential(null)}
+      >
+        <EyeOff className="size-3.5" aria-hidden />
         隐藏
       </Button>
     </span>
@@ -44,13 +53,20 @@ export function ResetPasswordButton({
     <span>
       <Button
         type="button"
-        variant="secondary"
+        variant="outline"
+        size="sm"
+        className="rounded-lg"
         disabled={pending}
         onClick={reset}
       >
+        <KeyRound className="size-3.5" aria-hidden />
         {pending ? "重置中…" : "重置密码"}
       </Button>
-      {message && <span role="status">{message}</span>}
+      {message && (
+        <span role="status" className="text-xs text-destructive">
+          {message}
+        </span>
+      )}
     </span>
   );
 }

@@ -7,10 +7,10 @@ test("unconfigured login is accessible, honest and responsive", async ({
   page.on("pageerror", (error) => errors.push(error.message));
   await page.goto("/login");
   await expect(
-    page.getByRole("heading", { name: "登录你的工作台" }),
+    page.getByRole("heading", { name: "登录", exact: true }),
   ).toBeVisible();
   await expect(page.getByRole("status")).toContainText("系统正在初始化");
-  await expect(page.getByRole("button", { name: "登录工作台" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "登录" })).toBeDisabled();
   await expect(
     page.getByRole("textbox", { name: "用户名", exact: true }),
   ).toBeDisabled();

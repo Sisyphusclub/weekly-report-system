@@ -48,7 +48,7 @@ async function main() {
         await page.locator('input[name="username"]').fill(username);
         await page.locator('input[name="password"]').fill(password);
         await page
-          .getByRole("button", { name: "登录工作台", exact: true })
+          .getByRole("button", { name: "登录", exact: true })
           .click();
         await page.waitForURL("**/dashboard", { timeout: 60000 });
         if (!page.url().endsWith("/dashboard")) {

@@ -6,8 +6,8 @@ import { user } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { CreateUserForm } from "@/components/workspace/create-user-form";
 import { ButtonLink } from "@/components/base/buttons/button";
-import { UserStatusButton } from "@/components/workspace/user-status-button";
-import { ResetPasswordButton } from "@/components/workspace/reset-password-button";
+import { PageHeading } from "@/components/dashboard/page-heading";
+import { UserManagementTable } from "@/components/workspace/user-management-table";
 export const metadata = { title: "账号管理" };
 export default async function UsersPage({
   searchParams,
@@ -35,49 +35,20 @@ export default async function UsersPage({
     .offset((page - 1) * 20);
   return (
     <WorkspaceShell actor={actor} selected="users">
-      <h1 className="text-title-1-medium">账号管理</h1>
+      <PageHeading
+        eyebrow="系统维护"
+        title="账号管理"
+        description="创建账号、调整使用状态并处理密码重置。"
+      />
       <CreateUserForm />
-      <section
-        aria-label="账号列表"
-        className="rounded-3xl border border-border-button-default p-6"
-      >
-        <ul className="divide-y divide-separator-border">
-          {rows.slice(0, 20).map((row) => (
-            <li
-              key={row.id}
-              className="flex flex-wrap items-center justify-between gap-4 py-4"
-            >
-              <p className="text-headline-medium">
-                {row.name} · {row.username}
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <UserStatusButton id={row.id} status={row.status} />
-                <ResetPasswordButton id={row.id} username={row.username} />
-              </div>
-              <p className="mt-2 text-body-regular text-text-secondary">
-                {{ EMPLOYEE: "员工", BOSS: "老板", ADMIN: "管理员" }[row.role]}{" "}
-                ·{" "}
-                {
-                  {
-                    PENDING: "待首次登录设置",
-                    ACTIVE: "正常",
-                    LOCKED: "锁定",
-                    DISABLED: "停用",
-                  }[row.status]
-                }
-                {row.title ? ` · ${row.title}` : ""}
-              </p>
-            </li>
-          ))}
-        </ul>
-      </section>
-      <footer className="flex gap-3">
+      <UserManagementTable rows={rows.slice(0, 20)} />
+      <footer className="flex items-center gap-3 text-sm text-muted-foreground">
         {page > 1 && (
           <ButtonLink href={`?page=${page - 1}`} variant="secondary">
             上一页
           </ButtonLink>
         )}
-        <span>第 {page} 页</span>
+        <span className="px-1">第 {page} 页</span>
         {rows.length > 20 && (
           <ButtonLink href={`?page=${page + 1}`} variant="secondary">
             下一页

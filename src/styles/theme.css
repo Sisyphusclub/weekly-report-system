@@ -644,6 +644,10 @@
    * the source of truth so both component systems follow the same theme. */
   --color-background: var(--color-background-primary-default);
   --color-foreground: var(--color-text-primary);
+  --color-card: var(--color-background-primary-default);
+  --color-card-foreground: var(--color-text-primary);
+  --color-popover: var(--color-background-primary-default);
+  --color-popover-foreground: var(--color-text-primary);
   --color-muted: var(--color-background-secondary-default);
   --color-muted-foreground: var(--color-text-secondary);
   --color-border: var(--color-separator-border);

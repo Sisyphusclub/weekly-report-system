@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/base/buttons/button";
+import { Power } from "lucide-react";
+import { Button } from "@/components/motion/button/base";
 export function UserStatusButton({
   id,
   status,
@@ -33,13 +34,20 @@ export function UserStatusButton({
     <span className="flex items-center gap-2">
       <Button
         type="button"
-        variant="secondary"
+        variant="outline"
+        size="sm"
+        className="rounded-lg"
         disabled={pending}
         onClick={toggle}
       >
+        <Power className="size-3.5" aria-hidden />
         {status === "DISABLED" ? "启用" : "停用"}
       </Button>
-      {message && <span role="status">{message}</span>}
+      {message && (
+        <span role="status" className="text-xs text-destructive">
+          {message}
+        </span>
+      )}
     </span>
   );
 }

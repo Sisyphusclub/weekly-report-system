@@ -6,6 +6,7 @@ import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/base/buttons/button";
 import { CopyFilterLink } from "@/components/workspace/copy-filter-link";
 import { ReportFilters } from "@/components/workspace/report-filters";
+import { ReportResultsTable } from "@/components/workspace/report-results-table";
 import { getDb } from "@/lib/db";
 import { user, project, category } from "@/lib/db/schema";
 import { and, asc, eq, ne } from "drizzle-orm";
@@ -112,44 +113,19 @@ export default async function ReportsPage({
       {!parsedDates.success && (
         <p role="alert">筛选条件无效，请重新选择后查询。</p>
       )}
-      <section className="rounded-3xl border border-border-button-default p-6">
-        {result.items.length ? (
-          <ul className="divide-y divide-separator-border">
-            {result.items.map((item) => (
-              <li
-                key={item.id}
-                className="flex flex-wrap items-center justify-between gap-4 py-4"
-              >
-                <div>
-                  <h2 className="text-headline-medium">
-                    {item.author} · {item.type === "DAILY" ? "日报" : "周报"} ·{" "}
-                    {item.date ?? item.weekStart}
-                  </h2>
-                  <p className="mt-2 text-body-regular text-text-secondary">
-                    {item.status === "DRAFT"
-                      ? "本人草稿"
-                      : `已提交 · 版本 ${item.revisionNumber}`}
-                    {item.wasLate ? " · 曾逾期" : ""}
-                  </p>
-                  <p className="mt-2 break-words text-body-regular">
-                    {item.summary || "未填写总结"}
-                  </p>
-                </div>
-                <ButtonLink href={`/reports/${item.id}`} variant="secondary">
-                  查看
-                </ButtonLink>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <div className="py-10 text-center">
-            <h2 className="text-headline-medium">没有符合条件的报告</h2>
-            <p className="mt-2 text-body-regular text-text-secondary">
-              可以尝试其他关键词，或等待团队提交报告。
-            </p>
-          </div>
-        )}
-      </section>
+      <ReportResultsTable
+        rows={result.items.map((item) => ({
+          id: item.id,
+          type: item.type,
+          status: item.status,
+          date: item.date,
+          weekStart: item.weekStart,
+          summary: item.summary ?? "",
+          author: item.author,
+          wasLate: item.wasLate,
+          revisionNumber: item.revisionNumber,
+        }))}
+      />
       <footer className="flex items-center justify-between">
         <span className="text-body-regular text-text-secondary">
           第 {page} 页 · 每页 {PAGE_SIZE} 份

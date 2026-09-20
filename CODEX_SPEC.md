@@ -42,30 +42,27 @@
 
 ## 2. 当前项目基线与迁移约束
 
-当前目录尚不是可运行的前端或全栈项目：
+当前项目已建立可运行基线：
 
-- 没有应用入口、路由、`tsconfig.json`、构建脚本或测试体系。
-- `package.json` 仍是最小 CommonJS 包配置。
-- React 当前只是传递依赖，不是项目直接依赖。
-- 已有 BoardUI CLI 复制出的本地组件源码、样式和辅助函数。
-- 不存在名为 `boardui` 的 npm 包依赖。
+- Next.js 16 App Router、React 19、TypeScript 严格模式和 Tailwind CSS v4。
+- PostgreSQL、版本化迁移、Better Auth、Vitest 与 Playwright 验证链路。
+- BEUI Pro 私有 Registry 已通过 `components.json` 接入，组件以源码形式纳入项目。
+- BEUI Pro 生成源码集中在 `src/components/premium` 与 `src/components/motion`，共享工具位于 `src/lib`。
+- `@/*` 路径别名、Design Tokens、开发环境种子数据和本地基础设施脚本均已建立。
 
-正式实现前必须：
+后续迁移必须：
 
-1. 初始化 Git，并提交当前规格、锁文件和本地 BoardUI 源码作为基线。
-2. 创建完整 TypeScript 全栈 React 工程。
-3. 把现有 BoardUI 源码迁移到统一的 `src/components`、`src/styles`、`src/hooks` 和 `src/lib` 目录。
-4. 明确配置 `@/*` 路径别名。
-5. 将 React、React DOM 和所有运行时依赖声明为直接依赖。
-6. 不提交 `node_modules`、密钥、数据库文件、用户附件或生产数据。
-
-迁移不得静默删除现有 BoardUI 源码；移动前后应核对文件清单和导入关系。
+1. 保留现有服务端数据、权限和领域逻辑，只替换或收敛前端视觉与交互层。
+2. 新增组件优先从 BEUI Pro 私有 Registry 获取，再按本项目中文业务场景适配。
+3. 旧组件只有在调用方全部迁移且验证通过后才能删除，不得静默破坏导入关系。
+4. React、React DOM 和所有运行时依赖必须保持为直接依赖并锁定版本。
+5. 不提交 `node_modules`、授权令牌、密钥、数据库文件、用户附件或生产数据。
 
 ## 3. 交付分期
 
 ### 3.1 Release 1
 
-- 用户名密码登录、TOTP 和会话管理。
+- 用户名密码登录和会话管理。
 - 员工、老板、管理员三类角色及服务端权限控制。
 - 日报、周报、计划滚动和修订版本。
 - 成员视角与项目视角看板。
@@ -120,31 +117,47 @@ Release 1.1 功能不得在 Release 1 中以不可用按钮、假数据或占位
 
 ## 5. UI 与设计系统
 
-### 5.1 BoardUI 使用约束
+### 5.1 BEUI Pro 使用约束
 
-BoardUI 在本项目中是由 CLI 复制到本地的组件源码，不是 npm 包。
+BEUI Pro 通过授权私有 Registry 提供组件源码，不作为运行时黑盒包使用。
 
-- 优先复用现有本地 BoardUI 组件。
-- 缺少基础控件时，通过 BoardUI CLI 添加，再纳入本地源码管理。
-- Button、Select、Input、Textarea、Modal、Card、Badge、Tabs、DatePicker 等基础控件不得在业务页面重复手写。
-- 业务代码从本地 `@/components/...` 路径导入，不得从不存在的 `boardui` 包导入。
-- 若 BoardUI 没有满足要求的控件，可基于可访问的底层组件封装，并记录原因。
+- Registry 配置统一维护在 `components.json`，命名空间为 `@beui-pro`；社区组件使用 `@beui`。
+- 授权只通过用户级或 CI 密钥环境变量 `BEUI_PRO_TOKEN` 注入，禁止写入源码、文档、日志、截图或 Git 历史。
+- 新组件使用 `npx shadcn@latest add @beui-pro/{name}` 获取，并将生成源码、依赖和锁文件一并审查、测试和提交。
+- 高级业务组件放在 `src/components/premium`，动画基础组件放在 `src/components/motion`，共享 Hook 与工具放在 `src/lib`。
+- 工作台壳层优先使用 Animated Sidebar；登录使用 Auth Split；项目摘要使用 Compact Card；管理列表优先使用 Responsive Data Table；空数据和无搜索结果使用对应 Empty State。
+- Button、Select、Input、Textarea、Dialog、Card、Badge、Tabs、DatePicker、Dropdown 和 Table 等基础控件不得在业务页面重复手写。
+- 交互底层优先复用 Radix UI Headless Components；复杂数据逻辑优先使用 TanStack 系列能力，图表使用 Recharts，动画统一使用 Motion。
+- 业务代码只从本地 `@/components/...` 路径导入 BEUI Pro 源码，避免页面依赖远程 Registry 的运行时可用性。
+- Registry 组件必须适配简体中文、现有权限与真实接口；不得保留英文演示文案、静态提交成功、无效按钮或与业务无关的 Mock 状态。
+- 对 Registry 源码的产品化修改应保持接口清晰，避免在具体业务页面复制组件内部实现。
 
-### 5.2 视觉原则
+### 5.2 Design Tokens 与组件状态
+
+- 颜色、字体、间距、圆角、边框、阴影、层级和动画时序统一由 `src/styles/theme.css` 管理。
+- BEUI Pro 使用 `background`、`foreground`、`card`、`muted`、`primary`、`border`、`ring` 和 `destructive` 等语义 Token；这些 Token 必须映射到本项目现有主题变量。
+- 业务页面不得硬编码品牌色、状态色、阴影或圆角值；动态数据宽度等非主题数值除外。
+- 重复出现的页面标题、数据表、筛选栏、空状态、状态标识和分页应沉淀为共享组件。
+- 组件必须覆盖默认、悬停、激活、聚焦、禁用、加载、成功、失败、空状态和响应式布局。
+- 动画必须服务于状态变化，并遵循 `prefers-reduced-motion`；不得用持续动画干扰高频操作。
+
+### 5.3 视觉原则
 
 - 清晰、克制、高信息密度、适合频繁扫描与重复操作。
 - 桌面端优先覆盖 1280-1920px；移动端保证填报、筛选和查看可用。
 - 窄屏中的复杂表格改为纵向任务列表，不强行压缩桌面表格。
-- 第一版只提供高质量浅色主题。
+- 以浅色主题为第一优先，同时保留语义 Token 的深色主题扩展能力。
+- 页面区块采用平面信息层级，卡片只用于独立重复项、工具或模态内容，禁止卡片嵌套卡片。
+- 圆角、阴影和强调色保持克制；状态同时使用文本、图标或形状，不只依靠颜色。
 - 状态不得只依靠颜色表达，必须同时有图标和文本。
 - 键盘操作、焦点状态、表单错误和读屏语义达到 WCAG 2.1 AA。
 
-状态色：
+状态色必须使用语义 Token：
 
-- 完成：绿色 `#26c281`
-- 推进中 / 常规计划：蓝色 `#4f8cff`
-- 待跟进 / 延期：橙色 `#ffb020`
-- 风险 / 阻塞 / 需协调：红色 `#ff4d4f`
+- 完成：`status-lime-text`
+- 推进中 / 常规计划：`primary` 或 `status-blue-text`
+- 待跟进 / 延期：`status-yellow-text` 或 `status-orange-text`
+- 风险 / 阻塞 / 需协调：`destructive` 或 `status-rose-text`
 
 ## 6. 角色与权限
 
@@ -617,7 +630,7 @@ Release 1 只有同时满足以下条件才能视为完成：
 
 1. 初始化 Git，建立现有文件基线。
 2. 创建 Next.js / TypeScript 工程与质量门禁。
-3. 迁移本地 BoardUI 组件，建立主题和页面壳层。
+3. 接入 BEUI Pro 私有 Registry，建立语义主题、共享组件和页面壳层。
 4. 建立 PostgreSQL schema、迁移和种子策略。
 5. 实现账号、密码、TOTP、会话和角色权限。
 6. 实现项目、分类、单位和工作日历后台。
