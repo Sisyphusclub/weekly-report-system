@@ -1,5 +1,8 @@
 "use client";
 
+import { RotateCcw, Search } from "lucide-react";
+import type { ComponentProps } from "react";
+import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { Input } from "@/components/premium/forms";
 import { Select, SelectItem } from "@/components/premium/forms";
 import { Button, ButtonLink } from "@/components/motion/button/base";
@@ -18,115 +21,160 @@ export function ReportFilters({
   projects: Array<{ id: string; name: string }>;
   categories: Array<{ id: string; name: string }>;
 }) {
+  const activeFilterCount = Object.values(filters).filter(Boolean).length;
+
   return (
-    <form action="/reports" className="flex flex-wrap items-end gap-3">
-      <Input
-        name="q"
-        label="搜索报告总结"
-        defaultValue={query}
-        placeholder="输入关键词"
-        maxLength={200}
+    <Card className="overflow-visible">
+      <CardHeader className="flex flex-wrap items-center justify-between gap-3 bg-slate-50/60">
+        <div>
+          <h2 className="text-sm font-semibold leading-5 text-slate-900">筛选报告</h2>
+          <p className="mt-0.5 text-xs leading-4 text-slate-500">
+            按关键词、日期和报告维度缩小查询范围
+          </p>
+        </div>
+        {activeFilterCount > 0 ? (
+          <span className="inline-flex items-center rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-xs font-medium leading-4 text-blue-700">
+            已应用 {activeFilterCount} 项条件
+          </span>
+        ) : null}
+      </CardHeader>
+      <CardBody>
+        <form
+          action="/reports"
+          role="search"
+          aria-label="报告筛选"
+          className="grid grid-cols-1 gap-x-4 gap-y-4 sm:grid-cols-2 xl:grid-cols-12"
+        >
+          <Input
+            className="sm:col-span-2 xl:col-span-4"
+            size="small"
+            name="q"
+            label="关键词"
+            defaultValue={query}
+            placeholder="搜索报告总结或内容"
+            maxLength={200}
+            leadingIcon={Search}
+          />
+          <Input
+            className="xl:col-span-2"
+            size="small"
+            name="from"
+            type="date"
+            label="开始日期"
+            defaultValue={filters.from ?? ""}
+          />
+          <Input
+            className="xl:col-span-2"
+            size="small"
+            name="to"
+            type="date"
+            label="结束日期"
+            defaultValue={filters.to ?? ""}
+          />
+          <FilterSelect
+            className="xl:col-span-2"
+            id="report-member-label"
+            label="成员"
+            name="member"
+            defaultSelectedKey={filters.member ?? "ALL"}
+          >
+            <SelectItem id="ALL">全部成员</SelectItem>
+            {members.map((member) => (
+              <SelectItem key={member.id} id={member.id} textValue={member.name}>
+                {member.name}
+              </SelectItem>
+            ))}
+            {filters.member &&
+              !members.some((member) => member.id === filters.member) && (
+                <SelectItem id={filters.member}>所选成员不可用</SelectItem>
+              )}
+          </FilterSelect>
+          <FilterSelect
+            className="xl:col-span-2"
+            id="report-project-label"
+            label="项目"
+            name="project"
+            defaultSelectedKey={filters.project ?? "ALL"}
+          >
+            <SelectItem id="ALL">全部项目</SelectItem>
+            {projects.map((item) => (
+              <SelectItem key={item.id} id={item.id} textValue={item.name}>
+                {item.name}
+              </SelectItem>
+            ))}
+          </FilterSelect>
+          <FilterSelect
+            className="xl:col-span-2"
+            id="report-category-label"
+            label="分类"
+            name="category"
+            defaultSelectedKey={filters.category ?? "ALL"}
+          >
+            <SelectItem id="ALL">全部分类</SelectItem>
+            {categories.map((item) => (
+              <SelectItem key={item.id} id={item.id} textValue={item.name}>
+                {item.name}
+              </SelectItem>
+            ))}
+          </FilterSelect>
+          <FilterSelect
+            className="xl:col-span-2"
+            id="report-type-label"
+            label="报告类型"
+            name="type"
+            defaultSelectedKey={filters.type ?? "ALL"}
+          >
+            <SelectItem id="ALL">全部类型</SelectItem>
+            <SelectItem id="DAILY">日报</SelectItem>
+            <SelectItem id="WEEKLY">周报</SelectItem>
+          </FilterSelect>
+          <FilterSelect
+            className="xl:col-span-2"
+            id="report-status-label"
+            label="报告状态"
+            name="status"
+            defaultSelectedKey={filters.status ?? "ALL"}
+          >
+            <SelectItem id="ALL">全部状态</SelectItem>
+            <SelectItem id="DRAFT">本人草稿</SelectItem>
+            <SelectItem id="SUBMITTED">已提交</SelectItem>
+          </FilterSelect>
+          <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 sm:col-span-2 xl:col-span-12">
+            <Button type="submit" size="small" leadingIcon={Search}>
+              查询报告
+            </Button>
+            <ButtonLink
+              href="/reports"
+              variant="ghost"
+              size="small"
+              leadingIcon={RotateCcw}
+            >
+              重置条件
+            </ButtonLink>
+          </div>
+        </form>
+      </CardBody>
+    </Card>
+  );
+}
+
+function FilterSelect({
+  id,
+  label,
+  className,
+  ...props
+}: ComponentProps<typeof Select> & { id: string; label: string }) {
+  return (
+    <div className={className}>
+      <span className="mb-1.5 block text-xs font-medium leading-4 text-slate-700" id={id}>
+        {label}
+      </span>
+      <Select
+        {...props}
+        aria-labelledby={id}
+        triggerClassName="min-h-9 rounded-lg px-3 text-sm"
       />
-      <Input
-        name="from"
-        type="date"
-        label="开始日期"
-        defaultValue={filters.from ?? ""}
-      />
-      <Input
-        name="to"
-        type="date"
-        label="结束日期"
-        defaultValue={filters.to ?? ""}
-      />
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium leading-5" id="report-member-label">
-          成员
-        </span>
-        <Select
-          name="member"
-          aria-labelledby="report-member-label"
-          defaultSelectedKey={filters.member ?? "ALL"}
-        >
-          <SelectItem id="ALL">全部成员</SelectItem>
-          {members.map((member) => (
-            <SelectItem key={member.id} id={member.id} textValue={member.name}>
-              {member.name}
-            </SelectItem>
-          ))}
-          {filters.member &&
-            !members.some((member) => member.id === filters.member) && (
-              <SelectItem id={filters.member}>所选成员不可用</SelectItem>
-            )}
-        </Select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium leading-5" id="report-project-label">
-          项目
-        </span>
-        <Select
-          name="neutral"
-          aria-labelledby="report-project-label"
-          defaultSelectedKey={filters.project ?? "ALL"}
-        >
-          <SelectItem id="ALL">全部项目</SelectItem>
-          {projects.map((item) => (
-            <SelectItem key={item.id} id={item.id} textValue={item.name}>
-              {item.name}
-            </SelectItem>
-          ))}
-        </Select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium leading-5" id="report-category-label">
-          分类
-        </span>
-        <Select
-          name="category"
-          aria-labelledby="report-category-label"
-          defaultSelectedKey={filters.category ?? "ALL"}
-        >
-          <SelectItem id="ALL">全部分类</SelectItem>
-          {categories.map((item) => (
-            <SelectItem key={item.id} id={item.id} textValue={item.name}>
-              {item.name}
-            </SelectItem>
-          ))}
-        </Select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium leading-5" id="report-type-label">
-          报告类型
-        </span>
-        <Select
-          name="type"
-          aria-labelledby="report-type-label"
-          defaultSelectedKey={filters.type ?? "ALL"}
-        >
-          <SelectItem id="ALL">全部类型</SelectItem>
-          <SelectItem id="DAILY">日报</SelectItem>
-          <SelectItem id="WEEKLY">周报</SelectItem>
-        </Select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-sm font-medium leading-5" id="report-status-label">
-          报告状态
-        </span>
-        <Select
-          name="status"
-          aria-labelledby="report-status-label"
-          defaultSelectedKey={filters.status ?? "ALL"}
-        >
-          <SelectItem id="ALL">全部状态</SelectItem>
-          <SelectItem id="DRAFT">本人草稿</SelectItem>
-          <SelectItem id="SUBMITTED">已提交</SelectItem>
-        </Select>
-      </div>
-      <Button type="submit">查询</Button>
-      <ButtonLink href="/reports" variant="ghost">
-        重置
-      </ButtonLink>
-    </form>
+    </div>
   );
 }
 

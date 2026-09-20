@@ -1,4 +1,5 @@
 "use client";
+import { Link2 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/motion/button/base";
 export function CopyFilterLink({ href }: { href: string }) {
@@ -15,7 +16,13 @@ export function CopyFilterLink({ href }: { href: string }) {
   }
   return (
     <span className="inline-flex items-center gap-2">
-      <Button type="button" variant="secondary" onClick={copy}>
+      <Button
+        type="button"
+        variant="secondary"
+        size="small"
+        leadingIcon={Link2}
+        onClick={copy}
+      >
         复制筛选链接
       </Button>
       {message && (

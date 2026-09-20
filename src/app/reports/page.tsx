@@ -91,25 +91,28 @@ export default async function ReportsPage({
           共 {result.total} 份可查看的报告
         </p>
       </header>
-      <ReportFilters
-        key={reportFilterParams(query, dates)}
-        query={query}
-        filters={dates}
-        members={members}
-        projects={projects}
-        categories={categories}
-      />
-      {parsedDates.success && (
-        <>
-          <ButtonLink
-            href={`/api/reports/export?${reportFilterParams(query, dates)}`}
-            variant="secondary"
-          >
-            导出 JSON
-          </ButtonLink>
-          <CopyFilterLink href={href(1)} />
-        </>
-      )}
+      <div className="space-y-4">
+        <ReportFilters
+          key={reportFilterParams(query, dates)}
+          query={query}
+          filters={dates}
+          members={members}
+          projects={projects}
+          categories={categories}
+        />
+        {parsedDates.success && (
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <ButtonLink
+              href={`/api/reports/export?${reportFilterParams(query, dates)}`}
+              variant="secondary"
+              size="small"
+            >
+              导出 JSON
+            </ButtonLink>
+            <CopyFilterLink href={href(1)} />
+          </div>
+        )}
+      </div>
       {!parsedDates.success && (
         <p role="alert">筛选条件无效，请重新选择后查询。</p>
       )}
