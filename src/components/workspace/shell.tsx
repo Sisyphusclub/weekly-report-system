@@ -60,6 +60,7 @@ type NavKey =
   | "members"
   | "weekly"
   | "notifications"
+  | "activity"
   | "tasks"
   | "calendar"
   | "exemptions"
@@ -304,6 +305,7 @@ function navigationForRole(
         items: [
           nav("dashboard", "日报总览", "/dashboard", LayoutDashboard),
           nav("reports", "我的报告", "/reports", FileChartColumn),
+          nav("notifications", "通知中心", "/notifications", Bell),
         ],
       },
       {
@@ -341,6 +343,8 @@ function navigationForRole(
           nav("projects", "项目协同", "/boss/projects", FolderKanban),
           nav("blockers", "阻塞中心", "/blockers", CircleAlert),
           nav("reports", "报告查询", "/reports", ChartNoAxesCombined),
+          nav("activity", "业务变更", "/activity", Files),
+          nav("notifications", "通知中心", "/notifications", Bell),
         ],
       },
     ];
@@ -352,9 +356,12 @@ function navigationForRole(
         nav("dashboard", "概览", "/dashboard", LayoutDashboard),
         nav("daily", "今日工作", "/daily", ClipboardCheck),
         nav("weekly", "本周周报", "/weekly", CalendarDays),
+        nav("projects", "项目看板", "/projects", FolderKanban),
         nav("tasks", "任务", "/tasks", ListChecks),
         nav("blockers", "阻塞", "/blockers", CircleAlert),
         nav("reports", "报告", "/reports", Files),
+        nav("activity", "团队动态", "/activity", Users),
+        nav("notifications", "通知中心", "/notifications", Bell),
       ],
     },
   ];
@@ -384,6 +391,7 @@ function pageLabel(selected: NavKey, role: Role) {
       blockers: "阻塞中心",
       reports: role === "ADMIN" ? "我的报告" : "报告查询",
       notifications: "通知中心",
+      activity: role === "BOSS" ? "业务变更" : "团队动态",
       users: "账号管理",
       members: "成员看板",
       projects: role === "BOSS" ? "项目协同" : "项目管理",

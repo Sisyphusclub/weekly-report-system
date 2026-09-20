@@ -2,9 +2,9 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/base/input/input";
-import { Textarea } from "@/components/base/textarea/textarea";
-import { Button } from "@/components/base/buttons/button";
+import { Input } from "@/components/premium/forms";
+import { Textarea } from "@/components/premium/forms";
+import { Button } from "@/components/motion/button/base";
 
 export function SettingsForm({
   name,
@@ -94,3 +94,4 @@ export function SettingsForm({
     </form>
   );
 }
+

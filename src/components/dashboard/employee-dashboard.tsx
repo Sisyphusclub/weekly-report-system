@@ -12,15 +12,27 @@ import {
   Gauge,
   ListChecks,
   Plus,
+  ChevronDown,
+  LoaderCircle,
 } from "lucide-react";
-import { Chip } from "@/components/base/badges/chip";
+import { Badge } from "@/components/premium/badge";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
+import { Input, Select, SelectItem, Textarea } from "@/components/premium/forms";
+import {
+  AnimatedDropdown,
+  AnimatedDropdownContent,
+  AnimatedDropdownItem,
+  AnimatedDropdownItemIcon,
+  AnimatedDropdownItemText,
+  AnimatedDropdownTrigger,
+} from "@/components/premium/animated-dropdown";
 import {
   DataTable,
   type DataTableColumn,
 } from "@/components/premium/data-table";
 import type { WorkStatus } from "./task-item-row";
+import { employeeDailyMetrics, type EmployeeDailyMetrics } from "@/lib/employee-metrics";
 
 type TaskDeliverable = {
   unitName: string;
@@ -57,6 +69,8 @@ type CompletePlanResult = {
   workDate: string;
 };
 
+type SelectOption = { id: string; name: string };
+
 const statusLabel: Record<WorkStatus, string> = {
   DONE: "已完成",
   IN_PROGRESS: "推进中",
@@ -72,13 +86,13 @@ const reportColumns: DataTableColumn<RecentReport>[] = [
     width: "14rem",
     cell: (report) => (
       <div className="flex min-w-0 items-center gap-2.5">
-        <Chip
+        <Badge
           variant="caption"
           color={report.type === "DAILY" ? "blue" : "purple"}
           className="rounded-full"
         >
           {report.type === "DAILY" ? "日报" : "周报"}
-        </Chip>
+        </Badge>
         <time className="truncate font-mono font-semibold text-foreground tabular-nums">
           {report.date ?? report.weekStart ?? "未设置日期"}
         </time>
@@ -110,13 +124,13 @@ const reportColumns: DataTableColumn<RecentReport>[] = [
     header: "状态",
     width: "8rem",
     cell: (report) => (
-      <Chip
+      <Badge
         variant="caption"
         color={report.status === "SUBMITTED" ? "lime" : "yellow"}
         className="rounded-full"
       >
         {report.status === "SUBMITTED" ? "已提交" : "草稿"}
-      </Chip>
+      </Badge>
     ),
   },
   {
@@ -145,6 +159,10 @@ export function EmployeeDashboard({
   submitted,
   openBlockers,
   recentReports,
+  projects,
+  categories,
+  deliverableUnits,
+  dailyMetrics,
 }: {
   name: string;
   today: string;
@@ -152,18 +170,30 @@ export function EmployeeDashboard({
   submitted: boolean;
   openBlockers: number;
   recentReports: RecentReport[];
+  projects: SelectOption[];
+  categories: SelectOption[];
+  deliverableUnits: SelectOption[];
+  dailyMetrics: EmployeeDailyMetrics;
 }) {
   const busy = useRef(false);
   const [items, setItems] = useState(tasks);
   const [pendingId, setPendingId] = useState("");
   const [error, setError] = useState("");
+  const [statusError, setStatusError] = useState("");
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickContent, setQuickContent] = useState("");
+  const [quickProjectId, setQuickProjectId] = useState(projects[0]?.id ?? "");
+  const [quickCategoryId, setQuickCategoryId] = useState(categories[0]?.id ?? "");
+  const [quickUnitId, setQuickUnitId] = useState(deliverableUnits[0]?.id ?? "");
+  const [quickQuantity, setQuickQuantity] = useState("");
+  const [quickPending, setQuickPending] = useState(false);
+  const [quickError, setQuickError] = useState("");
   const plans = items.filter((task) => task.kind === "PLAN");
   const actuals = items.filter((task) => task.kind === "ACTUAL");
-  const completed = actuals.filter((task) => task.status === "DONE").length;
-  const planDone = plans.filter((task) => task.status === "DONE").length;
-  const fulfillment = plans.length
-    ? Math.round((planDone / plans.length) * 100)
-    : 0;
+  const metrics = items.length ? employeeDailyMetrics(items) : dailyMetrics;
+  const completed = metrics.completedCount;
+  const planDone = metrics.completedPlans;
+  const fulfillment = metrics.fulfillmentRate;
   const visibleReports = recentReports.slice(0, 5);
 
   async function completePlan(task: EmployeeTask) {
@@ -211,6 +241,71 @@ export function EmployeeDashboard({
     } finally {
       busy.current = false;
       setPendingId("");
+    }
+  }
+
+  async function updateStatus(task: EmployeeTask, status: WorkStatus) {
+    if (pendingId || task.status === status || status === "DONE") return;
+    setPendingId(task.id);
+    setStatusError("");
+    setItems((current) => current.map((item) => item.id === task.id ? { ...item, status } : item));
+    try {
+      const response = await fetch("/api/tasks/status", {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ taskId: task.id, version: task.version, status }),
+      });
+      const result = (await response.json()) as { error?: string; version?: number; status?: WorkStatus };
+      if (!response.ok) throw new Error(result.error ?? "任务状态更新失败");
+      setItems((current) => current.map((item) => item.id === task.id ? { ...item, version: result.version ?? item.version + 1, status: result.status ?? status } : item));
+    } catch (caught) {
+      setItems((current) => current.map((item) => item.id === task.id ? { ...item, status: task.status } : item));
+      setStatusError(caught instanceof Error ? caught.message : "任务状态更新失败，请稍后重试");
+    } finally {
+      setPendingId("");
+    }
+  }
+
+  async function createQuickTask() {
+    if (quickPending) return;
+    setQuickPending(true);
+    setQuickError("");
+    const selectedProject = projects.find((item) => item.id === quickProjectId);
+    const selectedCategory = categories.find((item) => item.id === quickCategoryId);
+    const selectedUnit = deliverableUnits.find((item) => item.id === quickUnitId);
+    const quantity = quickQuantity.trim() ? Number(quickQuantity) : null;
+    const hasValidQuantity = quantity !== null && Number.isFinite(quantity) && quantity >= 0;
+    if (!quickContent.trim() || !quickProjectId || !quickCategoryId || (quickQuantity.trim() && !hasValidQuantity)) {
+      setQuickError("请填写任务、项目、分类，并确认产出数量有效");
+      setQuickPending(false);
+      return;
+    }
+    try {
+      const response = await fetch("/api/tasks/quick-create", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          projectId: quickProjectId,
+          categoryId: quickCategoryId,
+          content: quickContent.trim(),
+          deliverables: quickQuantity.trim() && selectedUnit ? [{ unitId: selectedUnit.id, quantity }] : [],
+        }),
+      });
+      const result = (await response.json()) as { error?: string; id?: string; version?: number; workDate?: string };
+      if (!response.ok || !result.id) throw new Error(result.error ?? "临时任务创建失败");
+      setItems((current) => [...current, {
+        id: result.id!, version: result.version ?? 1, content: quickContent.trim(), kind: "ACTUAL", status: "DONE",
+        projectName: selectedProject?.name ?? "未关联项目", categoryName: selectedCategory?.name ?? "未分类",
+        workDate: result.workDate ?? null, dueDate: null, sourceTaskId: null,
+        deliverables: quickQuantity.trim() && selectedUnit ? [{ unitName: selectedUnit.name, quantity: String(quantity) }] : [],
+      }]);
+      setQuickContent("");
+      setQuickQuantity("");
+      setQuickOpen(false);
+    } catch (caught) {
+      setQuickError(caught instanceof Error ? caught.message : "临时任务创建失败，请稍后重试");
+    } finally {
+      setQuickPending(false);
     }
   }
 
@@ -294,10 +389,11 @@ export function EmployeeDashboard({
           </div>
           <div className="flex flex-wrap items-center gap-2 sm:justify-end">
             <ButtonLink
-              href="/tasks"
+              href="#quick-task"
               variant="secondary"
               size="sm"
               className="gap-1.5 rounded-lg"
+              onClick={(event) => { event.preventDefault(); setQuickOpen((value) => !value); }}
             >
               <Plus className="size-4" aria-hidden />
               添加临时插队任务
@@ -313,6 +409,31 @@ export function EmployeeDashboard({
             </ButtonLink>
           </div>
         </CardHeader>
+
+        {quickOpen && (
+          <div id="quick-task" className="border-border/80 border-b bg-muted/25 px-5 py-4">
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_180px_180px_150px_auto] lg:items-end">
+              <Textarea label="临时任务" value={quickContent} onChange={setQuickContent} rows={2} isRequired />
+              <Select aria-label="项目" selectedKey={quickProjectId} onSelectionChange={setQuickProjectId} placeholder="选择项目">
+                {projects.map((item) => <SelectItem key={item.id} id={item.id}>{item.name}</SelectItem>)}
+              </Select>
+              <Select aria-label="分类" selectedKey={quickCategoryId} onSelectionChange={setQuickCategoryId} placeholder="选择分类">
+                {categories.map((item) => <SelectItem key={item.id} id={item.id}>{item.name}</SelectItem>)}
+              </Select>
+              <div className="grid grid-cols-[1fr_1fr] gap-2">
+                <Select aria-label="单位" selectedKey={quickUnitId} onSelectionChange={setQuickUnitId} placeholder="单位">
+                  {deliverableUnits.map((item) => <SelectItem key={item.id} id={item.id}>{item.name}</SelectItem>)}
+                </Select>
+                <Input aria-label="数量" value={quickQuantity} onChange={setQuickQuantity} placeholder="数量" inputMode="decimal" size="small" />
+              </div>
+              <Button variant="primary" size="sm" disabled={quickPending} onClick={createQuickTask} className="gap-1.5 rounded-lg">
+                {quickPending ? <LoaderCircle className="size-4 animate-spin" aria-hidden /> : <Plus className="size-4" aria-hidden />}
+                保存任务
+              </Button>
+            </div>
+            {quickError && <p className="mt-2 text-status-rose-text text-xs" role="alert">{quickError}</p>}
+          </div>
+        )}
 
         {openBlockers > 0 && (
           <div className="flex flex-wrap items-center justify-between gap-2 border-status-rose-text/25 border-b bg-status-rose-background px-5 py-2.5 text-status-rose-text">
@@ -352,13 +473,13 @@ export function EmployeeDashboard({
                         <div className="flex min-w-0 items-start justify-between gap-3">
                           <div className="min-w-0 flex-1">
                             <div className="flex min-w-0 items-center gap-2">
-                              <Chip
+                              <Badge
                                 variant="caption"
                                 color="blue"
                                 className="max-w-32 shrink-0 truncate rounded-full"
                               >
                                 {task.projectName}
-                              </Chip>
+                              </Badge>
                               <p className="min-w-0 truncate text-sm font-semibold text-foreground">
                                 {task.content}
                               </p>
@@ -368,33 +489,36 @@ export function EmployeeDashboard({
                             </p>
                           </div>
                           {isComplete ? (
-                            <Chip
+                            <Badge
                               variant="caption"
                               color="lime"
                               className="rounded-full"
                             >
                               已核销
-                            </Chip>
+                            </Badge>
                           ) : task.status === "CANCELED" ? (
-                            <Chip
+                            <Badge
                               variant="caption"
                               color="neutral"
                               className="rounded-full"
                             >
                               已取消
-                            </Chip>
+                            </Badge>
                           ) : (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              className="shrink-0 gap-1 rounded-lg px-2.5"
-                              disabled={Boolean(pendingId)}
-                              onClick={() => completePlan(task)}
-                              aria-label={`核销完成：${task.content}`}
-                            >
-                              {pendingId === task.id ? "核销中" : "核销完成"}
-                              <ArrowRight className="size-3.5" aria-hidden />
-                            </Button>
+                            <div className="flex shrink-0 items-center gap-1.5">
+                              <StatusMenu task={task} pending={pendingId === task.id} onSelect={(status) => updateStatus(task, status)} />
+                              <Button
+                                variant="secondary"
+                                size="sm"
+                                className="gap-1 rounded-lg px-2.5"
+                                disabled={Boolean(pendingId)}
+                                onClick={() => completePlan(task)}
+                                aria-label={`核销完成：${task.content}`}
+                              >
+                                {pendingId === task.id ? "核销中" : "核销完成"}
+                                <ArrowRight className="size-3.5" aria-hidden />
+                              </Button>
+                            </div>
                           )}
                         </div>
                       </li>
@@ -417,6 +541,7 @@ export function EmployeeDashboard({
                   {error}
                 </p>
               )}
+              {statusError && <p role="alert" className="mt-2 rounded-lg bg-status-rose-background px-3 py-2 text-status-rose-text text-xs">{statusError}</p>}
             </div>
           </div>
 
@@ -438,35 +563,35 @@ export function EmployeeDashboard({
                         {String(index + 1).padStart(2, "0")}
                       </span>
                       <div className="flex min-w-0 items-center gap-2">
-                        <Chip
+                        <Badge
                           variant="caption"
                           color="blue"
                           className="max-w-28 shrink-0 truncate rounded-full"
                         >
                           {task.projectName}
-                        </Chip>
+                        </Badge>
                         <span className="min-w-0 truncate text-sm text-foreground">
                           {task.content}
                         </span>
                       </div>
-                      <Chip
+                      <Badge
                         variant="caption"
                         color="soft"
                         className="max-w-24 truncate rounded-full"
                       >
                         {task.categoryName}
-                      </Chip>
+                      </Badge>
                       <div className="col-[2/-1] flex min-w-0 items-center gap-2">
                         <span className="min-w-0 flex-1 truncate rounded-full bg-status-blue-background px-2.5 py-1 text-status-blue-text text-xs font-medium">
                           产出：{deliverableText(task.deliverables)}
                         </span>
-                        <Chip
+                        <Badge
                           variant="caption"
                           color={statusColor(task.status)}
                           className="rounded-full"
                         >
                           {statusLabel[task.status]}
-                        </Chip>
+                        </Badge>
                       </div>
                     </li>
                   ))}
@@ -475,8 +600,9 @@ export function EmployeeDashboard({
                 <WorkEmptyState
                   title="还没有实际完成项"
                   description="从左侧核销计划，或添加临时工作。"
-                  href="/tasks"
+                  href="#quick-task"
                   action="添加临时工作"
+                  onAction={() => setQuickOpen(true)}
                 />
               )}
             </div>
@@ -530,24 +656,24 @@ export function EmployeeDashboard({
                 >
                   <div className="flex min-w-0 items-center justify-between gap-3">
                     <div className="flex min-w-0 items-center gap-2">
-                      <Chip
+                      <Badge
                         variant="caption"
                         color={report.type === "DAILY" ? "blue" : "purple"}
                         className="rounded-full"
                       >
                         {report.type === "DAILY" ? "日报" : "周报"}
-                      </Chip>
+                      </Badge>
                       <time className="truncate font-mono font-semibold text-foreground text-xs tabular-nums">
                         {report.date ?? report.weekStart ?? "未设置日期"}
                       </time>
                     </div>
-                    <Chip
+                    <Badge
                       variant="caption"
                       color={report.status === "SUBMITTED" ? "lime" : "yellow"}
                       className="rounded-full"
                     >
                       {report.status === "SUBMITTED" ? "已提交" : "草稿"}
-                    </Chip>
+                    </Badge>
                   </div>
                   <p className="mt-2 truncate text-sm text-foreground">
                     {report.summary || "未填写工作总结"}
@@ -693,11 +819,13 @@ function WorkEmptyState({
   description,
   href,
   action,
+  onAction,
 }: {
   title: string;
   description: string;
   href: string;
   action: string;
+  onAction?: () => void;
 }) {
   return (
     <div className="flex min-h-40 flex-col items-center justify-center px-4 py-7 text-center">
@@ -711,11 +839,53 @@ function WorkEmptyState({
         variant="ghost"
         size="sm"
         className="mt-2 gap-1 rounded-lg px-2"
+        onClick={onAction ? (event) => { event.preventDefault(); onAction(); } : undefined}
       >
         <Plus className="size-3.5" aria-hidden />
         {action}
       </ButtonLink>
     </div>
+  );
+}
+
+function StatusMenu({
+  task,
+  pending,
+  onSelect,
+}: {
+  task: EmployeeTask;
+  pending: boolean;
+  onSelect: (status: WorkStatus) => void;
+}) {
+  const statuses: Array<{ value: WorkStatus; label: string }> = [
+    { value: "TODO", label: "待开始" },
+    { value: "IN_PROGRESS", label: "推进中" },
+    { value: "BLOCKED", label: "阻塞" },
+    { value: "CANCELED", label: "已取消" },
+  ];
+  return (
+    <AnimatedDropdown>
+      <AnimatedDropdownTrigger asChild>
+        <Button
+          variant="ghost"
+          size="sm"
+          disabled={pending}
+          className="gap-1 rounded-lg px-2 text-xs text-muted-foreground"
+          aria-label={`更新任务状态，当前${statusLabel[task.status]}`}
+        >
+          {pending ? <LoaderCircle className="size-3.5 animate-spin" aria-hidden /> : statusLabel[task.status]}
+          <ChevronDown className="size-3.5" aria-hidden />
+        </Button>
+      </AnimatedDropdownTrigger>
+      <AnimatedDropdownContent align="end" aria-label="任务状态">
+        {statuses.map((item) => (
+          <AnimatedDropdownItem key={item.value} onSelect={() => onSelect(item.value)}>
+            <AnimatedDropdownItemIcon><Check className={item.value === task.status ? "opacity-100" : "opacity-0"} /></AnimatedDropdownItemIcon>
+            <AnimatedDropdownItemText>{item.label}</AnimatedDropdownItemText>
+          </AnimatedDropdownItem>
+        ))}
+      </AnimatedDropdownContent>
+    </AnimatedDropdown>
   );
 }
 
@@ -742,3 +912,4 @@ function statusColor(status: WorkStatus) {
     CANCELED: "neutral",
   }[status] as "lime" | "blue" | "rose" | "yellow" | "neutral";
 }
+

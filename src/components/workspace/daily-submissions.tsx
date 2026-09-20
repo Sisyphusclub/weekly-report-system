@@ -1,5 +1,5 @@
-import { ButtonLink } from "@/components/base/buttons/button";
-import { Chip } from "@/components/base/badges/chip";
+import { ButtonLink } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
 import {
   dailySubmissionStatus,
   type DailySubmissionStatus,
@@ -119,12 +119,12 @@ export function DailySubmissions({
             <p className="text-caption-1-medium text-text-secondary">{label}</p>
             <div className="mt-2 flex items-end justify-between gap-2">
               <p className="text-title-2-medium">{value}</p>
-              <Chip
+              <Badge
                 variant="caption"
                 color={color as "soft" | "lime" | "rose" | "blue"}
               >
                 人
-              </Chip>
+              </Badge>
             </div>
           </div>
         ))}
@@ -137,12 +137,12 @@ export function DailySubmissions({
               className="flex flex-wrap items-center justify-between gap-3 py-3"
             >
               <span className="text-body-medium">{row.name}</span>
-              <Chip
+              <Badge
                 variant="caption"
                 color={statusColors[row.status]}
               >
                 {statusLabels[row.status]}
-              </Chip>
+              </Badge>
               {showReportLinks && row.report && (
                 <ButtonLink href={`/reports/${row.report.id}`} variant="ghost">
                   查看日报
@@ -185,3 +185,4 @@ export function DailySubmissions({
     </section>
   );
 }
+

@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "@/components/base/buttons/button";
+import { Button } from "@/components/motion/button/base";
 export default function ErrorPage({
   reset,
 }: {
@@ -16,3 +16,4 @@ export default function ErrorPage({
     </main>
   );
 }
+

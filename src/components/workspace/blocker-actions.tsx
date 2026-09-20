@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/base/buttons/button";
-import { Select, SelectItem } from "@/components/base/select/select";
-import { Textarea } from "@/components/base/textarea/textarea";
+import { Button } from "@/components/motion/button/base";
+import { Select, SelectItem } from "@/components/premium/forms";
+import { Textarea } from "@/components/premium/forms";
 export function BlockerActions({
   id,
   version,
@@ -108,3 +108,4 @@ export function BlockerActions({
     </div>
   );
 }
+

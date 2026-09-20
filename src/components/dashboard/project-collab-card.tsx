@@ -1,6 +1,6 @@
 import { RiAlertLine, RiArrowDownSLine } from "@remixicon/react";
-import { Chip } from "@/components/base/badges/chip";
-import { Avatar } from "@/components/base/avatar/avatar";
+import { Badge } from "@/components/premium/badge";
+import { Avatar } from "@/components/premium/avatar";
 
 export function ProjectCollabCard({
   project,
@@ -107,9 +107,9 @@ export function ProjectCollabCard({
           <div className="md:col-span-2">
             <div className="flex flex-wrap gap-2">
               {project.deliverables.map((item) => (
-                <Chip key={item.unitId} variant="caption" color="blue">
+                <Badge key={item.unitId} variant="caption" color="blue">
                   {item.unitName} {item.quantity}
-                </Chip>
+                </Badge>
               ))}
             </div>
           </div>
@@ -118,3 +118,4 @@ export function ProjectCollabCard({
     </details>
   );
 }
+

@@ -15,6 +15,7 @@ import {
   deliverable,
   deliverableUnit,
   project,
+  projectMember,
   reportTask,
   user,
   workTask,
@@ -26,10 +27,11 @@ import {
   getDashboardMetrics,
   submissionRate,
 } from "@/lib/metrics";
+import { employeeDailyMetrics } from "@/lib/employee-metrics";
 import { shanghaiDate } from "@/lib/daily-input";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
-import { Chip } from "@/components/base/badges/chip";
+import { ButtonLink } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
 import { DailySubmissions } from "@/components/workspace/daily-submissions";
 import { MemberCompareCard } from "@/components/dashboard/member-compare-card";
 import { ProjectCollabCard } from "@/components/dashboard/project-collab-card";
@@ -107,7 +109,33 @@ export default async function DashboardPage() {
   }
   if (actor.role === "EMPLOYEE") {
     const today = shanghaiDate(now);
-    const [taskRows, reports, blockers, deliveryRows] = await Promise.all([
+    const [memberships, assignedProjects] = await Promise.all([
+      db
+        .select({ projectId: projectMember.projectId })
+        .from(projectMember)
+        .where(
+          and(
+            eq(projectMember.organizationId, actor.organizationId),
+            eq(projectMember.userId, actor.id),
+          ),
+        ),
+      db
+        .select({ projectId: workTask.projectId })
+        .from(workTask)
+        .where(
+          and(
+            eq(workTask.organizationId, actor.organizationId),
+            eq(workTask.primaryAssigneeId, actor.id),
+          ),
+        ),
+    ]);
+    const memberProjectIds = [
+      ...new Set([
+        ...memberships.map((item) => item.projectId),
+        ...assignedProjects.map((item) => item.projectId),
+      ]),
+    ];
+    const [taskRows, reports, blockers, deliveryRows, employeeProjects, employeeCategories, employeeUnits] = await Promise.all([
       db
         .select({
           id: workTask.id,
@@ -169,6 +197,40 @@ export default async function DashboardPage() {
             or(eq(workTask.workDate, today), eq(workTask.dueDate, today)),
           ),
         ),
+      db
+        .select({ id: project.id, name: project.name })
+        .from(project)
+        .where(
+          and(
+            eq(project.organizationId, actor.organizationId),
+            ne(project.status, "ARCHIVED"),
+            or(
+              eq(project.ownerId, actor.id),
+              memberProjectIds.length ? inArray(project.id, memberProjectIds) : undefined,
+            ),
+          ),
+        )
+        .orderBy(project.name),
+      db
+        .select({ id: category.id, name: category.name })
+        .from(category)
+        .where(
+          and(
+            eq(category.organizationId, actor.organizationId),
+            eq(category.enabled, true),
+          ),
+        )
+        .orderBy(category.sortOrder, category.name),
+      db
+        .select({ id: deliverableUnit.id, name: deliverableUnit.name })
+        .from(deliverableUnit)
+        .where(
+          and(
+            eq(deliverableUnit.organizationId, actor.organizationId),
+            eq(deliverableUnit.enabled, true),
+          ),
+        )
+        .orderBy(deliverableUnit.sortOrder, deliverableUnit.name),
     ]);
     const recentReportItems = reports.items.slice(0, 5);
     const reportTaskRows = recentReportItems.length
@@ -232,6 +294,17 @@ export default async function DashboardPage() {
                 quantity: item.quantity,
               })),
           }))}
+          projects={employeeProjects}
+          categories={employeeCategories}
+          deliverableUnits={employeeUnits}
+          dailyMetrics={employeeDailyMetrics(
+            taskRows.map((task) => ({
+              id: task.id,
+              kind: task.kind,
+              status: task.status,
+              sourceTaskId: task.sourceTaskId,
+            })),
+          )}
         />
       </WorkspaceShell>
     );
@@ -322,12 +395,12 @@ export default async function DashboardPage() {
                   <span className="truncate text-body-semibold">
                     {member.name}
                   </span>
-                  <Chip
+                  <Badge
                     variant="caption"
                     color={member.openBlockers ? "rose" : "soft"}
                   >
                     {member.completed} 完成
-                  </Chip>
+                  </Badge>
                 </div>
                 <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-background-tertiary-default">
                   <div
@@ -407,9 +480,9 @@ export default async function DashboardPage() {
                     <p className="truncate text-body-semibold text-status-rose-text">
                       {item.name}
                     </p>
-                    <Chip variant="caption" color="rose">
+                    <Badge variant="caption" color="rose">
                       {item.blocked} 项
-                    </Chip>
+                    </Badge>
                   </div>
                   <p className="mt-2 text-caption-1-regular text-status-rose-text">
                     项目内存在阻塞，需要负责人介入协调。
@@ -489,12 +562,12 @@ export default async function DashboardPage() {
                   {item.summary || "未填写总结"}
                 </p>
               </div>
-              <Chip
+              <Badge
                 variant="caption"
                 color={item.status === "SUBMITTED" ? "lime" : "yellow"}
               >
                 {item.status === "SUBMITTED" ? "已提交" : "草稿"}
-              </Chip>
+              </Badge>
             </li>
           ))}
         </ul>
@@ -641,3 +714,4 @@ function EmptyState({ text }: { text: string }) {
     </div>
   );
 }
+

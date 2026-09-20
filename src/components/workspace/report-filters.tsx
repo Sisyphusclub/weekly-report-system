@@ -1,8 +1,8 @@
 "use client";
 
-import { Input } from "@/components/base/input/input";
-import { Select, SelectItem } from "@/components/base/select/select";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { Input } from "@/components/premium/forms";
+import { Select, SelectItem } from "@/components/premium/forms";
+import { Button, ButtonLink } from "@/components/motion/button/base";
 import type { ReportFilter } from "@/lib/report-filter";
 
 export function ReportFilters({
@@ -160,3 +160,4 @@ export function ReportFilters({
     </form>
   );
 }
+

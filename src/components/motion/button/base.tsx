@@ -9,6 +9,7 @@ import {
 } from "motion/react";
 import {
   forwardRef,
+  type ComponentType,
   type PointerEvent,
   type ReactNode,
   useCallback,
@@ -19,8 +20,9 @@ import { EASE_OUT, SPRING_PRESS } from "@/lib/ease";
 import { useHoverCapable } from "@/lib/hooks/use-hover-capable";
 import { cn } from "@/lib/utils";
 
-export type ButtonVariant = "primary" | "secondary" | "ghost" | "outline";
-export type ButtonSize = "sm" | "md" | "lg" | "icon";
+export type ButtonVariant = "primary" | "secondary" | "ghost" | "outline" | "danger";
+export type ButtonSize = "xs" | "small" | "medium" | "sm" | "md" | "lg" | "icon";
+type IconComponent = ComponentType<{ className?: string; "aria-hidden"?: boolean | "true" | "false" }>;
 
 export interface ButtonProps extends Omit<
   HTMLMotionProps<"button">,
@@ -31,6 +33,9 @@ export interface ButtonProps extends Omit<
   pressScale?: number;
   /** Spawn a Material-style ripple from the press point. Off by default. */
   ripple?: boolean;
+  iconOnly?: boolean;
+  leadingIcon?: IconComponent;
+  trailingIcon?: IconComponent;
   children?: ReactNode;
 }
 
@@ -41,6 +46,9 @@ export interface ButtonLinkProps extends Omit<
   variant?: ButtonVariant;
   size?: ButtonSize;
   pressScale?: number;
+  iconOnly?: boolean;
+  leadingIcon?: IconComponent;
+  trailingIcon?: IconComponent;
   children?: ReactNode;
 }
 
@@ -52,9 +60,13 @@ const VARIANT_CLASS: Record<ButtonVariant, string> = {
   ghost: "text-muted-foreground hover:text-foreground hover:bg-primary/5",
   outline:
     "border border-border bg-transparent text-foreground hover:bg-primary/5",
+  danger: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
 };
 
 const SIZE_CLASS: Record<ButtonSize, string> = {
+  xs: "h-6 px-2 text-[11px] gap-1 rounded-md",
+  small: "h-8 px-3 text-xs gap-1.5 rounded-lg",
+  medium: "h-9 px-4 text-sm gap-2 rounded-xl",
   sm: "h-8 px-3 text-xs gap-1.5 rounded-full",
   md: "h-10 px-5 text-sm gap-2 rounded-full",
   lg: "h-12 px-6 text-base gap-2 rounded-full",
@@ -68,6 +80,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       size = "md",
       pressScale = 0.93,
       ripple = false,
+      iconOnly = false,
+      leadingIcon: LeadingIcon,
+      trailingIcon: TrailingIcon,
       className,
       children,
       onPointerDown,
@@ -116,6 +131,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
           ripple && "relative overflow-hidden",
           VARIANT_CLASS[variant],
           SIZE_CLASS[size],
+          iconOnly && "size-8 p-0",
           className,
         )}
         {...rest}
@@ -147,7 +163,9 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             </AnimatePresence>
           </span>
         ) : null}
-        {children}
+        {LeadingIcon ? <LeadingIcon className="size-4 shrink-0" aria-hidden /> : null}
+        {iconOnly ? null : children}
+        {!iconOnly && TrailingIcon ? <TrailingIcon className="size-4 shrink-0" aria-hidden /> : null}
       </motion.button>
     );
   },
@@ -159,6 +177,9 @@ export const ButtonLink = forwardRef<HTMLAnchorElement, ButtonLinkProps>(
       variant = "primary",
       size = "md",
       pressScale = 0.93,
+      iconOnly = false,
+      leadingIcon: LeadingIcon,
+      trailingIcon: TrailingIcon,
       className,
       children,
       ...rest
@@ -179,11 +200,14 @@ export const ButtonLink = forwardRef<HTMLAnchorElement, ButtonLinkProps>(
           "transition-colors",
           VARIANT_CLASS[variant],
           SIZE_CLASS[size],
+          iconOnly && "size-8 p-0",
           className,
         )}
         {...rest}
       >
-        {children}
+        {LeadingIcon ? <LeadingIcon className="size-4 shrink-0" aria-hidden /> : null}
+        {iconOnly ? null : children}
+        {!iconOnly && TrailingIcon ? <TrailingIcon className="size-4 shrink-0" aria-hidden /> : null}
       </motion.a>
     );
   },

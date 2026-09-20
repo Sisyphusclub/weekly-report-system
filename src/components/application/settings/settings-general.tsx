@@ -178,3 +178,4 @@ export function SettingsGeneral({ planArtSrc }: { planArtSrc?: string }) {
     </div>
   );
 }
+

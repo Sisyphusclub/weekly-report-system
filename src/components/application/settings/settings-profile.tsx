@@ -151,3 +151,4 @@ export function SettingsProfile({ onSaved }: { onSaved?: () => void } = {}) {
     </div>
   );
 }
+

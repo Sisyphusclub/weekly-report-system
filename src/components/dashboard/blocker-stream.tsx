@@ -1,6 +1,6 @@
 import { RiArrowRightLine, RiUserAddLine } from "@remixicon/react";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
-import { Chip } from "@/components/base/badges/chip";
+import { Button, ButtonLink } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
 
 export function BlockerStream({
   items,
@@ -27,7 +27,7 @@ export function BlockerStream({
           className="rounded-xl border border-status-rose-text/30 bg-status-rose-background p-4"
         >
           <div className="flex items-center justify-between gap-2">
-            <Chip
+            <Badge
               variant="caption"
               color={
                 item.severity === "URGENT"
@@ -38,7 +38,7 @@ export function BlockerStream({
               }
             >
               {severityLabel[item.severity]}
-            </Chip>
+            </Badge>
             <span className="text-caption-2-regular text-status-rose-text">
               {item.age}
             </span>
@@ -76,3 +76,4 @@ export function BlockerStream({
     </div>
   );
 }
+

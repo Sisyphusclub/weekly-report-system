@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { blocker, user } from "@/lib/db/schema";
 import { blockerVisibility } from "@/lib/blockers";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { BlockerActions } from "@/components/workspace/blocker-actions";
 import { BlockerCommentSection } from "@/components/workspace/blocker-comment-section";
 export default async function BlockerPage({

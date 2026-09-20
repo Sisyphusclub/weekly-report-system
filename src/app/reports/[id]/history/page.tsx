@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { report, reportRevision, user } from "@/lib/db/schema";
 import { reportVisibility } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { ReportSnapshotView } from "@/components/workspace/report-snapshot-view";
 
 export const metadata = { title: "报告历史版本" };

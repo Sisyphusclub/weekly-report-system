@@ -3,7 +3,7 @@ import { reportFilter, reportFilterParams } from "@/lib/report-filter";
 import { requireUser } from "@/lib/access";
 import { listReports, PAGE_SIZE } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { CopyFilterLink } from "@/components/workspace/copy-filter-link";
 import { ReportFilters } from "@/components/workspace/report-filters";
 import { ReportResultsTable } from "@/components/workspace/report-results-table";
@@ -146,3 +146,4 @@ export default async function ReportsPage({
     </WorkspaceShell>
   );
 }
+

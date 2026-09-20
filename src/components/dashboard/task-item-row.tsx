@@ -1,4 +1,4 @@
-import { Chip } from "@/components/base/badges/chip";
+import { Badge } from "@/components/premium/badge";
 
 export type WorkStatus =
   "DONE" | "IN_PROGRESS" | "BLOCKED" | "TODO" | "CANCELED";
@@ -53,19 +53,20 @@ export function TaskItemRow({
         )}
         {content}
       </div>
-      <Chip variant="caption" color={isPlan ? "yellow" : "soft"}>
+      <Badge variant="caption" color={isPlan ? "yellow" : "soft"}>
         {category}
-      </Chip>
+      </Badge>
       <div className="col-[2/-1] flex min-w-0 items-center gap-2 pl-0">
         {deliverableText && (
           <span className="min-w-0 flex-1 truncate rounded bg-status-blue-background px-2 py-1 text-caption-2-medium text-status-blue-text">
             产出：{deliverableText}
           </span>
         )}
-        <Chip variant="caption" color={statusColor[status]} className="ml-auto">
+        <Badge variant="caption" color={statusColor[status]} className="ml-auto">
           {statusLabel[status]}
-        </Chip>
+        </Badge>
       </div>
     </li>
   );
 }
+

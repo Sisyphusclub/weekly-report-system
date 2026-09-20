@@ -16,7 +16,7 @@ import { WorkspaceShell } from "@/components/workspace/shell";
 import { TaskForm } from "@/components/workspace/task-form";
 import { RollPlanForm } from "@/components/workspace/roll-plan-form";
 import { TaskStatusForm } from "@/components/workspace/task-status-form";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { ExternalLinkForm } from "@/components/workspace/external-link-form";
 import { TaskImportForm } from "@/components/workspace/task-import-form";
 import { TaskCommentSection } from "@/components/workspace/task-comment-section";
@@ -280,3 +280,4 @@ export default async function TasksPage({
     </WorkspaceShell>
   );
 }
+

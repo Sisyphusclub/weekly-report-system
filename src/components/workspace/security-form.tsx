@@ -1,8 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/base/buttons/button";
-import { Input } from "@/components/base/input/input";
+import { Button } from "@/components/motion/button/base";
+import { Input } from "@/components/premium/forms";
 import { authClient } from "@/lib/auth-client";
 
 export function SecurityForm() {
@@ -77,3 +77,4 @@ export function SecurityForm() {
     </form>
   );
 }
+

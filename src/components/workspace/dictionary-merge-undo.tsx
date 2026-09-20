@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/base/buttons/button";
+import { Button } from "@/components/motion/button/base";
 export function DictionaryMergeUndo({
   id,
   undoUntil,
@@ -28,3 +28,4 @@ export function DictionaryMergeUndo({
     </span>
   );
 }
+

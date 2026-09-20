@@ -11,9 +11,9 @@ import { report, reportTask, workTask } from "@/lib/db/schema";
 import { dateInput, shanghaiDate } from "@/lib/daily-input";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { DailyForm } from "@/components/workspace/daily-form";
-import { Input } from "@/components/base/input/input";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
-import { Chip } from "@/components/base/badges/chip";
+import { Input } from "@/components/premium/forms";
+import { Button, ButtonLink } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
 import { BlockerForm } from "@/components/workspace/blocker-form";
 
 export const metadata = { title: "今日工作台" };
@@ -108,10 +108,10 @@ export default async function DailyPage({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Chip variant="caption" color="lime">
+          <Badge variant="caption" color="lime">
             <RiCheckboxCircleLine className="mr-1 size-3.5" aria-hidden />
             工作日
-          </Chip>
+          </Badge>
           <span className="hidden text-caption-1-regular text-text-tertiary sm:inline">
             截止 18:30 · 草稿自动同步
           </span>
@@ -238,3 +238,4 @@ export default async function DailyPage({
     </WorkspaceShell>
   );
 }
+

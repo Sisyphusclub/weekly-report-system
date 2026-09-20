@@ -2,8 +2,8 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/base/buttons/button";
-import { Textarea } from "@/components/base/textarea/textarea";
+import { Button } from "@/components/motion/button/base";
+import { Textarea } from "@/components/premium/forms";
 
 export function RevisionReviewForm({
   requestId,
@@ -83,3 +83,4 @@ export function RevisionReviewForm({
     </div>
   );
 }
+

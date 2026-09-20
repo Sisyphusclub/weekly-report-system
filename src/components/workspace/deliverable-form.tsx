@@ -1,9 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/base/buttons/button";
-import { Input } from "@/components/base/input/input";
-import { Select, SelectItem } from "@/components/base/select/select";
+import { Button } from "@/components/motion/button/base";
+import { Input } from "@/components/premium/forms";
+import { Select, SelectItem } from "@/components/premium/forms";
 
 export function DeliverableForm({
   taskId,
@@ -113,3 +113,4 @@ export function DeliverableForm({
     </details>
   );
 }
+

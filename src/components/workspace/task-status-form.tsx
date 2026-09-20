@@ -1,8 +1,8 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Select, SelectItem } from "@/components/base/select/select";
-import { Button } from "@/components/base/buttons/button";
+import { Select, SelectItem } from "@/components/premium/forms";
+import { Button } from "@/components/motion/button/base";
 
 export function TaskStatusForm({
   taskId,
@@ -68,3 +68,4 @@ export function TaskStatusForm({
     </form>
   );
 }
+

@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Check, KeyRound, X } from "lucide-react";
-import { Input } from "@/components/base/input/input";
+import { Input } from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 
 export function ResetPasswordButton({
@@ -109,3 +109,4 @@ export function ResetPasswordButton({
     </span>
   );
 }
+

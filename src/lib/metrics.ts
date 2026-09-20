@@ -1,4 +1,4 @@
-import { and, asc, count, eq, gte, inArray, lte, ne } from "drizzle-orm";
+import { and, asc, count, eq, gte, inArray, lte, ne, or } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import {
   blocker,
@@ -70,6 +70,37 @@ export async function getDashboardBreakdown(
   const end = dates[dates.length - 1];
   const db = getDb();
   const data = submissionData ?? (await getSubmissionData(actor, now));
+  const employeeProjectIds =
+    actor.role === "EMPLOYEE"
+      ? (() => {
+          return Promise.all([
+            db
+              .select({ projectId: projectMember.projectId })
+              .from(projectMember)
+              .where(
+                and(
+                  eq(projectMember.organizationId, actor.organizationId),
+                  eq(projectMember.userId, actor.id),
+                ),
+              ),
+            db
+              .select({ projectId: workTask.projectId })
+              .from(workTask)
+              .where(
+                and(
+                  eq(workTask.organizationId, actor.organizationId),
+                  eq(workTask.primaryAssigneeId, actor.id),
+                ),
+              ),
+          ]).then(([memberships, tasks]) => [
+            ...new Set([
+              ...memberships.map((item) => item.projectId),
+              ...tasks.map((item) => item.projectId),
+            ]),
+          ]);
+        })()
+      : Promise.resolve(null);
+  const resolvedEmployeeProjectIds = await employeeProjectIds;
   const [tasks, blockers, projects, deliveries] = await Promise.all([
     db
       .select({
@@ -104,6 +135,14 @@ export async function getDashboardBreakdown(
         and(
           eq(project.organizationId, actor.organizationId),
           ne(project.status, "ARCHIVED"),
+          actor.role === "EMPLOYEE"
+            ? resolvedEmployeeProjectIds?.length
+              ? or(
+                  eq(project.ownerId, actor.id),
+                  inArray(project.id, resolvedEmployeeProjectIds),
+                )
+              : eq(project.ownerId, actor.id)
+            : undefined,
         ),
       ),
     db

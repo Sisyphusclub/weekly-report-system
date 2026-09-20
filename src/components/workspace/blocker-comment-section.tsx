@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { Button } from "@/components/base/buttons/button";
-import { Textarea } from "@/components/base/textarea/textarea";
+import { Button } from "@/components/motion/button/base";
+import { Textarea } from "@/components/premium/forms";
 type Item = {
   id: string;
   body: string;
@@ -175,3 +175,4 @@ export function BlockerCommentSection({
     </section>
   );
 }
+

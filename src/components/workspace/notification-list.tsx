@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { Button, ButtonLink } from "@/components/motion/button/base";
 type Item = {
   id: string;
   title: string;
@@ -87,3 +87,4 @@ export function NotificationList({ items: initial }: { items: Item[] }) {
     </div>
   );
 }
+

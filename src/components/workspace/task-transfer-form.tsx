@@ -1,10 +1,10 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/base/buttons/button";
-import { Select, SelectItem } from "@/components/base/select/select";
-import { Textarea } from "@/components/base/textarea/textarea";
-import { Checkbox } from "@/components/base/checkbox/checkbox";
+import { Button } from "@/components/motion/button/base";
+import { Select, SelectItem } from "@/components/premium/forms";
+import { Textarea } from "@/components/premium/forms";
+import { Checkbox } from "@/components/premium/forms";
 
 type Person = {
   id: string;
@@ -200,3 +200,4 @@ export function TaskTransferForm({ people }: { people: Person[] }) {
     </form>
   );
 }
+

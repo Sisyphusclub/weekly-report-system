@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { category, deliverableUnit, dictionaryMerge } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { DictionaryForm } from "@/components/workspace/dictionary-form";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { DictionaryMergeForm } from "@/components/workspace/dictionary-merge-form";
 import { DictionaryMergeUndo } from "@/components/workspace/dictionary-merge-undo";
 export const metadata = { title: "分类与交付物单位" };
@@ -106,3 +106,4 @@ export default async function DictionariesPage({
     </WorkspaceShell>
   );
 }
+

@@ -14,9 +14,9 @@ import { dateInput, shanghaiDate } from "@/lib/daily-input";
 import { weekDates } from "@/lib/domain";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { WeeklyForm } from "@/components/workspace/weekly-form";
-import { Input } from "@/components/base/input/input";
-import { Button } from "@/components/base/buttons/button";
-import { Chip } from "@/components/base/badges/chip";
+import { Input } from "@/components/premium/forms";
+import { Button } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
 
 export const metadata = { title: "本周周报" };
 
@@ -92,12 +92,12 @@ export default async function WeeklyPage({
             汇总本周日报，复盘阻塞，并明确下周重点里程碑。
           </p>
         </div>
-        <Chip
+        <Badge
           variant="caption"
           color={item?.status === "SUBMITTED" ? "lime" : "yellow"}
         >
           {item?.status === "SUBMITTED" ? "已提交快照" : "草稿待提交"}
-        </Chip>
+        </Badge>
       </header>
       <form
         action="/weekly"
@@ -164,16 +164,16 @@ export default async function WeeklyPage({
                       : "等待日报提交后自动汇总。"}
                   </p>
                   <div className="mt-2 flex flex-wrap gap-2">
-                    <Chip
+                    <Badge
                       variant="caption"
                       color={index < 3 ? "lime" : "yellow"}
                     >
                       {index < 3 ? "已提交" : "待提交"}
-                    </Chip>
+                    </Badge>
                     {index < 3 && (
-                      <Chip variant="caption" color="blue">
+                      <Badge variant="caption" color="blue">
                         项目成果待润色
-                      </Chip>
+                      </Badge>
                     )}
                   </div>
                 </div>
@@ -267,3 +267,4 @@ function daysMissing(days: string[], submitted: Set<string>) {
     .filter((day) => !submitted.has(day))
     .map((day) => `周${["一", "二", "三", "四", "五"][days.indexOf(day)]}`);
 }
+

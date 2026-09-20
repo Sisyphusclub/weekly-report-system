@@ -4,8 +4,8 @@ import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
 import { auditLog, user } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { Input } from "@/components/base/input/input";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { Input } from "@/components/premium/forms";
+import { Button, ButtonLink } from "@/components/motion/button/base";
 import { auditActionLabel, auditReasonDetails } from "@/lib/audit-display";
 import { businessAuditVisibility } from "@/lib/audit-visibility";
 
@@ -55,7 +55,7 @@ export async function AuditPage({
     timeStyle: "medium",
   });
   return (
-    <WorkspaceShell actor={actor} selected="audit">
+    <WorkspaceShell actor={actor} selected={business ? "activity" : "audit"}>
       <h1 className="text-title-1-medium">{title}</h1>
       <form action={path} className="flex flex-wrap items-end gap-3">
         <Input
@@ -131,3 +131,4 @@ export async function AuditPage({
     </WorkspaceShell>
   );
 }
+

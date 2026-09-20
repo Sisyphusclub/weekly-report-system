@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { Input } from "@/components/base/input/input";
-import { Textarea } from "@/components/base/textarea/textarea";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
-import { Checkbox } from "@/components/base/checkbox/checkbox";
+import { Input } from "@/components/premium/forms";
+import { Textarea } from "@/components/premium/forms";
+import { Button, ButtonLink } from "@/components/motion/button/base";
+import { Checkbox } from "@/components/premium/forms";
 import { DailyDraftController } from "@/lib/daily-draft-controller";
 import { remoteDailyDraft, type RemoteDailyDraft } from "@/lib/daily-conflict";
 
@@ -317,3 +317,4 @@ export function DailyForm({
     </form>
   );
 }
+

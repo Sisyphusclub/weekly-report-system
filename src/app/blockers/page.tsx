@@ -6,7 +6,7 @@ import { getDb } from "@/lib/db";
 import { blocker, user, project } from "@/lib/db/schema";
 import { blockerVisibility } from "@/lib/blockers";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { BlockerForm } from "@/components/workspace/blocker-form";
 
 const severityLabel = {
@@ -219,3 +219,4 @@ export default async function BlockersPage({
     </WorkspaceShell>
   );
 }
+

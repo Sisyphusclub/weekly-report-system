@@ -4,7 +4,7 @@ import { getDb } from "@/lib/db";
 import { notification } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { NotificationList } from "@/components/workspace/notification-list";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 export const metadata = { title: "通知中心" };
 export default async function NotificationsPage({
   searchParams,
@@ -60,3 +60,4 @@ export default async function NotificationsPage({
     </WorkspaceShell>
   );
 }
+

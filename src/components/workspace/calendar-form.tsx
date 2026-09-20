@@ -1,9 +1,9 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/base/input/input";
-import { Checkbox } from "@/components/base/checkbox/checkbox";
-import { Button } from "@/components/base/buttons/button";
+import { Input } from "@/components/premium/forms";
+import { Checkbox } from "@/components/premium/forms";
+import { Button } from "@/components/motion/button/base";
 
 export function CalendarForm({
   date,
@@ -83,3 +83,4 @@ export function CalendarForm({
     </form>
   );
 }
+

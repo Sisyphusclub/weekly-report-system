@@ -7,8 +7,8 @@ import { dateInput, shanghaiDate } from "@/lib/daily-input";
 import { isWorkday } from "@/lib/domain";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { CalendarForm } from "@/components/workspace/calendar-form";
-import { Input } from "@/components/base/input/input";
-import { Button, ButtonLink } from "@/components/base/buttons/button";
+import { Input } from "@/components/premium/forms";
+import { Button, ButtonLink } from "@/components/motion/button/base";
 
 export const metadata = { title: "工作日历" };
 export default async function CalendarPage({
@@ -119,3 +119,4 @@ export default async function CalendarPage({
     </WorkspaceShell>
   );
 }
+

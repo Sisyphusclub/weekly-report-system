@@ -7,7 +7,7 @@ import { report, reportRevision, reportTask } from "@/lib/db/schema";
 import { taskSnapshot } from "@/lib/task-snapshot";
 import { reportVisibility } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { RevisionForm } from "@/components/workspace/revision-form";
 import { RevisionRequests } from "@/components/workspace/revision-requests";
 import { CommentSection } from "@/components/workspace/comment-section";

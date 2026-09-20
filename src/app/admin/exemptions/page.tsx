@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { reportingExemption, user } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ExemptionForm } from "@/components/workspace/exemption-form";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 export const metadata = { title: "请假与免报" };
 export default async function ExemptionsPage({
   searchParams,
@@ -93,3 +93,4 @@ export default async function ExemptionsPage({
     </WorkspaceShell>
   );
 }
+

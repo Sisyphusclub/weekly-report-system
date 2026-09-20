@@ -1,11 +1,11 @@
 "use client";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/base/input/input";
-import { Textarea } from "@/components/base/textarea/textarea";
-import { Select, SelectItem } from "@/components/base/select/select";
-import { Checkbox } from "@/components/base/checkbox/checkbox";
-import { Button } from "@/components/base/buttons/button";
+import { Input } from "@/components/premium/forms";
+import { Textarea } from "@/components/premium/forms";
+import { Select, SelectItem } from "@/components/premium/forms";
+import { Checkbox } from "@/components/premium/forms";
+import { Button } from "@/components/motion/button/base";
 type Project = {
   id: string;
   version: number;
@@ -166,3 +166,4 @@ export function ProjectForm({
     </form>
   );
 }
+

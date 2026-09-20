@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { RiArrowLeftSLine, RiArrowRightSLine } from "@remixicon/react";
-import { Button } from "@/components/base/buttons/button";
+import { Button } from "@/components/motion/button/base";
 
 export function PlanStrip({ children }: { children: React.ReactNode }) {
   const stripRef = useRef<HTMLDivElement>(null);
@@ -61,3 +61,4 @@ export function PlanStrip({ children }: { children: React.ReactNode }) {
     </div>
   );
 }
+

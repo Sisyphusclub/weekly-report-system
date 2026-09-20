@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/base/buttons/button";
+import { Button } from "@/components/motion/button/base";
 export function CopyFilterLink({ href }: { href: string }) {
   const [message, setMessage] = useState("");
   async function copy() {
@@ -26,3 +26,4 @@ export function CopyFilterLink({ href }: { href: string }) {
     </span>
   );
 }
+

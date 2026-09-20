@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { user } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { CreateUserForm } from "@/components/workspace/create-user-form";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { PageHeading } from "@/components/dashboard/page-heading";
 import { UserManagementTable } from "@/components/workspace/user-management-table";
 export const metadata = { title: "账号管理" };
@@ -58,3 +58,4 @@ export default async function UsersPage({
     </WorkspaceShell>
   );
 }
+

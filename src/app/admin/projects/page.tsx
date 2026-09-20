@@ -5,7 +5,7 @@ import { getDb } from "@/lib/db";
 import { project, projectMember, user } from "@/lib/db/schema";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ProjectForm } from "@/components/workspace/project-form";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 export const metadata = { title: "项目管理" };
 export default async function ProjectsPage({
   searchParams,
@@ -121,3 +121,4 @@ export default async function ProjectsPage({
     </WorkspaceShell>
   );
 }
+

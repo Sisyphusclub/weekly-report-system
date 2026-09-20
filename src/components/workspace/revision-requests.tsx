@@ -2,7 +2,7 @@ import { and, desc, eq, or } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import { revisionRequest, user } from "@/lib/db/schema";
 import type { Actor } from "@/lib/domain";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { RevisionReviewForm } from "./revision-review-form";
 
 export async function RevisionRequests({
@@ -137,3 +137,4 @@ export async function RevisionRequests({
     </section>
   );
 }
+

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/access";
 import { WorkspaceShell } from "@/components/workspace/shell";
-import { ButtonLink } from "@/components/base/buttons/button";
+import { ButtonLink } from "@/components/motion/button/base";
 import { TaskImportForm } from "@/components/workspace/task-import-form";
 import { TaskTransferForm } from "@/components/workspace/task-transfer-form";
 import { getDb } from "@/lib/db";
@@ -56,3 +56,4 @@ export default async function AdminTasksPage() {
     </WorkspaceShell>
   );
 }
+

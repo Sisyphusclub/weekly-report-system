@@ -3,9 +3,9 @@ import {
   RiCheckboxCircleLine,
   RiTimeLine,
 } from "@remixicon/react";
-import { Avatar } from "@/components/base/avatar/avatar";
-import { ButtonLink } from "@/components/base/buttons/button";
-import { Chip } from "@/components/base/badges/chip";
+import { Avatar } from "@/components/premium/avatar";
+import { ButtonLink } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
 import { TaskItemRow, type WorkStatus } from "./task-item-row";
 
 export function MemberCompareCard({
@@ -45,7 +45,7 @@ export function MemberCompareCard({
             </p>
           </div>
         </div>
-        <Chip
+        <Badge
           variant="caption"
           color={
             hasRisk
@@ -60,7 +60,7 @@ export function MemberCompareCard({
             : member.submitted >= member.due && member.due > 0
               ? "按时提交"
               : "待跟进"}
-        </Chip>
+        </Badge>
       </div>
       {hasRisk && (
         <div className="mt-4 flex items-start gap-2 rounded-lg bg-status-rose-background px-3 py-2 text-caption-1-medium text-status-rose-text">
@@ -148,3 +148,4 @@ export function MemberCompareCard({
     </article>
   );
 }
+

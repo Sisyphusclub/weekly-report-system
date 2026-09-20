@@ -1,8 +1,8 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/base/buttons/button";
-import { Input } from "@/components/base/input/input";
+import { Button } from "@/components/motion/button/base";
+import { Input } from "@/components/premium/forms";
 export function ExternalLinkForm({ taskId }: { taskId: string }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -58,3 +58,4 @@ export function ExternalLinkForm({ taskId }: { taskId: string }) {
     </form>
   );
 }
+

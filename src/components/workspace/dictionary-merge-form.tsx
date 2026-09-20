@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
-import { Button } from "@/components/base/buttons/button";
-import { Select, SelectItem } from "@/components/base/select/select";
+import { Button } from "@/components/motion/button/base";
+import { Select, SelectItem } from "@/components/premium/forms";
 export function DictionaryMergeForm({
   kind,
   entries,
@@ -64,3 +64,4 @@ export function DictionaryMergeForm({
     </div>
   );
 }
+
