@@ -14,11 +14,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 import { Badge, Tag } from "@/components/premium/badge";
-import {
-  Card,
-  CardBody,
-  CardHeader,
-} from "@/components/premium/cards/card";
+import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { FooterToolbar } from "@/components/premium/footer-toolbar";
 import {
   Checkbox,
@@ -97,7 +93,9 @@ function isSameWork(plan: DailyEntry, work: DailyEntry) {
 }
 
 function projectName(entry: DailyEntry, projects: Project[]) {
-  return projects.find((item) => item.id === entry.projectId)?.name ?? "未关联项目";
+  return (
+    projects.find((item) => item.id === entry.projectId)?.name ?? "未关联项目"
+  );
 }
 
 function formatReportDate(value: string) {
@@ -121,7 +119,8 @@ function ReportDateControl({
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const openPicker = () => {
-    const input = inputRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
+    const input = inputRef.current as
+      (HTMLInputElement & { showPicker?: () => void }) | null;
     if (!input) return;
     if (input.showPicker) input.showPicker();
     else input.click();
@@ -179,7 +178,9 @@ function PlanListItem({
         <div className="min-w-0">
           <div className="flex min-w-0 items-center gap-1.5">
             <Tag color="neutral">{projectName(entry, projects)}</Tag>
-            <p className="min-w-0 truncate text-sm font-medium text-slate-800">{entry.content}</p>
+            <p className="min-w-0 truncate text-sm font-medium text-slate-800">
+              {entry.content}
+            </p>
           </div>
           <p className="mt-1 text-xs text-slate-500">{entry.category}</p>
         </div>
@@ -245,7 +246,9 @@ function WorkListItem({
   onEdit: () => void;
   onRemove: () => void;
 }) {
-  const deliverables = entry.deliverables.length ? entry.deliverables.join("、") : "未登记产出";
+  const deliverables = entry.deliverables.length
+    ? entry.deliverables.join("、")
+    : "未登记产出";
   return (
     <ListItem
       index={String(index + 1).padStart(2, "0")}
@@ -253,8 +256,14 @@ function WorkListItem({
         <div className="min-w-0 space-y-2">
           <div className="flex min-w-0 items-center gap-1.5">
             <Tag color="neutral">{projectName(entry, projects)}</Tag>
-            <p className="min-w-0 truncate text-sm font-medium text-slate-800">{entry.content}</p>
-            <Badge status="success" text="已完成" className="ml-auto shrink-0" />
+            <p className="min-w-0 truncate text-sm font-medium text-slate-800">
+              {entry.content}
+            </p>
+            <Badge
+              status="success"
+              text="已完成"
+              className="ml-auto shrink-0"
+            />
           </div>
           <div className="flex min-w-0 items-center gap-2 pl-0.5">
             <Tag color="processing">产出：{deliverables}</Tag>
@@ -295,9 +304,15 @@ function EmptyColumn({ kind }: { kind: EntryKind }) {
     <div className="grid min-h-36 place-items-center rounded-lg border border-dashed border-border bg-muted/30 px-6 text-center">
       <div>
         {kind === "plan" ? (
-          <CalendarDays className="mx-auto size-5 text-muted-foreground" aria-hidden />
+          <CalendarDays
+            className="mx-auto size-5 text-muted-foreground"
+            aria-hidden
+          />
         ) : (
-          <CheckCircle2 className="mx-auto size-5 text-muted-foreground" aria-hidden />
+          <CheckCircle2
+            className="mx-auto size-5 text-muted-foreground"
+            aria-hidden
+          />
         )}
         <p className="mt-2 text-sm font-medium text-foreground">
           {kind === "plan" ? "今天还没有工作计划" : "还没有实际完成项"}
@@ -422,8 +437,10 @@ export function DailyForm({
   const fulfillment = plans.length
     ? Math.round((completedPlans / plans.length) * 100)
     : 0;
-  const updatePlans = (next: DailyEntry[]) => controller.update({ plans: next });
-  const updateWorks = (next: DailyEntry[]) => controller.update({ works: next });
+  const updatePlans = (next: DailyEntry[]) =>
+    controller.update({ plans: next });
+  const updateWorks = (next: DailyEntry[]) =>
+    controller.update({ works: next });
   const updateBlockers = (next: DailyBlocker[]) =>
     controller.update({ blockers: next });
 
@@ -500,7 +517,10 @@ export function DailyForm({
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <p className="text-xs font-semibold text-primary">今日工作</p>
-            <Badge variant="caption" color={state.submitted ? "lime" : "yellow"}>
+            <Badge
+              variant="caption"
+              color={state.submitted ? "lime" : "yellow"}
+            >
               {state.submitted
                 ? "已提交"
                 : state.pending
@@ -510,7 +530,9 @@ export function DailyForm({
                     : "草稿已同步"}
             </Badge>
           </div>
-          <h1 className="mt-2 text-2xl font-bold text-foreground">今日工作台</h1>
+          <h1 className="mt-2 text-2xl font-bold text-foreground">
+            今日工作台
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
             汇报人：{reporterName}，计划与实际在同一处核销。
           </p>
@@ -522,7 +544,9 @@ export function DailyForm({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <ClipboardCheck className="size-4 text-primary" aria-hidden />
-              <h2 className="text-base font-semibold text-foreground">今日计划与实际</h2>
+              <h2 className="text-base font-semibold text-foreground">
+                今日计划与实际
+              </h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               左侧维护计划，核销后自动带入右侧实际完成。
@@ -552,106 +576,138 @@ export function DailyForm({
         </CardHeader>
 
         <CardBody className="min-w-0 p-0">
-          <Row className="min-w-0">
-            <Col span={12} lg={6} className="min-w-0 border-b border-border p-5 lg:border-b-0">
-            <div className="mb-3 flex items-center justify-between gap-3">
-              <div>
-                <h3 className="text-sm font-semibold text-foreground">今日工作计划</h3>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {completedPlans}/{plans.length} 项已核销
-                </p>
+          <Row className="min-w-0 lg:items-stretch">
+            <Col
+              span={12}
+              lg={6}
+              className="flex min-w-0 flex-col border-b border-border p-5 lg:border-b-0"
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    今日工作计划
+                  </h3>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    {completedPlans}/{plans.length} 项已核销
+                  </p>
+                </div>
               </div>
-            </div>
-            {plans.length ? (
-              <List
-                dataSource={plans}
-                rowKey={(_, index) => `plan-${index}`}
-                itemClassName="min-h-[72px] border-slate-200 bg-slate-50/70"
-                renderItem={(entry, index) => (
-                  <PlanListItem
-                    entry={entry}
-                    index={index}
-                    projects={projects}
-                    disabled={disabled}
-                    reconciled={works.some((work) => isSameWork(entry, work))}
-                    onEdit={() => openEntryModal("plan", index)}
-                    onRemove={() => updatePlans(plans.filter((_, itemIndex) => itemIndex !== index))}
-                    onReconcile={() => reconcilePlan(index)}
-                  />
-                )}
-              />
-            ) : (
-              <>
-                <EmptyColumn kind="plan" />
-                <Input
-                  className="mt-3"
-                  label="没有计划的原因"
-                  value={state.content.noPlanReason}
-                  onChange={(noPlanReason) => controller.update({ noPlanReason })}
-                  isDisabled={disabled}
-                  maxLength={200}
+              {plans.length ? (
+                <List
+                  dataSource={plans}
+                  rowKey={(_, index) => `plan-${index}`}
+                  itemClassName="min-h-[96px] border-slate-200 bg-slate-50/70 lg:h-[96px] lg:overflow-hidden"
+                  renderItem={(entry, index) => (
+                    <PlanListItem
+                      entry={entry}
+                      index={index}
+                      projects={projects}
+                      disabled={disabled}
+                      reconciled={works.some((work) => isSameWork(entry, work))}
+                      onEdit={() => openEntryModal("plan", index)}
+                      onRemove={() =>
+                        updatePlans(
+                          plans.filter((_, itemIndex) => itemIndex !== index),
+                        )
+                      }
+                      onReconcile={() => reconcilePlan(index)}
+                    />
+                  )}
                 />
-              </>
-            )}
+              ) : (
+                <>
+                  <EmptyColumn kind="plan" />
+                  <Input
+                    className="mt-3"
+                    label="没有计划的原因"
+                    value={state.content.noPlanReason}
+                    onChange={(noPlanReason) =>
+                      controller.update({ noPlanReason })
+                    }
+                    isDisabled={disabled}
+                    maxLength={200}
+                  />
+                </>
+              )}
             </Col>
 
-            <Col span={12} lg={6} className="min-w-0 border-l border-slate-100 p-5">
-            <div className="mb-3">
-              <h3 className="text-sm font-semibold text-foreground">今日实际完成</h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                {completedWorks}/{works.length} 项已完成
-              </p>
-            </div>
-            {works.length ? (
-              <List
-                dataSource={works}
-                rowKey={(_, index) => `work-${index}`}
-                itemClassName="min-h-[72px] border-slate-200 bg-white shadow-xs"
-                renderItem={(entry, index) => (
-                  <WorkListItem
-                    entry={entry}
-                    index={index}
-                    projects={projects}
-                    disabled={disabled}
-                    onEdit={() => openEntryModal("work", index)}
-                    onRemove={() => updateWorks(works.filter((_, itemIndex) => itemIndex !== index))}
-                  />
-                )}
-              />
-            ) : (
-              <>
-                <EmptyColumn kind="work" />
-                <Input
-                  className="mt-3"
-                  label="没有实际工作的原因"
-                  value={state.content.noWorkReason}
-                  onChange={(noWorkReason) => controller.update({ noWorkReason })}
-                  isDisabled={disabled}
-                  maxLength={200}
-                />
-              </>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="small"
-              disabled={disabled || works.length >= 100}
-              onClick={() => openEntryModal("work")}
-              className="mt-3 text-primary"
+            <Col
+              span={12}
+              lg={6}
+              className="flex min-w-0 flex-col border-l border-slate-100 p-5"
             >
-              <Plus className="size-3.5" aria-hidden />
-              插入临时工作
-            </Button>
+              <div className="mb-3">
+                <h3 className="text-sm font-semibold text-foreground">
+                  今日实际完成
+                </h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {completedWorks}/{works.length} 项已完成
+                </p>
+              </div>
+              {works.length ? (
+                <List
+                  dataSource={works}
+                  rowKey={(_, index) => `work-${index}`}
+                  itemClassName="min-h-[96px] border-slate-200 bg-white shadow-xs lg:h-[96px] lg:overflow-hidden"
+                  renderItem={(entry, index) => (
+                    <WorkListItem
+                      entry={entry}
+                      index={index}
+                      projects={projects}
+                      disabled={disabled}
+                      onEdit={() => openEntryModal("work", index)}
+                      onRemove={() =>
+                        updateWorks(
+                          works.filter((_, itemIndex) => itemIndex !== index),
+                        )
+                      }
+                    />
+                  )}
+                />
+              ) : (
+                <>
+                  <EmptyColumn kind="work" />
+                  <Input
+                    className="mt-3"
+                    label="没有实际工作的原因"
+                    value={state.content.noWorkReason}
+                    onChange={(noWorkReason) =>
+                      controller.update({ noWorkReason })
+                    }
+                    isDisabled={disabled}
+                    maxLength={200}
+                  />
+                </>
+              )}
+              <Button
+                type="button"
+                variant="ghost"
+                size="small"
+                disabled={disabled || works.length >= 100}
+                onClick={() => openEntryModal("work")}
+                className="mt-3 text-primary"
+              >
+                <Plus className="size-3.5" aria-hidden />
+                插入临时工作
+              </Button>
             </Col>
           </Row>
         </CardBody>
 
         <div className="border-t border-slate-100 bg-slate-50/60 p-4">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <Checkbox isSelected={blockerOpen} onChange={toggleBlockers} isDisabled={disabled}>
-              <span className="font-medium text-slate-800">今日存在卡点或阻碍事项</span>
+            <Checkbox
+              isSelected={blockerOpen}
+              onChange={toggleBlockers}
+              isDisabled={disabled}
+            >
+              <span className="font-medium text-slate-800">
+                今日存在卡点或阻碍事项
+              </span>
             </Checkbox>
-            <span className="text-xs text-slate-500">勾选后展开输入卡点和关联项目</span>
+            <span className="text-xs text-slate-500">
+              勾选后展开输入卡点和关联项目
+            </span>
           </div>
 
           {blockerOpen ? (
@@ -667,7 +723,13 @@ export function DailyForm({
                         label={`卡点 ${index + 1}`}
                         value={blocker.description}
                         onChange={(description) =>
-                          updateBlockers(blockers.map((item, itemIndex) => itemIndex === index ? { ...item, description } : item))
+                          updateBlockers(
+                            blockers.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? { ...item, description }
+                                : item,
+                            ),
+                          )
                         }
                         placeholder="说明需要协调的事项"
                         isDisabled={disabled}
@@ -680,24 +742,44 @@ export function DailyForm({
                         aria-label={`卡点 ${index + 1} 关联项目`}
                         selectedKey={blocker.projectId}
                         onSelectionChange={(projectId) =>
-                          updateBlockers(blockers.map((item, itemIndex) => itemIndex === index ? { ...item, projectId } : item))
+                          updateBlockers(
+                            blockers.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? { ...item, projectId }
+                                : item,
+                            ),
+                          )
                         }
                         isDisabled={disabled}
                       >
                         {projects.map((item) => (
-                          <SelectItem key={item.id} id={item.id}>{item.name}</SelectItem>
+                          <SelectItem key={item.id} id={item.id}>
+                            {item.name}
+                          </SelectItem>
                         ))}
                       </Select>
                       <Select
                         aria-label={`卡点 ${index + 1} 严重程度`}
                         selectedKey={blocker.severity}
                         onSelectionChange={(severity) =>
-                          updateBlockers(blockers.map((item, itemIndex) => itemIndex === index ? { ...item, severity: severity as DailyBlocker["severity"] } : item))
+                          updateBlockers(
+                            blockers.map((item, itemIndex) =>
+                              itemIndex === index
+                                ? {
+                                    ...item,
+                                    severity:
+                                      severity as DailyBlocker["severity"],
+                                  }
+                                : item,
+                            ),
+                          )
                         }
                         isDisabled={disabled}
                       >
                         {severityOptions.map(([value, label]) => (
-                          <SelectItem key={value} id={value}>{label}</SelectItem>
+                          <SelectItem key={value} id={value}>
+                            {label}
+                          </SelectItem>
                         ))}
                       </Select>
                       <Button
@@ -707,7 +789,9 @@ export function DailyForm({
                         iconOnly
                         disabled={disabled}
                         onClick={() => {
-                          const next = blockers.filter((_, itemIndex) => itemIndex !== index);
+                          const next = blockers.filter(
+                            (_, itemIndex) => itemIndex !== index,
+                          );
                           updateBlockers(next);
                           if (!next.length) setBlockerOpen(false);
                         }}
@@ -723,7 +807,9 @@ export function DailyForm({
                     variant="ghost"
                     size="small"
                     disabled={disabled || blockers.length >= 20}
-                    onClick={() => updateBlockers([...blockers, blankBlocker(projects)])}
+                    onClick={() =>
+                      updateBlockers([...blockers, blankBlocker(projects)])
+                    }
                     className="text-status-rose-text"
                   >
                     <Plus className="size-3.5" aria-hidden />
@@ -754,34 +840,50 @@ export function DailyForm({
 
       {preview && !state.submitted ? (
         <Card aria-label="提交预览">
-          <CardHeader className="flex items-center justify-between gap-3">
+          <CardHeader className="flex items-center justify-between gap-3 px-4 py-3">
             <div>
-              <h2 className="text-base font-semibold text-foreground">提交预览</h2>
+              <h2 className="text-base font-semibold text-foreground">
+                提交预览
+              </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                {reporterName} · {date} · 计划 {plans.length} 项 · 实际 {works.length} 项
+                {reporterName} · {date} · 计划 {plans.length} 项 · 实际{" "}
+                {works.length} 项
               </p>
             </div>
-            <Button type="button" variant="ghost" size="small" onClick={() => setPreview(false)}>
+            <Button
+              type="button"
+              variant="ghost"
+              size="small"
+              onClick={() => setPreview(false)}
+            >
               继续编辑
             </Button>
           </CardHeader>
-          <CardBody className="grid gap-5 lg:grid-cols-2">
+          <CardBody className="grid items-start gap-3 px-4 py-3 lg:grid-cols-2">
             <PreviewEntries title="工作计划 / 进度" entries={plans} />
             <PreviewEntries title="工作内容 / 产出" entries={works} />
             {blockers.length ? (
-              <div className="lg:col-span-2">
-                <h3 className="text-sm font-semibold text-status-rose-text">阻塞事项</h3>
+              <div className="border-t border-status-rose-border pt-3 lg:col-span-2">
+                <h3 className="text-sm font-semibold text-status-rose-text">
+                  阻塞事项
+                </h3>
                 <ul className="mt-2 space-y-1 text-sm text-foreground">
                   {blockers.map((blocker, index) => (
                     <li key={index}>
-                      {index + 1}. {blocker.description}，{projects.find((item) => item.id === blocker.projectId)?.name ?? "未关联项目"}
+                      {index + 1}. {blocker.description}，
+                      {projects.find((item) => item.id === blocker.projectId)
+                        ?.name ?? "未关联项目"}
                     </li>
                   ))}
                 </ul>
               </div>
             ) : null}
-            <div className="flex justify-end lg:col-span-2">
-              <Button type="button" disabled={state.pending || submitting} onClick={() => void saveSubmit()}>
+            <div className="flex justify-end border-t border-border pt-3 lg:col-span-2">
+              <Button
+                type="button"
+                disabled={state.pending || submitting}
+                onClick={() => void saveSubmit()}
+              >
                 {submitting ? "正在提交" : "确认提交"}
               </Button>
             </div>
@@ -792,8 +894,12 @@ export function DailyForm({
       {remote ? (
         <Card className="border-status-rose-border">
           <CardBody>
-            <h2 className="text-base font-semibold text-foreground">远端已有更新</h2>
-            <p className="mt-1 text-sm text-muted-foreground">请选择保留远端版本或当前编辑内容。</p>
+            <h2 className="text-base font-semibold text-foreground">
+              远端已有更新
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              请选择保留远端版本或当前编辑内容。
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button
                 type="button"
@@ -822,7 +928,9 @@ export function DailyForm({
                   保存当前内容
                 </Button>
               ) : (
-                <ButtonLink href={`/reports/${remote.id}`} variant="secondary">查看已提交报告</ButtonLink>
+                <ButtonLink href={`/reports/${remote.id}`} variant="secondary">
+                  查看已提交报告
+                </ButtonLink>
               )}
             </div>
           </CardBody>
@@ -833,11 +941,22 @@ export function DailyForm({
         <Modal
           open
           onClose={closeEntryModal}
-          title={entryModal.index === null ? (entryModal.kind === "plan" ? "添加工作计划" : "插入临时工作") : "编辑日报条目"}
+          title={
+            entryModal.index === null
+              ? entryModal.kind === "plan"
+                ? "添加工作计划"
+                : "插入临时工作"
+              : "编辑日报条目"
+          }
           description="保存后条目会回到双栏列表，列表中只展示已保存内容。"
           footer={
             <>
-              <Button type="button" variant="secondary" size="small" onClick={closeEntryModal}>
+              <Button
+                type="button"
+                variant="secondary"
+                size="small"
+                onClick={closeEntryModal}
+              >
                 取消
               </Button>
               <Button
@@ -856,7 +975,11 @@ export function DailyForm({
               label={entryModal.kind === "plan" ? "计划内容" : "实际工作内容"}
               value={entryDraft.content}
               onChange={(content) => setEntryDraft({ ...entryDraft, content })}
-              placeholder={entryModal.kind === "plan" ? "填写计划内容和预期结果" : "填写实际完成的工作内容"}
+              placeholder={
+                entryModal.kind === "plan"
+                  ? "填写计划内容和预期结果"
+                  : "填写实际完成的工作内容"
+              }
               isDisabled={disabled}
               isRequired
               rows={3}
@@ -867,11 +990,15 @@ export function DailyForm({
                 <Select
                   aria-label="工作类型"
                   selectedKey={entryDraft.category}
-                  onSelectionChange={(category) => setEntryDraft({ ...entryDraft, category })}
+                  onSelectionChange={(category) =>
+                    setEntryDraft({ ...entryDraft, category })
+                  }
                   isDisabled={disabled}
                 >
                   {categoryOptions.map((category) => (
-                    <SelectItem key={category} id={category}>{category}</SelectItem>
+                    <SelectItem key={category} id={category}>
+                      {category}
+                    </SelectItem>
                   ))}
                 </Select>
               </Col>
@@ -879,11 +1006,18 @@ export function DailyForm({
                 <Select
                   aria-label="工作进度"
                   selectedKey={entryDraft.status}
-                  onSelectionChange={(status) => setEntryDraft({ ...entryDraft, status: status as DailyEntry["status"] })}
+                  onSelectionChange={(status) =>
+                    setEntryDraft({
+                      ...entryDraft,
+                      status: status as DailyEntry["status"],
+                    })
+                  }
                   isDisabled={disabled}
                 >
                   {statusOptions.map(([value, label]) => (
-                    <SelectItem key={value} id={value}>{label}</SelectItem>
+                    <SelectItem key={value} id={value}>
+                      {label}
+                    </SelectItem>
                   ))}
                 </Select>
               </Col>
@@ -891,12 +1025,19 @@ export function DailyForm({
                 <Select
                   aria-label="关联项目"
                   selectedKey={entryDraft.projectId ?? "NONE"}
-                  onSelectionChange={(projectId) => setEntryDraft({ ...entryDraft, projectId: projectId === "NONE" ? null : projectId })}
+                  onSelectionChange={(projectId) =>
+                    setEntryDraft({
+                      ...entryDraft,
+                      projectId: projectId === "NONE" ? null : projectId,
+                    })
+                  }
                   isDisabled={disabled}
                 >
                   <SelectItem id="NONE">未关联项目</SelectItem>
                   {projects.map((item) => (
-                    <SelectItem key={item.id} id={item.id}>{item.name}</SelectItem>
+                    <SelectItem key={item.id} id={item.id}>
+                      {item.name}
+                    </SelectItem>
                   ))}
                 </Select>
               </Col>
@@ -910,82 +1051,135 @@ export function DailyForm({
                     variant="ghost"
                     size="small"
                     disabled={disabled || entryDraft.deliverables.length >= 20}
-                    onClick={() => setEntryDraft({ ...entryDraft, deliverables: [...entryDraft.deliverables, ""] })}
+                    onClick={() =>
+                      setEntryDraft({
+                        ...entryDraft,
+                        deliverables: [...entryDraft.deliverables, ""],
+                      })
+                    }
                     className="text-blue-600"
                   >
                     <Plus className="size-3.5" aria-hidden />
                     添加交付物
                   </Button>
                 </div>
-                {entryDraft.deliverables.map((deliverable, deliverableIndex) => (
-                  <div key={deliverableIndex} className="flex items-center gap-2">
-                    <Input
-                      aria-label={`交付物 ${deliverableIndex + 1}`}
-                      value={deliverable}
-                      onChange={(value) => setEntryDraft({ ...entryDraft, deliverables: entryDraft.deliverables.map((item, itemIndex) => itemIndex === deliverableIndex ? value : item) })}
-                      placeholder="如：教材 1 本、章节 13 章"
-                      isDisabled={disabled}
-                      size="small"
-                      maxLength={200}
-                      className="min-w-0 flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      iconOnly
-                      disabled={disabled}
-                      onClick={() => setEntryDraft({ ...entryDraft, deliverables: entryDraft.deliverables.filter((_, itemIndex) => itemIndex !== deliverableIndex) })}
-                      aria-label={`删除交付物 ${deliverableIndex + 1}`}
+                {entryDraft.deliverables.map(
+                  (deliverable, deliverableIndex) => (
+                    <div
+                      key={deliverableIndex}
+                      className="flex items-center gap-2"
                     >
-                      <Trash2 className="size-4" aria-hidden />
-                    </Button>
-                  </div>
-                ))}
+                      <Input
+                        aria-label={`交付物 ${deliverableIndex + 1}`}
+                        value={deliverable}
+                        onChange={(value) =>
+                          setEntryDraft({
+                            ...entryDraft,
+                            deliverables: entryDraft.deliverables.map(
+                              (item, itemIndex) =>
+                                itemIndex === deliverableIndex ? value : item,
+                            ),
+                          })
+                        }
+                        placeholder="如：教材 1 本、章节 13 章"
+                        isDisabled={disabled}
+                        size="small"
+                        maxLength={200}
+                        className="min-w-0 flex-1"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        iconOnly
+                        disabled={disabled}
+                        onClick={() =>
+                          setEntryDraft({
+                            ...entryDraft,
+                            deliverables: entryDraft.deliverables.filter(
+                              (_, itemIndex) => itemIndex !== deliverableIndex,
+                            ),
+                          })
+                        }
+                        aria-label={`删除交付物 ${deliverableIndex + 1}`}
+                      >
+                        <Trash2 className="size-4" aria-hidden />
+                      </Button>
+                    </div>
+                  ),
+                )}
               </div>
             ) : null}
           </div>
         </Modal>
       ) : null}
 
-      <FooterToolbar>
-        <div className="min-w-0">
-          <p className="text-sm font-medium text-foreground">
-            今日计划 {plans.length} 项 · 已完成 {completedWorks} 项 · 达成率 {fulfillment}%
-          </p>
-          {state.message ? (
-            <p role="status" aria-live="polite" className="mt-0.5 truncate text-xs text-muted-foreground">
-              {state.message}
+      {!preview ? (
+        <FooterToolbar>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">
+              今日计划 {plans.length} 项 · 已完成 {completedWorks} 项 · 达成率{" "}
+              {fulfillment}%
             </p>
-          ) : null}
-        </div>
-        {state.submitted ? (
-          state.id ? <ButtonLink href={`/reports/${state.id}`} variant="secondary">查看已提交日报</ButtonLink> : null
-        ) : (
-          <div className="flex shrink-0 gap-2">
-            <Button type="submit" variant="secondary" disabled={state.pending || submitting}>
-              {state.pending ? "正在保存" : "保存草稿"}
-            </Button>
-            <Button type="button" disabled={state.pending || submitting} onClick={() => setPreview(true)}>
-              预览并提交
-            </Button>
+            {state.message ? (
+              <p
+                role="status"
+                aria-live="polite"
+                className="mt-0.5 truncate text-xs text-muted-foreground"
+              >
+                {state.message}
+              </p>
+            ) : null}
           </div>
-        )}
-      </FooterToolbar>
+          {state.submitted ? (
+            state.id ? (
+              <ButtonLink href={`/reports/${state.id}`} variant="secondary">
+                查看已提交日报
+              </ButtonLink>
+            ) : null
+          ) : (
+            <div className="flex shrink-0 gap-2">
+              <Button
+                type="submit"
+                variant="secondary"
+                disabled={state.pending || submitting}
+              >
+                {state.pending ? "正在保存" : "保存草稿"}
+              </Button>
+              <Button
+                type="button"
+                disabled={state.pending || submitting}
+                onClick={() => setPreview(true)}
+              >
+                预览并提交
+              </Button>
+            </div>
+          )}
+        </FooterToolbar>
+      ) : null}
     </form>
   );
 }
 
-function PreviewEntries({ title, entries }: { title: string; entries: DailyEntry[] }) {
+function PreviewEntries({
+  title,
+  entries,
+}: {
+  title: string;
+  entries: DailyEntry[];
+}) {
   return (
-    <section>
+    <section className="min-w-0">
       <h3 className="text-sm font-semibold text-foreground">{title}</h3>
       {entries.length ? (
-        <ol className="mt-2 space-y-2 text-sm text-foreground">
+        <ol className="mt-1.5 space-y-1.5 text-sm text-foreground">
           {entries.map((entry, index) => (
-            <li key={index}>
-              {index + 1}. {entry.content}（{statusLabel[entry.status]}）｜类型：{entry.category}
-              {entry.deliverables.length ? `｜产出：${entry.deliverables.join(" ")}` : ""}
+            <li key={index} className="min-w-0 truncate">
+              {index + 1}. {entry.content}（{statusLabel[entry.status]}
+              ）｜类型：{entry.category}
+              {entry.deliverables.length
+                ? `｜产出：${entry.deliverables.join(" ")}`
+                : ""}
             </li>
           ))}
         </ol>
