@@ -411,10 +411,12 @@ export function DailyForm({
   const plans = state.content.plans ?? [];
   const works = state.content.works ?? [];
   const blockers = state.content.blockers ?? [];
-  const completedPlans = plans.filter((item) => item.status === "DONE").length;
+  const reconciledPlans = plans.filter((plan) =>
+    works.some((work) => isSameWork(plan, work)),
+  ).length;
   const completedWorks = works.filter((item) => item.status === "DONE").length;
   const fulfillment = plans.length
-    ? Math.round((completedPlans / plans.length) * 100)
+    ? Math.round((reconciledPlans / plans.length) * 100)
     : 0;
   const updatePlans = (next: DailyEntry[]) =>
     controller.update({ plans: next });
@@ -490,7 +492,7 @@ export function DailyForm({
         event.preventDefault();
         void controller.save(false);
       }}
-      className="mx-auto flex w-full max-w-7xl flex-col gap-4"
+      className={`mx-auto flex w-full max-w-7xl flex-col gap-4 ${!preview ? "pb-20" : ""}`}
     >
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0">
@@ -567,7 +569,7 @@ export function DailyForm({
                     今日工作计划
                   </h3>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    {completedPlans}/{plans.length} 项已核销
+                    {reconciledPlans}/{plans.length} 项已核销
                   </p>
                 </div>
               </div>
@@ -1094,46 +1096,48 @@ export function DailyForm({
       ) : null}
 
       {!preview ? (
-        <FooterToolbar>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-foreground">
-              今日计划 {plans.length} 项 · 已完成 {completedWorks} 项 · 达成率{" "}
-              {fulfillment}%
-            </p>
-            {state.message ? (
-              <p
-                role="status"
-                aria-live="polite"
-                className="mt-0.5 truncate text-xs text-muted-foreground"
-              >
-                {state.message}
+        <FooterToolbar className="fixed inset-x-0 bottom-0 z-40 mx-0 rounded-none border-x-0 px-0 py-0 sm:mx-0 sm:rounded-none md:left-[var(--sidebar-width)]">
+          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 xl:px-8">
+            <div className="min-w-0">
+              <p className="text-sm font-medium text-foreground">
+                今日计划 {plans.length} 项 · 已完成 {completedWorks} 项 · 达成率{" "}
+                {fulfillment}%
               </p>
-            ) : null}
-          </div>
-          {state.submitted ? (
-            state.id ? (
-              <ButtonLink href={`/reports/${state.id}`} variant="secondary">
-                查看已提交日报
-              </ButtonLink>
-            ) : null
-          ) : (
-            <div className="flex shrink-0 gap-2">
-              <Button
-                type="submit"
-                variant="secondary"
-                disabled={state.pending || submitting}
-              >
-                {state.pending ? "正在保存" : "保存草稿"}
-              </Button>
-              <Button
-                type="button"
-                disabled={state.pending || submitting}
-                onClick={() => setPreview(true)}
-              >
-                预览并提交
-              </Button>
+              {state.message ? (
+                <p
+                  role="status"
+                  aria-live="polite"
+                  className="mt-0.5 truncate text-xs text-muted-foreground"
+                >
+                  {state.message}
+                </p>
+              ) : null}
             </div>
-          )}
+            {state.submitted ? (
+              state.id ? (
+                <ButtonLink href={`/reports/${state.id}`} variant="secondary">
+                  查看已提交日报
+                </ButtonLink>
+              ) : null
+            ) : (
+              <div className="flex shrink-0 gap-2">
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  disabled={state.pending || submitting}
+                >
+                  {state.pending ? "正在保存" : "保存草稿"}
+                </Button>
+                <Button
+                  type="button"
+                  disabled={state.pending || submitting}
+                  onClick={() => setPreview(true)}
+                >
+                  预览并提交
+                </Button>
+              </div>
+            )}
+          </div>
         </FooterToolbar>
       ) : null}
     </form>
