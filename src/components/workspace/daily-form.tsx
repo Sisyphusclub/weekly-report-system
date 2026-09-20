@@ -11,7 +11,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 import { Badge, Tag } from "@/components/premium/badge";
 import {
@@ -100,6 +100,59 @@ function projectName(entry: DailyEntry, projects: Project[]) {
   return projects.find((item) => item.id === entry.projectId)?.name ?? "未关联项目";
 }
 
+function formatReportDate(value: string) {
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return value;
+  const weekday = new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "UTC",
+    weekday: "short",
+  }).format(new Date(Date.UTC(year, month - 1, day)));
+  return `${String(year)}/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")} (${weekday})`;
+}
+
+function ReportDateControl({
+  value,
+  disabled,
+  onChange,
+}: {
+  value: string;
+  disabled: boolean;
+  onChange: (value: string) => void;
+}) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const openPicker = () => {
+    const input = inputRef.current as (HTMLInputElement & { showPicker?: () => void }) | null;
+    if (!input) return;
+    if (input.showPicker) input.showPicker();
+    else input.click();
+  };
+
+  return (
+    <div className="relative">
+      <Button
+        type="button"
+        variant="secondary"
+        size="small"
+        disabled={disabled}
+        onClick={openPicker}
+        className="h-8 gap-2 border-slate-200 bg-white px-3 text-xs text-slate-700"
+      >
+        <CalendarDays className="size-3.5 text-slate-500" aria-hidden />
+        {formatReportDate(value)}
+      </Button>
+      <input
+        ref={inputRef}
+        type="date"
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+        aria-label="报告日期"
+        tabIndex={-1}
+        className="pointer-events-none absolute size-px opacity-0"
+      />
+    </div>
+  );
+}
+
 function PlanListItem({
   entry,
   index,
@@ -124,11 +177,11 @@ function PlanListItem({
       index={String(index + 1).padStart(2, "0")}
       title={
         <div className="min-w-0">
-          <p className="truncate text-sm font-medium text-slate-800">{entry.content}</p>
-          <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
-            <Tag color="neutral">{entry.category}</Tag>
-            <Tag color="neutral">项目：{projectName(entry, projects)}</Tag>
+          <div className="flex min-w-0 items-center gap-1.5">
+            <Tag color="neutral">{projectName(entry, projects)}</Tag>
+            <p className="min-w-0 truncate text-sm font-medium text-slate-800">{entry.content}</p>
           </div>
+          <p className="mt-1 text-xs text-slate-500">{entry.category}</p>
         </div>
       }
       trailing={
@@ -144,17 +197,21 @@ function PlanListItem({
           >
             <Pencil className="size-3.5" aria-hidden />
           </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            disabled={disabled || reconciled || !entry.content.trim()}
-            onClick={onReconcile}
-            className="text-blue-600 hover:bg-blue-50 hover:text-blue-700"
-          >
-            {reconciled ? "已核销" : "核销完成"}
-            {!reconciled && <ArrowRight className="size-3.5" aria-hidden />}
-          </Button>
+          {reconciled ? (
+            <span className="text-xs text-slate-400">✓ 已核销</span>
+          ) : (
+            <Button
+              type="button"
+              variant="ghost"
+              size="xs"
+              disabled={disabled || !entry.content.trim()}
+              onClick={onReconcile}
+              className="rounded bg-blue-50 px-2 py-1 text-xs text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+            >
+              核销完成
+              <ArrowRight className="size-3.5" aria-hidden />
+            </Button>
+          )}
           <Button
             type="button"
             variant="ghost"
@@ -193,43 +250,40 @@ function WorkListItem({
     <ListItem
       index={String(index + 1).padStart(2, "0")}
       title={
-        <div className="min-w-0">
+        <div className="min-w-0 space-y-2">
           <div className="flex min-w-0 items-center gap-1.5">
+            <Tag color="neutral">{projectName(entry, projects)}</Tag>
             <p className="min-w-0 truncate text-sm font-medium text-slate-800">{entry.content}</p>
-            <Tag color="neutral">{entry.category}</Tag>
+            <Badge status="success" text="已完成" className="ml-auto shrink-0" />
           </div>
-          <div className="mt-2 flex min-w-0 items-center gap-2 pl-0.5">
+          <div className="flex min-w-0 items-center gap-2 pl-0.5">
             <Tag color="processing">产出：{deliverables}</Tag>
-            <Badge status="success" text="已完成" />
-            <Tag color="neutral">项目：{projectName(entry, projects)}</Tag>
+            <div className="ml-auto flex shrink-0 items-center gap-1">
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                disabled={disabled}
+                onClick={onEdit}
+                aria-label={`编辑第 ${index + 1} 项实际工作`}
+                className="text-slate-500 hover:text-slate-900"
+              >
+                <Pencil className="size-3.5" aria-hidden />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="xs"
+                iconOnly
+                disabled={disabled}
+                onClick={onRemove}
+                aria-label={`删除第 ${index + 1} 项实际工作`}
+                className="text-slate-400 hover:text-rose-700"
+              >
+                <Trash2 className="size-3.5" aria-hidden />
+              </Button>
+            </div>
           </div>
-        </div>
-      }
-      trailing={
-        <div className="flex shrink-0 items-center gap-1">
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            disabled={disabled}
-            onClick={onEdit}
-            aria-label={`编辑第 ${index + 1} 项实际工作`}
-            className="text-slate-500 hover:text-slate-900"
-          >
-            <Pencil className="size-3.5" aria-hidden />
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            size="xs"
-            iconOnly
-            disabled={disabled}
-            onClick={onRemove}
-            aria-label={`删除第 ${index + 1} 项实际工作`}
-            className="text-slate-400 hover:text-rose-700"
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-          </Button>
         </div>
       }
     />
@@ -461,25 +515,6 @@ export function DailyForm({
             汇报人：{reporterName}，计划与实际在同一处核销。
           </p>
         </div>
-        <div className="flex flex-wrap items-end gap-2">
-          <Input
-            type="date"
-            label="报告日期"
-            value={selectedDate}
-            onChange={setSelectedDate}
-            size="small"
-            className="w-44"
-          />
-          <Button
-            type="button"
-            variant="secondary"
-            size="medium"
-            disabled={!selectedDate || selectedDate === date || state.dirty}
-            onClick={() => router.push(`/daily?date=${selectedDate}`)}
-          >
-            打开日报
-          </Button>
-        </div>
       </header>
 
       <Card className="overflow-hidden">
@@ -494,12 +529,18 @@ export function DailyForm({
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-medium text-muted-foreground">
-              {date.replaceAll("-", ".")} · {plans.length} 项计划 · {works.length} 项实际
-            </span>
+            <ReportDateControl
+              value={selectedDate}
+              disabled={state.dirty || state.pending || submitting}
+              onChange={(nextDate) => {
+                setSelectedDate(nextDate);
+                if (nextDate && nextDate !== date && !state.dirty) {
+                  router.push(`/daily?date=${nextDate}`);
+                }
+              }}
+            />
             <Button
               type="button"
-              variant="secondary"
               size="small"
               disabled={disabled || plans.length >= 100}
               onClick={() => openEntryModal("plan")}
@@ -512,7 +553,7 @@ export function DailyForm({
 
         <CardBody className="min-w-0 p-0">
           <Row className="min-w-0">
-          <Col span={12} lg={6} className="min-w-0 border-b border-border p-5 lg:border-b-0">
+            <Col span={12} lg={6} className="min-w-0 border-b border-border p-5 lg:border-b-0">
             <div className="mb-3 flex items-center justify-between gap-3">
               <div>
                 <h3 className="text-sm font-semibold text-foreground">今日工作计划</h3>
@@ -525,7 +566,7 @@ export function DailyForm({
               <List
                 dataSource={plans}
                 rowKey={(_, index) => `plan-${index}`}
-                itemClassName="border-slate-200 bg-slate-50/70"
+                itemClassName="min-h-[72px] border-slate-200 bg-slate-50/70"
                 renderItem={(entry, index) => (
                   <PlanListItem
                     entry={entry}
@@ -552,9 +593,9 @@ export function DailyForm({
                 />
               </>
             )}
-          </Col>
+            </Col>
 
-          <Col span={12} lg={6} className="min-w-0 border-l border-slate-100 p-5">
+            <Col span={12} lg={6} className="min-w-0 border-l border-slate-100 p-5">
             <div className="mb-3">
               <h3 className="text-sm font-semibold text-foreground">今日实际完成</h3>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -565,7 +606,7 @@ export function DailyForm({
               <List
                 dataSource={works}
                 rowKey={(_, index) => `work-${index}`}
-                itemClassName="border-slate-200 bg-white shadow-xs"
+                itemClassName="min-h-[72px] border-slate-200 bg-white shadow-xs"
                 renderItem={(entry, index) => (
                   <WorkListItem
                     entry={entry}
@@ -601,14 +642,17 @@ export function DailyForm({
               <Plus className="size-3.5" aria-hidden />
               插入临时工作
             </Button>
-          </Col>
+            </Col>
           </Row>
         </CardBody>
 
-        <div className="border-t border-border bg-muted/20 px-5 py-4">
-          <Checkbox isSelected={blockerOpen} onChange={toggleBlockers} isDisabled={disabled}>
-            <span className="font-medium text-foreground">今日存在卡点或需协调事项</span>
-          </Checkbox>
+        <div className="border-t border-slate-100 bg-slate-50/60 p-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+            <Checkbox isSelected={blockerOpen} onChange={toggleBlockers} isDisabled={disabled}>
+              <span className="font-medium text-slate-800">今日存在卡点或阻碍事项</span>
+            </Checkbox>
+            <span className="text-xs text-slate-500">勾选后展开输入卡点和关联项目</span>
+          </div>
 
           {blockerOpen ? (
             <div className="mt-3 rounded-lg border border-status-rose-border bg-status-rose-background p-4">
@@ -699,11 +743,11 @@ export function DailyForm({
             label="补充说明（可选）"
             value={state.content.summary}
             onChange={(summary) => controller.update({ summary })}
-            placeholder="补充今天需要说明的信息"
+            placeholder="补充今日渠道数据与协同事项…"
             isDisabled={disabled}
-            rows={2}
+            rows={1}
             maxLength={10000}
-            className="mt-3 min-h-20"
+            className="mt-3 min-h-11 resize-y"
           />
         </div>
       </Card>
