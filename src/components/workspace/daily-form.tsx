@@ -739,15 +739,15 @@ export function DailyForm({
             </div>
           ) : null}
 
-          <Textarea
+          <Input
             label="补充说明（可选）"
             value={state.content.summary}
             onChange={(summary) => controller.update({ summary })}
             placeholder="补充今日渠道数据与协同事项…"
             isDisabled={disabled}
-            rows={1}
             maxLength={10000}
-            className="mt-3 min-h-11 resize-y"
+            size="small"
+            className="mt-3"
           />
         </div>
       </Card>
