@@ -26,7 +26,7 @@ export function AuthSplit({
   description = "使用管理员分配的账号进入工作台。",
   panelEyebrow = "MARKETING / WORKSPACE",
   panelTitle = "让每天的进展，都能沉淀为团队判断。",
-  panelDescription = "日报、周报、任务与阻塞统一归档，负责人可以随时掌握项目推进状态。",
+  panelDescription = "日报、周报与阻塞统一归档，负责人可以随时掌握项目推进状态。",
   children,
   className,
 }: AuthSplitProps) {

@@ -39,7 +39,7 @@ export default async function DictionariesPage({
     <WorkspaceShell actor={actor} selected="dictionaries">
       <h1 className="text-title-1-medium">分类与交付物单位</h1>
       <p className="text-body-regular text-text-secondary">
-        停用后不能用于新任务，历史记录中的名称快照保留。
+        停用后不能用于新的日报条目，历史记录中的名称快照保留。
       </p>
       <nav aria-label="资料类型" className="flex gap-3">
         <ButtonLink

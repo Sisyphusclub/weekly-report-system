@@ -200,11 +200,11 @@ export default async function WeeklyPage({
             <SectionHeading
               icon={RiArrowRightLine}
               title="下周重点规划"
-              detail="先写清任务与预期产出"
+              detail="先写清工作计划与预期产出"
             />
             <div className="mt-4 grid gap-2 text-caption-1-medium text-text-tertiary sm:grid-cols-[1fr_1.5fr_1fr_100px]">
               <span>归属项目</span>
-              <span>里程碑任务</span>
+              <span>里程碑计划</span>
               <span>预期产出物</span>
               <span>截止日</span>
             </div>

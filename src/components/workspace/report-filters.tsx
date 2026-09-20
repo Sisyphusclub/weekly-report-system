@@ -95,37 +95,6 @@ export function ReportFilters({
         </Select>
       </div>
       <div className="flex flex-col gap-2">
-        <span className="text-body-medium" id="report-task-status-label">
-          任务状态
-        </span>
-        <Select
-          name="taskStatus"
-          aria-labelledby="report-task-status-label"
-          defaultSelectedKey={filters.taskStatus ?? "ALL"}
-        >
-          <SelectItem id="ALL">全部任务状态</SelectItem>
-          <SelectItem id="TODO">待处理</SelectItem>
-          <SelectItem id="IN_PROGRESS">进行中</SelectItem>
-          <SelectItem id="BLOCKED">阻塞</SelectItem>
-          <SelectItem id="DONE">已完成</SelectItem>
-          <SelectItem id="CANCELED">已取消</SelectItem>
-        </Select>
-      </div>
-      <div className="flex flex-col gap-2">
-        <span className="text-body-medium" id="report-blocked-label">
-          阻塞条件
-        </span>
-        <Select
-          name="blocked"
-          aria-labelledby="report-blocked-label"
-          defaultSelectedKey={filters.blocked ?? "ALL"}
-        >
-          <SelectItem id="ALL">全部</SelectItem>
-          <SelectItem id="YES">包含阻塞任务</SelectItem>
-          <SelectItem id="NO">不含阻塞任务</SelectItem>
-        </Select>
-      </div>
-      <div className="flex flex-col gap-2">
         <span className="text-body-medium" id="report-type-label">
           报告类型
         </span>

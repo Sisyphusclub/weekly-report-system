@@ -11,7 +11,6 @@ import {
   FolderKanban,
   KeyRound,
   LayoutDashboard,
-  ListChecks,
   PanelLeft,
   Settings,
   ShieldCheck,
@@ -61,7 +60,6 @@ type NavKey =
   | "weekly"
   | "notifications"
   | "activity"
-  | "tasks"
   | "calendar"
   | "exemptions"
   | "audit"
@@ -313,7 +311,6 @@ function navigationForRole(
         items: [
           nav("users", "账号管理", "/admin/users", UserRoundCog),
           nav("projects", "项目管理", "/admin/projects", FolderKanban),
-          nav("tasks", "任务管理", "/admin/tasks", ListChecks),
           nav(
             "dictionaries",
             "分类与单位",
@@ -357,7 +354,6 @@ function navigationForRole(
         nav("daily", "今日工作", "/daily", ClipboardCheck),
         nav("weekly", "本周周报", "/weekly", CalendarDays),
         nav("projects", "项目看板", "/projects", FolderKanban),
-        nav("tasks", "任务", "/tasks", ListChecks),
         nav("blockers", "阻塞", "/blockers", CircleAlert),
         nav("reports", "报告", "/reports", Files),
         nav("activity", "团队动态", "/activity", Users),
@@ -387,7 +383,6 @@ function pageLabel(selected: NavKey, role: Role) {
         role === "ADMIN" ? "日报总览" : role === "BOSS" ? "工作总览" : "概览",
       daily: "今日工作台",
       weekly: "本周周报",
-      tasks: "任务管理",
       blockers: "阻塞中心",
       reports: role === "ADMIN" ? "我的报告" : "报告查询",
       notifications: "通知中心",

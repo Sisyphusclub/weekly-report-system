@@ -6,19 +6,16 @@ import {
   RiPulseLine,
   RiTimerLine,
 } from "@remixicon/react";
-import { and, count, eq, inArray, ne, or } from "drizzle-orm";
+import { and, count, eq, ne } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
 import {
   blocker,
   category,
-  deliverable,
   deliverableUnit,
   project,
-  projectMember,
-  reportTask,
+  report,
   user,
-  workTask,
 } from "@/lib/db/schema";
 import { listReports } from "@/lib/reports";
 import { getSubmissionData } from "@/lib/submission-data";
@@ -27,8 +24,7 @@ import {
   getDashboardMetrics,
   submissionRate,
 } from "@/lib/metrics";
-import { employeeDailyMetrics } from "@/lib/employee-metrics";
-import { shanghaiDate } from "@/lib/daily-input";
+import { dailyEntriesSchema, shanghaiDate } from "@/lib/daily-input";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/motion/button/base";
 import { Badge } from "@/components/premium/badge";
@@ -39,7 +35,6 @@ import { PlanStrip } from "@/components/dashboard/plan-strip";
 import { type WorkStatus } from "@/components/dashboard/task-item-row";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
 import { blockerVisibility } from "@/lib/blockers";
-import { taskSnapshot } from "@/lib/task-snapshot";
 import { cx } from "@/utils/cx";
 
 export const metadata = { title: "工作看板" };
@@ -110,62 +105,7 @@ export default async function DashboardPage() {
   }
   if (actor.role === "EMPLOYEE") {
     const today = shanghaiDate(now);
-    const [memberships, assignedProjects] = await Promise.all([
-      db
-        .select({ projectId: projectMember.projectId })
-        .from(projectMember)
-        .where(
-          and(
-            eq(projectMember.organizationId, actor.organizationId),
-            eq(projectMember.userId, actor.id),
-          ),
-        ),
-      db
-        .select({ projectId: workTask.projectId })
-        .from(workTask)
-        .where(
-          and(
-            eq(workTask.organizationId, actor.organizationId),
-            eq(workTask.primaryAssigneeId, actor.id),
-          ),
-        ),
-    ]);
-    const memberProjectIds = [
-      ...new Set([
-        ...memberships.map((item) => item.projectId),
-        ...assignedProjects.map((item) => item.projectId),
-      ]),
-    ];
-    const [taskRows, reports, blockers, deliveryRows, employeeProjects, employeeCategories, employeeUnits] = await Promise.all([
-      db
-        .select({
-          id: workTask.id,
-          version: workTask.version,
-          content: workTask.content,
-          kind: workTask.kind,
-          status: workTask.status,
-          categoryName: workTask.categoryName,
-          workDate: workTask.workDate,
-          dueDate: workTask.dueDate,
-          sourceTaskId: workTask.sourceTaskId,
-          projectName: project.name,
-        })
-        .from(workTask)
-        .leftJoin(
-          project,
-          and(
-            eq(project.id, workTask.projectId),
-            eq(project.organizationId, workTask.organizationId),
-          ),
-        )
-        .where(
-          and(
-            eq(workTask.organizationId, actor.organizationId),
-            eq(workTask.primaryAssigneeId, actor.id),
-            or(eq(workTask.workDate, today), eq(workTask.dueDate, today)),
-          ),
-        )
-        .orderBy(workTask.kind, workTask.status, workTask.updatedAt),
+    const [reports, blockers, todayReports] = await Promise.all([
       listReports(actor, "", 1, { member: actor.id }),
       db
         .select({ id: blocker.id })
@@ -179,90 +119,31 @@ export default async function DashboardPage() {
         ),
       db
         .select({
-          taskId: deliverable.taskId,
-          unitName: deliverable.unitName,
-          quantity: deliverable.quantity,
+          id: report.id,
+          status: report.status,
+          planEntries: report.planEntries,
+          workEntries: report.workEntries,
         })
-        .from(deliverable)
-        .innerJoin(
-          workTask,
-          and(
-            eq(workTask.id, deliverable.taskId),
-            eq(workTask.organizationId, deliverable.organizationId),
-          ),
-        )
+        .from(report)
         .where(
           and(
-            eq(deliverable.organizationId, actor.organizationId),
-            eq(workTask.primaryAssigneeId, actor.id),
-            or(eq(workTask.workDate, today), eq(workTask.dueDate, today)),
-          ),
-        ),
-      db
-        .select({ id: project.id, name: project.name })
-        .from(project)
-        .where(
-          and(
-            eq(project.organizationId, actor.organizationId),
-            ne(project.status, "ARCHIVED"),
-            or(
-              eq(project.ownerId, actor.id),
-              memberProjectIds.length ? inArray(project.id, memberProjectIds) : undefined,
-            ),
+            eq(report.organizationId, actor.organizationId),
+            eq(report.authorId, actor.id),
+            eq(report.type, "DAILY"),
+            eq(report.reportDate, today),
           ),
         )
-        .orderBy(project.name),
-      db
-        .select({ id: category.id, name: category.name })
-        .from(category)
-        .where(
-          and(
-            eq(category.organizationId, actor.organizationId),
-            eq(category.enabled, true),
-          ),
-        )
-        .orderBy(category.sortOrder, category.name),
-      db
-        .select({ id: deliverableUnit.id, name: deliverableUnit.name })
-        .from(deliverableUnit)
-        .where(
-          and(
-            eq(deliverableUnit.organizationId, actor.organizationId),
-            eq(deliverableUnit.enabled, true),
-          ),
-        )
-        .orderBy(deliverableUnit.sortOrder, deliverableUnit.name),
+        .limit(1),
     ]);
-    const recentReportItems = reports.items.slice(0, 5);
-    const reportTaskRows = recentReportItems.length
-      ? await db
-          .select({
-            reportId: reportTask.reportId,
-            snapshot: reportTask.snapshot,
-          })
-          .from(reportTask)
-          .where(
-            and(
-              eq(reportTask.organizationId, actor.organizationId),
-              inArray(
-                reportTask.reportId,
-                recentReportItems.map((item) => item.id),
-              ),
-            ),
-          )
-      : [];
-    const todayReport = data.reports.find(
-      (item) =>
-        item.authorId === actor.id &&
-        item.reportDate === today &&
-        item.status === "SUBMITTED",
-    );
+    const todayReport = todayReports[0];
+    const plans = parseDailyEntries(todayReport?.planEntries);
+    const works = parseDailyEntries(todayReport?.workEntries);
     return (
       <WorkspaceShell actor={actor} selected="dashboard">
         <EmployeeDashboard
           name={actor.name}
           today={today.replaceAll("-", ".")}
-          submitted={Boolean(todayReport)}
+          submitted={todayReport?.status === "SUBMITTED"}
           openBlockers={blockers.length}
           recentReports={reports.items.map((item) => ({
             id: item.id,
@@ -270,42 +151,11 @@ export default async function DashboardPage() {
             date: item.date,
             weekStart: item.weekStart,
             summary: item.summary,
-            deliverableSummary: summarizeDeliverables(
-              reportTaskRows
-                .filter((row) => row.reportId === item.id)
-                .map((row) => row.snapshot),
-            ),
+            deliverableSummary: "查看报告",
             status: item.status,
           }))}
-          tasks={taskRows.map((task) => ({
-            id: task.id,
-            version: task.version,
-            content: task.content,
-            kind: task.kind,
-            status: task.status as WorkStatus,
-            projectName: task.projectName ?? "未关联项目",
-            categoryName: task.categoryName,
-            workDate: task.workDate,
-            dueDate: task.dueDate,
-            sourceTaskId: task.sourceTaskId,
-            deliverables: deliveryRows
-              .filter((item) => item.taskId === task.id)
-              .map((item) => ({
-                unitName: item.unitName,
-                quantity: item.quantity,
-              })),
-          }))}
-          projects={employeeProjects}
-          categories={employeeCategories}
-          deliverableUnits={employeeUnits}
-          dailyMetrics={employeeDailyMetrics(
-            taskRows.map((task) => ({
-              id: task.id,
-              kind: task.kind,
-              status: task.status,
-              sourceTaskId: task.sourceTaskId,
-            })),
-          )}
+          plans={plans}
+          works={works}
         />
       </WorkspaceShell>
     );
@@ -371,12 +221,12 @@ export default async function DashboardPage() {
           tone="warning"
         />
         <MetricCard
-          label="本周完成任务"
+          label="本周完成事项"
           value={String(metrics.completedTasks)}
           note={`${metrics.inProgressTasks} 项推进中`}
           icon={RiBarChart2Line}
           tone="info"
-          href="/tasks"
+          href="/reports"
         />
       </section>
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(360px,0.65fr)]">
@@ -384,7 +234,7 @@ export default async function DashboardPage() {
           <SectionHeading
             title="今日计划横向矩阵"
             detail="按成员查看计划完成情况"
-            href={isBoss ? "/reports" : "/tasks"}
+            href="/reports"
           />
           <PlanStrip>
             {breakdown.members.map((member) => (
@@ -535,7 +385,7 @@ export default async function DashboardPage() {
           <SectionHeading
             title="项目协同"
             detail="跨成员贡献聚合"
-            href="/tasks"
+            href="/projects"
           />
           <div className="mt-4 space-y-3">
             {breakdown.projects.slice(0, 5).map((item) => (
@@ -582,24 +432,9 @@ export default async function DashboardPage() {
   );
 }
 
-function summarizeDeliverables(snapshots: unknown[]) {
-  const totals = new Map<string, number>();
-  for (const snapshot of snapshots) {
-    const parsed = taskSnapshot.safeParse(snapshot);
-    if (!parsed.success) continue;
-    for (const item of parsed.data.deliverables) {
-      const quantity = Number(item.quantity);
-      if (!Number.isFinite(quantity)) continue;
-      totals.set(item.unitName, (totals.get(item.unitName) ?? 0) + quantity);
-    }
-  }
-  if (!totals.size) return "未登记";
-  return [...totals]
-    .map(
-      ([unitName, quantity]) =>
-        `${quantity.toLocaleString("zh-CN", { maximumFractionDigits: 4 })} ${unitName}`,
-    )
-    .join("、");
+function parseDailyEntries(value: unknown) {
+  const parsed = dailyEntriesSchema.safeParse(value);
+  return parsed.success ? parsed.data : [];
 }
 
 function PageIntro({

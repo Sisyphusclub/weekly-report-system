@@ -524,6 +524,79 @@ async function main() {
       status: "DRAFT" | "SUBMITTED",
       summary: string,
     ) {
+      const isEmployee = authorId === employee.id;
+      const planEntries = isEmployee
+        ? [
+            {
+              content: "协助教师导出整本教材资源",
+              status: "DONE" as const,
+              category: "综合事务",
+              deliverables: [],
+              projectId: projects.content.id,
+            },
+            {
+              content: "协助教师完成 3 个独立章节内容导出",
+              status: "DONE" as const,
+              category: "综合事务",
+              deliverables: [],
+              projectId: projects.content.id,
+            },
+            {
+              content: "数智云编辑器打印导出测试与缺陷排查",
+              status: date === today ? ("IN_PROGRESS" as const) : ("DONE" as const),
+              category: "测试",
+              deliverables: [],
+              projectId: projects.growth.id,
+            },
+          ]
+        : [
+            {
+              content: "确认团队进度与本周风险",
+              status: "DONE" as const,
+              category: "会议协作",
+              deliverables: [],
+              projectId: projects.growth.id,
+            },
+          ];
+      const workEntries = isEmployee
+        ? [
+            {
+              content: "协助教师导出整本教材资源",
+              status: "DONE" as const,
+              category: "综合事务",
+              deliverables: ["教材 1 本", "章节 13 章"],
+              projectId: projects.content.id,
+            },
+            {
+              content: "协助教师完成 3 个独立章节内容导出",
+              status: "DONE" as const,
+              category: "综合事务",
+              deliverables: ["章节 3 章"],
+              projectId: projects.content.id,
+            },
+            {
+              content: "数智云编辑器打印导出测试与缺陷排查",
+              status: "DONE" as const,
+              category: "测试",
+              deliverables: ["提出缺陷 2 个"],
+              projectId: projects.growth.id,
+            },
+          ]
+        : [
+            {
+              content: "完成团队进度同步与风险确认",
+              status: "DONE" as const,
+              category: "会议协作",
+              deliverables: ["进度纪要 1 份"],
+              projectId: projects.growth.id,
+            },
+          ];
+      const structured = {
+        summary,
+        planEntries,
+        workEntries,
+        blockers: [],
+      };
       const [existing] = await tx
         .select()
         .from(report)
@@ -536,7 +609,12 @@ async function main() {
           ),
         )
         .limit(1);
-      if (existing) return existing;
+      if (existing) {
+        await tx.update(report).set(structured).where(eq(report.id, existing.id));
+        return (
+          await tx.select().from(report).where(eq(report.id, existing.id)).limit(1)
+        )[0];
+      }
       const submitted = status === "SUBMITTED";
       const created = {
         id: crypto.randomUUID(),
@@ -547,7 +625,7 @@ async function main() {
         reportDate: date,
         dueAt: atShanghai(date, 18),
         submittedAt: submitted ? atShanghai(date, 17, 30) : null,
-        summary,
+        ...structured,
         wasLate: false,
         revisionNumber: submitted ? 1 : 0,
         calendarVersion: 1,
