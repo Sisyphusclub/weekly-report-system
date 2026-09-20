@@ -6,14 +6,16 @@ import {
   RiPulseLine,
   RiTimerLine,
 } from "@remixicon/react";
-import { and, count, eq, ne, or } from "drizzle-orm";
+import { and, count, eq, inArray, ne, or } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
 import {
   blocker,
   category,
+  deliverable,
   deliverableUnit,
   project,
+  reportTask,
   user,
   workTask,
 } from "@/lib/db/schema";
@@ -35,6 +37,7 @@ import { PlanStrip } from "@/components/dashboard/plan-strip";
 import { type WorkStatus } from "@/components/dashboard/task-item-row";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
 import { blockerVisibility } from "@/lib/blockers";
+import { taskSnapshot } from "@/lib/task-snapshot";
 
 export const metadata = { title: "工作看板" };
 
@@ -104,15 +107,18 @@ export default async function DashboardPage() {
   }
   if (actor.role === "EMPLOYEE") {
     const today = shanghaiDate(now);
-    const [taskRows, reports, blockers] = await Promise.all([
+    const [taskRows, reports, blockers, deliveryRows] = await Promise.all([
       db
         .select({
           id: workTask.id,
+          version: workTask.version,
           content: workTask.content,
           kind: workTask.kind,
           status: workTask.status,
           categoryName: workTask.categoryName,
+          workDate: workTask.workDate,
           dueDate: workTask.dueDate,
+          sourceTaskId: workTask.sourceTaskId,
           projectName: project.name,
         })
         .from(workTask)
@@ -131,7 +137,7 @@ export default async function DashboardPage() {
           ),
         )
         .orderBy(workTask.kind, workTask.status, workTask.updatedAt),
-      listReports(actor, "", 1),
+      listReports(actor, "", 1, { member: actor.id }),
       db
         .select({ id: blocker.id })
         .from(blocker)
@@ -142,7 +148,46 @@ export default async function DashboardPage() {
             eq(blocker.reporterId, actor.id),
           ),
         ),
+      db
+        .select({
+          taskId: deliverable.taskId,
+          unitName: deliverable.unitName,
+          quantity: deliverable.quantity,
+        })
+        .from(deliverable)
+        .innerJoin(
+          workTask,
+          and(
+            eq(workTask.id, deliverable.taskId),
+            eq(workTask.organizationId, deliverable.organizationId),
+          ),
+        )
+        .where(
+          and(
+            eq(deliverable.organizationId, actor.organizationId),
+            eq(workTask.primaryAssigneeId, actor.id),
+            or(eq(workTask.workDate, today), eq(workTask.dueDate, today)),
+          ),
+        ),
     ]);
+    const recentReportItems = reports.items.slice(0, 5);
+    const reportTaskRows = recentReportItems.length
+      ? await db
+          .select({
+            reportId: reportTask.reportId,
+            snapshot: reportTask.snapshot,
+          })
+          .from(reportTask)
+          .where(
+            and(
+              eq(reportTask.organizationId, actor.organizationId),
+              inArray(
+                reportTask.reportId,
+                recentReportItems.map((item) => item.id),
+              ),
+            ),
+          )
+      : [];
     const todayReport = data.reports.find(
       (item) =>
         item.authorId === actor.id &&
@@ -162,16 +207,30 @@ export default async function DashboardPage() {
             date: item.date,
             weekStart: item.weekStart,
             summary: item.summary,
+            deliverableSummary: summarizeDeliverables(
+              reportTaskRows
+                .filter((row) => row.reportId === item.id)
+                .map((row) => row.snapshot),
+            ),
             status: item.status,
           }))}
           tasks={taskRows.map((task) => ({
             id: task.id,
+            version: task.version,
             content: task.content,
             kind: task.kind,
             status: task.status as WorkStatus,
             projectName: task.projectName ?? "未关联项目",
             categoryName: task.categoryName,
+            workDate: task.workDate,
             dueDate: task.dueDate,
+            sourceTaskId: task.sourceTaskId,
+            deliverables: deliveryRows
+              .filter((item) => item.taskId === task.id)
+              .map((item) => ({
+                unitName: item.unitName,
+                quantity: item.quantity,
+              })),
           }))}
         />
       </WorkspaceShell>
@@ -442,6 +501,26 @@ export default async function DashboardPage() {
       </section>
     </WorkspaceShell>
   );
+}
+
+function summarizeDeliverables(snapshots: unknown[]) {
+  const totals = new Map<string, number>();
+  for (const snapshot of snapshots) {
+    const parsed = taskSnapshot.safeParse(snapshot);
+    if (!parsed.success) continue;
+    for (const item of parsed.data.deliverables) {
+      const quantity = Number(item.quantity);
+      if (!Number.isFinite(quantity)) continue;
+      totals.set(item.unitName, (totals.get(item.unitName) ?? 0) + quantity);
+    }
+  }
+  if (!totals.size) return "未登记";
+  return [...totals]
+    .map(
+      ([unitName, quantity]) =>
+        `${quantity.toLocaleString("zh-CN", { maximumFractionDigits: 4 })} ${unitName}`,
+    )
+    .join("、");
 }
 
 function PageIntro({

@@ -218,7 +218,7 @@ export function WorkspaceShell({
           <AnimatedSidebarRail />
         </AnimatedSidebar>
 
-        <AnimatedSidebarInset>
+        <AnimatedSidebarInset className="bg-muted/60">
           <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-background/90 px-4 backdrop-blur-xl sm:px-6 xl:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <AnimatedSidebarTrigger className="-ml-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
