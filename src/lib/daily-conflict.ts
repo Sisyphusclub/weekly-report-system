@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dailyBlockersSchema, dailyEntriesSchema } from "./daily-input";
 export const remoteDailyDraft = z.object({
   id: z.string(),
   version: z.number().int().positive(),
@@ -7,6 +8,9 @@ export const remoteDailyDraft = z.object({
   noWorkReason: z.string(),
   noPlanReason: z.string(),
   taskIds: z.array(z.string()),
+  plans: dailyEntriesSchema.optional(),
+  works: dailyEntriesSchema.optional(),
+  blockers: dailyBlockersSchema.optional(),
 });
 export type RemoteDailyDraft = z.infer<typeof remoteDailyDraft>;
 export class DailyConflict extends Error {

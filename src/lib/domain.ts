@@ -51,12 +51,18 @@ export function deadline(date: string) {
 }
 
 export function validateSubmission(input: {
-  tasks: Array<{ id: string; kind?: "ACTUAL" | "PLAN" }>;
+  tasks?: Array<{ id: string; kind?: "ACTUAL" | "PLAN" }>;
+  works?: Array<unknown>;
+  plans?: Array<unknown>;
   noWorkReason?: string;
   noPlanReason?: string;
 }) {
-  const hasWork = input.tasks.some((task) => task.kind !== "PLAN");
-  const hasPlans = input.tasks.some((task) => task.kind === "PLAN");
+  const hasWork = input.works?.length
+    ? true
+    : (input.tasks ?? []).some((task) => task.kind !== "PLAN");
+  const hasPlans = input.plans?.length
+    ? true
+    : (input.tasks ?? []).some((task) => task.kind === "PLAN");
   const hasWorkReason = Boolean(input.noWorkReason?.trim());
   const hasPlanReason = Boolean(input.noPlanReason?.trim());
   if (!hasWork && !hasWorkReason) throw new Error("请填写实际工作或无工作原因");

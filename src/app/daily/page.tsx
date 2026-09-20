@@ -1,20 +1,14 @@
-import {
-  RiAlarmWarningLine,
-  RiArrowRightLine,
-  RiCheckboxCircleLine,
-  RiTimeLine,
-} from "@remixicon/react";
-import { and, eq, lt, or } from "drizzle-orm";
+import { RiCheckboxCircleLine, RiTimeLine } from "@remixicon/react";
+import { and, asc, eq, ne } from "drizzle-orm";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { report, reportTask, workTask } from "@/lib/db/schema";
+import { project, report } from "@/lib/db/schema";
 import { dateInput, shanghaiDate } from "@/lib/daily-input";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { DailyForm } from "@/components/workspace/daily-form";
 import { Input } from "@/components/premium/forms";
-import { Button, ButtonLink } from "@/components/motion/button/base";
+import { Button } from "@/components/motion/button/base";
 import { Badge } from "@/components/premium/badge";
-import { BlockerForm } from "@/components/workspace/blocker-form";
 
 export const metadata = { title: "今日工作台" };
 
@@ -33,6 +27,9 @@ export default async function DailyPage({
       summary: report.summary,
       noWorkReason: report.noWorkReason,
       noPlanReason: report.noPlanReason,
+      planEntries: report.planEntries,
+      workEntries: report.workEntries,
+      blockers: report.blockers,
       version: report.version,
       status: report.status,
     })
@@ -46,55 +43,23 @@ export default async function DailyPage({
       ),
     )
     .limit(1);
-  const tasks = await db
-    .select({
-      id: workTask.id,
-      content: workTask.content,
-      kind: workTask.kind,
-      status: workTask.status,
-      dueDate: workTask.dueDate,
-    })
-    .from(workTask)
-    .where(
-      and(
-        eq(workTask.organizationId, actor.organizationId),
-        eq(workTask.primaryAssigneeId, actor.id),
-      ),
-    );
-  const carryover = await db
-    .select({ id: workTask.id })
-    .from(workTask)
-    .where(
-      and(
-        eq(workTask.organizationId, actor.organizationId),
-        eq(workTask.primaryAssigneeId, actor.id),
-        eq(workTask.kind, "PLAN"),
-        lt(workTask.dueDate, date),
-        or(
-          eq(workTask.status, "TODO"),
-          eq(workTask.status, "IN_PROGRESS"),
-          eq(workTask.status, "BLOCKED"),
+  const projects = await db
+      .select({ id: project.id, name: project.name })
+      .from(project)
+      .where(
+        and(
+          eq(project.organizationId, actor.organizationId),
+          ne(project.status, "ARCHIVED"),
         ),
-      ),
-    );
-  const associations = draft
-    ? await db
-        .select({ taskId: reportTask.taskId })
-        .from(reportTask)
-        .where(
-          and(
-            eq(reportTask.organizationId, actor.organizationId),
-            eq(reportTask.reportId, draft.id),
-          ),
-        )
-    : [];
-  const plans = tasks.filter(
-    (task) => task.kind === "PLAN" && (!task.dueDate || task.dueDate === date),
-  );
-  const completed = tasks.filter(
-    (task) => task.kind === "ACTUAL" && task.status === "DONE",
+      )
+      .orderBy(asc(project.name));
+  const plans = Array.isArray(draft?.planEntries) ? draft.planEntries : [];
+  const works = Array.isArray(draft?.workEntries) ? draft.workEntries : [];
+  const blockers = Array.isArray(draft?.blockers) ? draft.blockers : [];
+  const completed = works.filter(
+    (item) => item && typeof item === "object" && item.status === "DONE",
   ).length;
-  const blocked = tasks.filter((task) => task.status === "BLOCKED").length;
+  const blocked = blockers.length;
   return (
     <WorkspaceShell actor={actor} selected="daily">
       <header className="flex flex-wrap items-end justify-between gap-4">
@@ -139,25 +104,13 @@ export default async function DailyPage({
                 已带入 {plans.length} 项计划 · 已完成 {completed} 项
               </p>
             </div>
-            <ButtonLink
-              href="/tasks"
-              variant="ghost"
-              size="small"
-            >
-              管理任务 <RiArrowRightLine className="size-4" aria-hidden />
-            </ButtonLink>
           </div>
           <DailyForm
             key={date}
             date={date}
+            reporterName={actor.name}
             draft={draft ?? null}
-            tasks={tasks}
-            initialTaskIds={Array.from(
-              new Set([
-                ...carryover.map((item) => item.id),
-                ...associations.map((item) => item.taskId),
-              ]),
-            )}
+            projects={projects}
           />
         </section>
         <aside className="flex min-w-0 flex-col gap-4">
@@ -214,22 +167,6 @@ export default async function DailyPage({
                   阻塞
                 </p>
               </div>
-            </div>
-          </section>
-          <section className="rounded-2xl border border-status-rose-text/30 bg-background-primary-default p-5 shadow-xs">
-            <div className="flex items-start gap-3">
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-status-rose-background text-status-rose-text">
-                <RiAlarmWarningLine className="size-4" aria-hidden />
-              </span>
-              <div>
-                <h2 className="text-title-3-semibold">阻塞协调</h2>
-                <p className="mt-1 text-caption-1-regular text-text-tertiary">
-                  遇到需要他人介入的事项，及时提交。
-                </p>
-              </div>
-            </div>
-            <div className="mt-4">
-              <BlockerForm compact />
             </div>
           </section>
         </aside>

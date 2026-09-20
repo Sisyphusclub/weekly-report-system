@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { taskSnapshot } from "./task-snapshot";
+import { dailyBlockersSchema, dailyEntriesSchema } from "./daily-input";
 
-// Daily reports store tasks directly; weekly reports wrap each frozen task.
+// New daily reports store structured entries; legacy task snapshots remain readable.
 const frozenTask = z.union([
   taskSnapshot,
   z.object({ snapshot: taskSnapshot }).transform((row) => row.snapshot),
@@ -11,6 +12,9 @@ export const reportSnapshot = z.object({
   noWorkReason: z.string().nullable().optional(),
   noPlanReason: z.string().nullable().optional(),
   tasks: z.array(frozenTask),
+  plans: dailyEntriesSchema.optional(),
+  works: dailyEntriesSchema.optional(),
+  blockers: dailyBlockersSchema.optional(),
 });
 export const reportSummaryDiff = z.object({
   summary: z.tuple([z.string().nullable(), z.string().nullable()]).optional(),

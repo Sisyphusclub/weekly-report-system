@@ -1,4 +1,4 @@
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import { getDb } from "@/lib/db";
 import {
   report,
@@ -8,9 +8,15 @@ import {
   workTask,
   reportTask,
   deliverable,
+  project,
 } from "@/lib/db/schema";
 import { deadline, validateSubmission } from "@/lib/domain";
-import { dailyInput, shanghaiDate } from "@/lib/daily-input";
+import {
+  dailyBlockersSchema,
+  dailyEntriesSchema,
+  dailyInput,
+  shanghaiDate,
+} from "@/lib/daily-input";
 import { apiError, BusinessError, writeActor } from "@/lib/api";
 import { DailyConflict } from "@/lib/daily-conflict";
 
@@ -75,9 +81,38 @@ export async function POST(request: Request) {
       }));
       if (selectedTasks.length !== input.taskIds.length)
         throw new BusinessError("任务不存在或无权选择", 403);
+      const blockerProjectIds = [...new Set(input.blockers.map((item) => item.projectId))];
+      const blockerProjects = blockerProjectIds.length
+        ? await tx
+            .select({ id: project.id, name: project.name })
+            .from(project)
+            .where(
+              and(
+                eq(project.organizationId, actor.organizationId),
+                inArray(project.id, blockerProjectIds),
+                ne(project.status, "ARCHIVED"),
+              ),
+            )
+            .orderBy(asc(project.name))
+        : [];
+      if (blockerProjects.length !== blockerProjectIds.length)
+        throw new BusinessError("阻塞关联的项目无效或已归档");
+      const blockerProjectNames = new Map(
+        blockerProjects.map((item) => [item.id, item.name]),
+      );
+      const blockers = input.blockers.map((item) => ({
+        ...item,
+        projectName: blockerProjectNames.get(item.projectId),
+      }));
       if (input.submit) {
         try {
-          validateSubmission({ tasks: selectedTasks, ...input });
+          validateSubmission({
+            tasks: selectedTasks,
+            works: input.works,
+            plans: input.plans,
+            noWorkReason: input.noWorkReason,
+            noPlanReason: input.noPlanReason,
+          });
         } catch (error) {
           throw new BusinessError((error as Error).message);
         }
@@ -118,6 +153,9 @@ export async function POST(request: Request) {
           noWorkReason: existing.noWorkReason ?? "",
           noPlanReason: existing.noPlanReason ?? "",
           taskIds: links.map((link) => link.taskId),
+          plans: dailyEntriesSchema.parse(existing.planEntries),
+          works: dailyEntriesSchema.parse(existing.workEntries),
+          blockers: dailyBlockersSchema.parse(existing.blockers),
         });
       }
       if (!existing && input.version !== 0)
@@ -140,6 +178,9 @@ export async function POST(request: Request) {
         summary: input.summary || null,
         noWorkReason: input.noWorkReason || null,
         noPlanReason: input.noPlanReason || null,
+        planEntries: input.plans,
+        workEntries: input.works,
+        blockers,
         status: input.submit ? ("SUBMITTED" as const) : ("DRAFT" as const),
         submittedAt: input.submit ? now : null,
         updatedAt: now,
@@ -190,6 +231,9 @@ export async function POST(request: Request) {
             ...values,
             reportDate: input.reportDate,
             tasks: selectedTasks,
+            plans: input.plans,
+            works: input.works,
+            blockers,
           },
           diff: { status: ["DRAFT", "SUBMITTED"] },
         });

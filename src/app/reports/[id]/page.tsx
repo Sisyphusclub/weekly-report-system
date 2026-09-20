@@ -11,6 +11,7 @@ import { ButtonLink } from "@/components/motion/button/base";
 import { RevisionForm } from "@/components/workspace/revision-form";
 import { RevisionRequests } from "@/components/workspace/revision-requests";
 import { CommentSection } from "@/components/workspace/comment-section";
+import { dailyBlockersSchema, dailyEntriesSchema } from "@/lib/daily-input";
 
 export default async function ReportPage({
   params,
@@ -47,6 +48,9 @@ export default async function ReportPage({
       ),
     )
     .orderBy(reportTask.taskId);
+  const dailyPlans = dailyEntriesSchema.safeParse(item.planEntries).data ?? [];
+  const dailyWorks = dailyEntriesSchema.safeParse(item.workEntries).data ?? [];
+  const dailyBlockers = dailyBlockersSchema.safeParse(item.blockers).data ?? [];
   const versions = await db
     .select({
       number: reportRevision.revisionNumber,
@@ -128,7 +132,28 @@ export default async function ReportPage({
         {item.noWorkReason && <p>无工作原因：{item.noWorkReason}</p>}
         {item.noPlanReason && <p>无计划原因：{item.noPlanReason}</p>}
       </section>
-      <section className="rounded-3xl border border-border-button-default p-6">
+      {item.type === "DAILY" && (
+        <section className="rounded-3xl border border-border-button-default p-6">
+          <h2 className="text-title-2-medium">日报明细</h2>
+          <DailyEntrySection title="工作计划 / 进度" entries={dailyPlans} />
+          <DailyEntrySection title="工作内容 / 产出" entries={dailyWorks} />
+          <div className="mt-6">
+            <h3 className="text-body-medium">阻塞事项</h3>
+            {dailyBlockers.length ? (
+              <ul className="mt-3 flex flex-col gap-2">
+                {dailyBlockers.map((blocker, index) => (
+                  <li key={index} className="rounded-lg bg-status-rose-background p-3">
+                    {blocker.description} · 关联项目 {blocker.projectName ?? blocker.projectId}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mt-3 text-text-secondary">无阻塞事项</p>
+            )}
+          </div>
+        </section>
+      )}
+      {tasks.length > 0 && <section className="rounded-3xl border border-border-button-default p-6">
         <h2 className="text-title-2-medium">任务与交付物</h2>
         {tasks.length ? (
           <ul className="mt-4 divide-y divide-separator-border">
@@ -185,7 +210,7 @@ export default async function ReportPage({
         ) : (
           <p className="mt-4 text-text-secondary">未关联任务</p>
         )}
-      </section>
+      </section>}
       <section className="rounded-3xl border border-border-button-default p-6">
         <h2 className="text-title-2-medium">最近修订记录</h2>
         {versions.length > 0 && (
@@ -235,5 +260,39 @@ export default async function ReportPage({
         )}
       <CommentSection reportId={id} />
     </WorkspaceShell>
+  );
+}
+
+function DailyEntrySection({
+  title,
+  entries,
+}: {
+  title: string;
+  entries: Array<{
+    content: string;
+    status: string;
+    category: string;
+    deliverables: string[];
+  }>;
+}) {
+  return (
+    <div className="mt-5">
+      <h3 className="text-body-medium">{title}</h3>
+      {entries.length ? (
+        <ol className="mt-3 flex flex-col gap-2">
+          {entries.map((entry, index) => (
+            <li key={index} className="rounded-lg border border-border-button-default p-3">
+              <p>{index + 1}、{entry.content}</p>
+              <p className="mt-1 text-body-regular text-text-secondary">
+                {entry.status === "DONE" ? "已完成" : entry.status === "IN_PROGRESS" ? "进行中" : entry.status === "TODO" ? "未开始" : entry.status === "BLOCKED" ? "阻塞" : "已取消"} · 类型：{entry.category}
+              </p>
+              {entry.deliverables.length > 0 && <p className="mt-1 text-body-regular text-text-secondary">产出：{entry.deliverables.join(" ")}</p>}
+            </li>
+          ))}
+        </ol>
+      ) : (
+        <p className="mt-3 text-text-secondary">暂无条目</p>
+      )}
+    </div>
   );
 }

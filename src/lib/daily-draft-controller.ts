@@ -1,9 +1,13 @@
 import type { RemoteDailyDraft } from "./daily-conflict";
+import type { DailyBlocker, DailyEntry } from "./daily-input";
 export type DailyDraftContent = {
   summary: string;
   noWorkReason: string;
   noPlanReason: string;
   taskIds: string[];
+  plans?: DailyEntry[];
+  works?: DailyEntry[];
+  blockers?: DailyBlocker[];
 };
 type SaveResult = {
   id: string;
@@ -94,6 +98,9 @@ export class DailyDraftController {
             noWorkReason: remote.noWorkReason,
             noPlanReason: remote.noPlanReason,
             taskIds: remote.taskIds,
+            plans: remote.plans,
+            works: remote.works,
+            blockers: remote.blockers,
           },
       dirty: keepLocal,
       paused: false,
