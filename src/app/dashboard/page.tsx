@@ -191,12 +191,6 @@ export default async function DashboardPage() {
           eyebrow="负责人视角 · 今日"
           title="团队工作驾驶舱"
           description="在一屏内查看提交进度、阻塞风险、计划兑现率和核心交付物。"
-          action={
-            <ButtonLink href="/daily" variant="primary">
-              <RiCheckboxCircleLine className="size-4" aria-hidden />
-              填写今日日报
-            </ButtonLink>
-          }
         />
         <BossDashboard
           metrics={metrics}
