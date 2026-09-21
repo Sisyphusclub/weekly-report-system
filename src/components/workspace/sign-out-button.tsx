@@ -25,7 +25,7 @@ export function SignOutButton({
         leadingIcon={LogOut}
         disabled={busy}
         className={cn(
-          "flex min-h-9 w-full items-center gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-medium text-muted-foreground outline-none transition-colors",
+          "flex min-h-9 w-full items-center justify-start gap-2.5 overflow-hidden rounded-xl px-3 text-left text-sm font-medium text-muted-foreground outline-none transition-colors",
           "hover:bg-muted/70 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50",
           className,
         )}

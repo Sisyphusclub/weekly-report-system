@@ -176,7 +176,9 @@ export default async function DashboardPage() {
   const today = shanghaiDate(now).replaceAll("-", ".");
   const isBoss = actor.role === "BOSS";
   if (isBoss) {
-    const todayStatuses = data.members.map((member) => dailySubmissionStatus(data, member));
+    const todayStatuses = data.members.map((member) =>
+      dailySubmissionStatus(data, member),
+    );
     const todayEligible = todayStatuses.filter(
       (status) => !["EXEMPT", "REST_DAY", "NOT_STARTED"].includes(status),
     ).length;
@@ -491,7 +493,7 @@ function PageIntro({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="flex flex-wrap items-end justify-between gap-4">
+    <header className="mx-auto flex w-full max-w-7xl flex-wrap items-end justify-between gap-4">
       <div>
         <p className="text-xs font-semibold leading-4 uppercase tracking-[0.08em] text-blue-600">
           {eyebrow}
@@ -569,11 +571,18 @@ function MetricCard({
         <p className="text-xs font-medium leading-4 text-slate-500">{label}</p>
         {Icon && <Icon className={cx("size-5", toneClass)} aria-hidden />}
       </div>
-      <p className={cx("mt-4 text-3xl font-semibold leading-9 tabular-nums", toneClass)}>
+      <p
+        className={cx(
+          "mt-4 text-3xl font-semibold leading-9 tabular-nums",
+          toneClass,
+        )}
+      >
         {value}
       </p>
       {note && (
-        <p className="mt-1 text-xs font-normal leading-4 text-slate-500">{note}</p>
+        <p className="mt-1 text-xs font-normal leading-4 text-slate-500">
+          {note}
+        </p>
       )}
       {href && (
         <ButtonLink
