@@ -2,7 +2,6 @@
 
 import {
   ArrowRight,
-  BarChart3,
   CircleAlert,
   ClipboardCheck,
   FolderKanban,
@@ -18,11 +17,7 @@ import { List, ListItem } from "@/components/premium/list";
 import { ProgressCircle } from "@/components/premium/stats/progress-circle";
 import { Statistic } from "@/components/premium/stats/statistic-card";
 import { Table } from "@/components/premium/table";
-import {
-  ChartCard,
-  DonutBreakdownChart,
-  HorizontalMetricChart,
-} from "@/components/premium/charts/dashboard-charts";
+import { ConversionFunnel } from "@/components/premium/conversion-funnel";
 import {
   Tabs,
   TabsContent,
@@ -220,33 +215,42 @@ export function BossDashboard({
       </section>
 
       <section className="grid gap-5 xl:grid-cols-2" aria-label="工作分析图表">
-        <ChartCard
+        <ConversionFunnel
           title="工作分类与精力投入"
           description="按本周已提交日报中的实际工作条目统计"
-          icon={<BarChart3 className="size-4" aria-hidden />}
-          meta={`${breakdown.categoryBreakdown.reduce((sum, item) => sum + item.value, 0)} 条`}
-        >
-          <DonutBreakdownChart
-            data={breakdown.categoryBreakdown}
-            emptyText="本周暂无已提交的实际工作"
-          />
-        </ChartCard>
-
-        <ChartCard
+          valueLabel="当前分类条目"
+          valueSuffix="条"
+          periods={[
+            {
+              id: "week",
+              label: "本周",
+              stages: breakdown.categoryBreakdown.map((item) => ({
+                id: item.name,
+                label: item.name,
+                value: item.value,
+                detail: `${item.value} 条实际工作记录`,
+              })),
+            },
+          ]}
+        />
+        <ConversionFunnel
           title="核心交付物量化统计"
           description="从日报产出物中提取数量并按类型汇总"
-          icon={<PackageCheck className="size-4" aria-hidden />}
-          meta={`${breakdown.deliverableSummary.length} 类`}
-        >
-          <HorizontalMetricChart
-            data={breakdown.deliverableSummary.map((item) => ({
-              name: item.label,
-              value: item.quantity,
-              unit: item.unit,
-            }))}
-            emptyText="本周日报暂未登记量化产出"
-          />
-        </ChartCard>
+          valueLabel="当前交付物"
+          valueSuffix="件"
+          periods={[
+            {
+              id: "week",
+              label: "本周",
+              stages: breakdown.deliverableSummary.map((item) => ({
+                id: item.unitId,
+                label: item.label,
+                value: item.quantity,
+                detail: `${item.quantity} ${item.unit}`,
+              })),
+            },
+          ]}
+        />
       </section>
 
       <section aria-label="团队协同视图">
