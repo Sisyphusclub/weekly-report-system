@@ -252,7 +252,7 @@ export function BossDashboard({
       <section aria-label="团队协同视图">
         <Tabs defaultValue="projects" variant="underline">
           <div className="flex items-center justify-between gap-3 border-b border-border">
-            <TabsList className="w-full overflow-x-auto">
+            <TabsList className="w-full">
               <TabsTrigger value="projects">
                 <FolderKanban className="mr-1.5 size-4" aria-hidden />
                 核心项目协同全景
