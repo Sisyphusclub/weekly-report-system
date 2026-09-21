@@ -1,8 +1,8 @@
-import { and, eq, ne } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { requireUser } from "@/lib/access";
 import { getDb } from "@/lib/db";
-import { blocker, user } from "@/lib/db/schema";
+import { blocker } from "@/lib/db/schema";
 import { blockerVisibility } from "@/lib/blockers";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/motion/button/base";
@@ -21,19 +21,9 @@ export default async function BlockerPage({
     .where(and(blockerVisibility(actor), eq(blocker.id, id)))
     .limit(1);
   if (!item) notFound();
-  const coordinators =
-    actor.role === "BOSS"
-      ? await getDb()
-          .select({ id: user.id, name: user.name })
-          .from(user)
-          .where(
-            and(
-              eq(user.organizationId, actor.organizationId),
-              eq(user.status, "ACTIVE"),
-              ne(user.role, "ADMIN"),
-            ),
-          )
-      : [];
+  const canAcknowledge =
+    actor.id === item.coordinatorId && item.status === "OPEN";
+  const canResolve = actor.id === item.reporterId;
   return (
     <WorkspaceShell actor={actor} selected="blockers">
       <ButtonLink href="/blockers" variant="ghost">
@@ -54,20 +44,19 @@ export default async function BlockerPage({
           解决说明：{item.resolution}
         </p>
       )}
-      {item.status !== "RESOLVED" && (
+      {item.status !== "RESOLVED" && (canAcknowledge || canResolve) && (
         <BlockerActions
           id={item.id}
           version={item.version}
-          canAcknowledge={
-            (actor.role === "BOSS" || actor.id === item.coordinatorId) &&
-            item.status === "OPEN"
-          }
-          canResolve={actor.role === "BOSS" || actor.id === item.reporterId}
-          canAssign={actor.role === "BOSS"}
-          coordinators={coordinators}
+          canAcknowledge={canAcknowledge}
+          canResolve={canResolve}
         />
       )}
-      <BlockerCommentSection blockerId={id} actorId={actor.id} />
+      <BlockerCommentSection
+        blockerId={id}
+        actorId={actor.id}
+        readOnly={actor.role === "BOSS"}
+      />
     </WorkspaceShell>
   );
 }

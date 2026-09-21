@@ -1,28 +1,22 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/motion/button/base";
-import { Select, SelectItem } from "@/components/premium/forms";
 import { Textarea } from "@/components/premium/forms";
 export function BlockerActions({
   id,
   version,
   canAcknowledge,
   canResolve,
-  canAssign,
-  coordinators = [],
 }: {
   id: string;
   version: number;
   canAcknowledge: boolean;
   canResolve: boolean;
-  canAssign?: boolean;
-  coordinators?: Array<{ id: string; name: string }>;
 }) {
   const [pending, setPending] = useState(false);
   const [resolution, setResolution] = useState("");
   const [message, setMessage] = useState("");
-  const [coordinatorId, setCoordinatorId] = useState("");
-  async function act(action: "ACKNOWLEDGE" | "RESOLVE" | "ASSIGN") {
+  async function act(action: "ACKNOWLEDGE" | "RESOLVE") {
     if (pending || (action === "RESOLVE" && !resolution.trim())) {
       if (action === "RESOLVE") setMessage("请填写解决说明");
       return;
@@ -36,7 +30,6 @@ export function BlockerActions({
           action,
           resolution,
           version,
-          coordinatorId: action === "ASSIGN" ? coordinatorId : undefined,
         }),
       });
       const result = await r.json();
@@ -51,30 +44,6 @@ export function BlockerActions({
   return (
     <div className="flex flex-col gap-3">
       <div className="flex gap-2">
-        {canAssign && (
-          <>
-            <Select
-              aria-label="协调负责人"
-              selectedKey={coordinatorId || null}
-              onSelectionChange={(key) => setCoordinatorId(String(key))}
-              isDisabled={pending}
-            >
-              {coordinators.map((person) => (
-                <SelectItem key={person.id} id={person.id}>
-                  {person.name}
-                </SelectItem>
-              ))}
-            </Select>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={() => void act("ASSIGN")}
-              disabled={pending || !coordinatorId}
-            >
-              分配协调人
-            </Button>
-          </>
-        )}
         {canAcknowledge && (
           <Button
             type="button"
@@ -108,4 +77,3 @@ export function BlockerActions({
     </div>
   );
 }
-

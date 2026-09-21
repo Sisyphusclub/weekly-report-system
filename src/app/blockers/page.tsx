@@ -104,10 +104,12 @@ export default async function BlockersPage({
       <header>
         <h1 className="text-2xl font-medium leading-8">阻塞中心</h1>
         <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
-          集中查看需要协调的事项，敏感内容只向相关人员展示。
+          {actor.role === "BOSS"
+            ? "查看团队阻塞情况，事项由提出人和项目协作方跟进。"
+            : "集中查看需要协调的事项，敏感内容只向相关人员展示。"}
         </p>
       </header>
-      <BlockerForm />
+      {actor.role === "EMPLOYEE" ? <BlockerForm /> : null}
       <nav aria-label="阻塞筛选" className="flex flex-wrap gap-3">
         {(
           [
@@ -167,7 +169,7 @@ export default async function BlockersPage({
                     </p>
                     <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
                       提出人：{reporter}
-                      {` · 协调人：${coordinatorName ?? "待分配"}`}
+                      {coordinatorName ? ` · 协同人：${coordinatorName}` : ""}
                       {projectName ? ` · 项目：${projectName}` : ""}
                     </p>
                     {item.resolution && (
@@ -192,7 +194,7 @@ export default async function BlockersPage({
           <div className="py-12 text-center">
             <p className="text-base font-medium leading-6">暂无可见阻塞</p>
             <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
-              新的协调事项会显示在这里。
+              新的阻塞记录会显示在这里。
             </p>
           </div>
         )}
@@ -219,4 +221,3 @@ export default async function BlockersPage({
     </WorkspaceShell>
   );
 }
-

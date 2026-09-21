@@ -83,6 +83,8 @@ export async function POST(
 ) {
   try {
     const actor = await writeActor(request);
+    if (actor.role === "BOSS")
+      throw new BusinessError("老板账号仅可查看阻塞评论", 403);
     const parsed = input.safeParse(await request.json().catch(() => null));
     if (!parsed.success) throw new BusinessError("评论内容无效");
     const id = (await params).id;

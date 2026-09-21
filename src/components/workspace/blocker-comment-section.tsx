@@ -14,9 +14,11 @@ type Item = {
 export function BlockerCommentSection({
   blockerId,
   actorId,
+  readOnly = false,
 }: {
   blockerId: string;
   actorId: string;
+  readOnly?: boolean;
 }) {
   const [items, setItems] = useState<Item[]>([]);
   const [body, setBody] = useState("");
@@ -101,7 +103,8 @@ export function BlockerCommentSection({
                   {item.body}
                 </p>
               )}
-              {!item.deletedAt &&
+              {!readOnly &&
+                !item.deletedAt &&
                 item.authorId === actorId &&
                 (editing === item.id ? (
                   <span className="flex gap-2">
@@ -141,7 +144,7 @@ export function BlockerCommentSection({
                     </Button>
                   </span>
                 ))}
-              {!item.deletedAt && !editing && (
+              {!readOnly && !item.deletedAt && !editing && (
                 <Button variant="ghost" onClick={() => setReplyTo(item.id)}>
                   回复
                 </Button>
@@ -152,27 +155,32 @@ export function BlockerCommentSection({
       ) : (
         <p className="text-slate-500">暂无评论</p>
       )}
-      <Textarea
-        label={replyTo ? "回复内容" : "评论内容"}
-        value={editing ? "" : body}
-        onChange={setBody}
-        maxLength={5000}
-        rows={3}
-        isDisabled={pending || Boolean(editing)}
-      />
-      {replyTo && (
-        <Button variant="ghost" onClick={() => setReplyTo(null)}>
-          取消回复
-        </Button>
+      {!readOnly ? (
+        <>
+          <Textarea
+            label={replyTo ? "回复内容" : "评论内容"}
+            value={editing ? "" : body}
+            onChange={setBody}
+            maxLength={5000}
+            rows={3}
+            isDisabled={pending || Boolean(editing)}
+          />
+          {replyTo ? (
+            <Button variant="ghost" onClick={() => setReplyTo(null)}>
+              取消回复
+            </Button>
+          ) : null}
+          <Button
+            onClick={() => void submit()}
+            disabled={pending || !body.trim() || Boolean(editing)}
+          >
+            发布评论
+          </Button>
+        </>
+      ) : (
+        <p className="text-sm text-muted-foreground">评论仅供查看</p>
       )}
-      <Button
-        onClick={() => void submit()}
-        disabled={pending || !body.trim() || Boolean(editing)}
-      >
-        发布评论
-      </Button>
       {message && <p role="alert">{message}</p>}
     </section>
   );
 }
-

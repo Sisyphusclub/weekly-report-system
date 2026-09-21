@@ -28,7 +28,7 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
         setMessage(result.error);
         return;
       }
-      setMessage("阻塞已提交，老板将收到站内通知");
+      setMessage("阻塞已提交");
       setDescription("");
       router.refresh();
     } catch {
@@ -42,7 +42,9 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
       onSubmit={submit}
       className={`flex flex-col gap-4 ${compact ? "" : "rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs"}`}
     >
-      <h2 className={compact ? "sr-only" : "text-xl font-medium leading-7"}>提交阻塞</h2>
+      <h2 className={compact ? "sr-only" : "text-xl font-medium leading-7"}>
+        提交阻塞
+      </h2>
       <Textarea
         label="阻塞描述"
         isRequired
@@ -75,4 +77,3 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
     </form>
   );
 }
-

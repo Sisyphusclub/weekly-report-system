@@ -10,6 +10,8 @@ export async function PATCH(
 ) {
   try {
     const actor = await writeActor(request);
+    if (actor.role === "BOSS")
+      throw new BusinessError("老板账号仅可查看阻塞评论", 403);
     const { id, commentId } = await params;
     const payload = await request.json().catch(() => null);
     const deleted = payload?.deleted === true;

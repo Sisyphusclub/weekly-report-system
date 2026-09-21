@@ -16,7 +16,6 @@ import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { Drawer } from "@/components/premium/drawer";
 import { List, ListItem } from "@/components/premium/list";
-import { Modal } from "@/components/premium/modal";
 import { WorkAnalyticsCharts } from "@/components/dashboard/work-analytics-charts";
 import { Button } from "@/components/motion/button/base";
 import { ProgressCircle } from "@/components/premium/stats/progress-circle";
@@ -49,8 +48,6 @@ export function BossDashboard({
   memberCount: number;
   reports: RecentReport[];
 }) {
-  const [assignmentOpen, setAssignmentOpen] = useState(false);
-  const [coordinatorId, setCoordinatorId] = useState<string | null>(null);
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [reportsOpen, setReportsOpen] = useState(false);
   const projectNames = new Map(
@@ -62,9 +59,6 @@ export function BossDashboard({
     ? percent(todaySubmission.submitted, todaySubmission.total)
     : 0;
   const planRate = breakdown.todayPlanFulfillment.rate ?? 0;
-  const selectedCoordinator = breakdown.members.find(
-    (member) => member.id === coordinatorId,
-  );
   const attentionMembers = breakdown.members.filter(
     (member) =>
       member.openBlockers > 0 ||
@@ -123,7 +117,7 @@ export function BossDashboard({
         <StatisticCard
           className="h-20 min-h-20"
           icon={CircleAlert}
-          label="待处理阻塞"
+          label="开放阻塞"
           value={metrics.openBlockers}
           suffix="项"
           tone={metrics.openBlockers > 0 ? "danger" : "neutral"}
@@ -135,25 +129,15 @@ export function BossDashboard({
         showIcon
         message={
           hasBlockers
-            ? `阻塞作战室 · ${metrics.openBlockers} 项待协调`
-            : "阻塞作战室 · 当前无待协调事项"
+            ? `团队阻塞概览 · ${metrics.openBlockers} 项开放`
+            : "团队阻塞概览 · 当前无开放事项"
         }
         description={
           hasBlockers
             ? blockedItems
                 .map((item) => `${item.projectName}：${item.description}`)
                 .join(" · ")
-            : "团队当前没有需要负责人介入的开放卡点。"
-        }
-        action={
-          <Button
-            variant="primary"
-            size="small"
-            onClick={() => setAssignmentOpen(true)}
-          >
-            {hasBlockers ? "立即指派协调人" : "查看团队状态"}
-            <ArrowRight className="size-3.5" aria-hidden />
-          </Button>
+            : "当前没有开放阻塞记录。"
         }
       />
 
@@ -333,61 +317,6 @@ export function BossDashboard({
           )}
         />
       </Drawer>
-
-      <Modal
-        open={assignmentOpen}
-        onClose={() => setAssignmentOpen(false)}
-        title="指派协调人"
-        description={
-          hasBlockers
-            ? "为当前待协调卡点选择一位负责人。"
-            : "当前没有开放卡点，可先选择后续协同负责人。"
-        }
-        footer={
-          <>
-            <Button
-              variant="secondary"
-              size="small"
-              onClick={() => setAssignmentOpen(false)}
-            >
-              取消
-            </Button>
-            <Button
-              variant="primary"
-              size="small"
-              disabled={!selectedCoordinator}
-              onClick={() => setAssignmentOpen(false)}
-            >
-              确认指派
-            </Button>
-          </>
-        }
-      >
-        <div className="space-y-2">
-          {breakdown.members.map((member) => (
-            <Button
-              key={member.id}
-              variant={coordinatorId === member.id ? "secondary" : "ghost"}
-              className="h-auto w-full justify-start rounded-lg border border-border px-3 py-2.5 text-left"
-              onClick={() => setCoordinatorId(member.id)}
-            >
-              <Avatar initials={member.name.slice(0, 1)} size="sm" />
-              <span className="ml-2 min-w-0 flex-1">
-                <span className="block text-sm font-medium text-foreground">
-                  {member.name}
-                </span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  今日计划 {member.todayPlans} 项 · 已完成{" "}
-                  {member.todayCompleted} 项
-                </span>
-              </span>
-              {member.openBlockers > 0 ? (
-                <Badge color="danger">{member.openBlockers} 项阻塞</Badge>
-              ) : null}
-            </Button>
-          ))}
-        </div>
-      </Modal>
     </div>
   );
 }

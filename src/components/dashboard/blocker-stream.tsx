@@ -1,5 +1,5 @@
-import { RiArrowRightLine, RiUserAddLine } from "@remixicon/react";
-import { Button, ButtonLink } from "@/components/motion/button/base";
+import { RiArrowRightLine } from "@remixicon/react";
+import { ButtonLink } from "@/components/motion/button/base";
 import { Badge } from "@/components/premium/badge";
 
 export function BlockerStream({
@@ -52,14 +52,7 @@ export function BlockerStream({
             </Badge>
             <span className="truncate">{item.reporter}</span>
           </div>
-          <div className="mt-4 flex items-center justify-between gap-2">
-            <Button
-              size="small"
-              variant="secondary"
-            >
-              <RiUserAddLine className="size-4" aria-hidden />
-              指派协调人
-            </Button>
+          <div className="mt-4 flex items-center justify-end">
             <ButtonLink
               size="small"
               variant="ghost"
@@ -78,4 +71,3 @@ export function BlockerStream({
     </div>
   );
 }
-
