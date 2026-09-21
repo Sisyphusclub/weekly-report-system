@@ -2,11 +2,7 @@
 
 import {
   ArrowRight,
-  CircleAlert,
-  ClipboardCheck,
   FolderKanban,
-  PackageCheck,
-  Send,
   Users,
 } from "lucide-react";
 import { Alert } from "@/components/premium/alert";
@@ -14,10 +10,9 @@ import { Avatar } from "@/components/premium/avatar";
 import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { List, ListItem } from "@/components/premium/list";
-import { ProgressCircle } from "@/components/premium/stats/progress-circle";
-import { Statistic } from "@/components/premium/stats/statistic-card";
 import { Table } from "@/components/premium/table";
-import { ConversionFunnel } from "@/components/premium/conversion-funnel";
+import { MetricDistribution } from "@/components/premium/stats/metric-distribution";
+import { PlanStrip } from "@/components/dashboard/plan-strip";
 import {
   Tabs,
   TabsContent,
@@ -49,140 +44,24 @@ export function BossDashboard({
   todaySubmission: { submitted: number; total: number };
   reports: RecentReport[];
 }) {
-  const submissionRate = todaySubmission.total
-    ? percent(todaySubmission.submitted, todaySubmission.total)
-    : null;
-  const fulfillment = breakdown.todayPlanFulfillment.rate;
-  const deliveryTypes = breakdown.deliverableSummary.length;
+  const totalPlans = breakdown.planFulfillment.due;
+  const followUp = metrics.inProgressTasks + metrics.openBlockers;
+  const projectNames = new Map(breakdown.projects.map((item) => [item.id, item.name]));
   const blockedItems = breakdown.blockerItems.slice(0, 3);
   const hasBlockers = metrics.openBlockers > 0 && blockedItems.length > 0;
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-      <section aria-label="团队关键指标">
-        <Card className="overflow-hidden">
-          <div className="grid grid-cols-2 xl:grid-cols-4">
-            <MetricCell
-              label="今日提交进度"
-              icon={<Send className="size-4" aria-hidden />}
-              iconClass="border-blue-200 bg-blue-50 text-blue-700"
-              className="border-b border-border xl:border-b-0"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <Statistic
-                  label=""
-                  value={
-                    todaySubmission.total ? todaySubmission.submitted : "—"
-                  }
-                  suffix={
-                    todaySubmission.total
-                      ? `/ ${todaySubmission.total} 人`
-                      : undefined
-                  }
-                />
-                <ProgressCircle value={submissionRate} label="今日提交进度" />
-              </div>
-              {todaySubmission.total ? (
-                <ButtonLink
-                  href="/boss/members"
-                  variant="ghost"
-                  size="small"
-                  className="mt-2 -ml-2 text-blue-700"
-                >
-                  查看未提交成员 <ArrowRight className="size-3.5" aria-hidden />
-                </ButtonLink>
-              ) : (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  今日非工作日
-                </p>
-              )}
-            </MetricCell>
-            <MetricCell
-              label="待处理阻塞"
-              icon={<CircleAlert className="size-4" aria-hidden />}
-              iconClass={
-                metrics.openBlockers
-                  ? "border-rose-200 bg-rose-50 text-rose-700"
-                  : "border-slate-200 bg-slate-100 text-slate-600"
-              }
-              className={cx(
-                "border-b border-l border-border xl:border-b-0",
-                metrics.openBlockers && "bg-rose-50/40",
-              )}
-            >
-              <Statistic
-                label=""
-                value={metrics.openBlockers}
-                suffix="项"
-                tone={metrics.openBlockers ? "danger" : "neutral"}
-              />
-              <p className="mt-1 text-xs text-rose-700">
-                {metrics.urgentBlockers
-                  ? `其中 ${metrics.urgentBlockers} 项紧急`
-                  : "当前无紧急卡点"}
-              </p>
-              <ButtonLink
-                href="/blockers"
-                variant="ghost"
-                size="small"
-                className={cx(
-                  "mt-2 -ml-2",
-                  metrics.openBlockers ? "text-rose-700" : "text-slate-600",
-                )}
-              >
-                查看卡点 <ArrowRight className="size-3.5" aria-hidden />
-              </ButtonLink>
-            </MetricCell>
-            <MetricCell
-              label="今日计划兑现率"
-              icon={<ClipboardCheck className="size-4" aria-hidden />}
-              iconClass="border-emerald-200 bg-emerald-50 text-emerald-700"
-              className="xl:border-l xl:border-border"
-            >
-              <div className="flex items-center justify-between gap-4">
-                <Statistic
-                  label=""
-                  value={breakdown.todayPlanFulfillment.rate ?? "—"}
-                  suffix={
-                    breakdown.todayPlanFulfillment.rate === null
-                      ? undefined
-                      : "%"
-                  }
-                  tone="success"
-                />
-                <ProgressCircle
-                  value={fulfillment}
-                  tone="success"
-                  label="今日计划兑现率"
-                />
-              </div>
-              <p className="mt-2 text-xs text-muted-foreground">
-                {breakdown.todayPlanFulfillment.due
-                  ? `${breakdown.todayPlanFulfillment.completed}/${breakdown.todayPlanFulfillment.due} 项完成`
-                  : "今日暂无应核销计划"}
-              </p>
-            </MetricCell>
-            <MetricCell
-              label="本周交付物类型"
-              icon={<PackageCheck className="size-4" aria-hidden />}
-              iconClass="border-slate-200 bg-slate-100 text-slate-700"
-              className="border-l border-border"
-            >
-              <Statistic
-                label=""
-                value={deliveryTypes || "—"}
-                suffix={deliveryTypes ? "类" : undefined}
-              />
-              <p className="mt-2 truncate text-xs text-muted-foreground">
-                {breakdown.deliverableSummary
-                  .slice(0, 2)
-                  .map(formatDeliverable)
-                  .join(" · ") || "按单位分别统计"}
-              </p>
-            </MetricCell>
-          </div>
-        </Card>
-      </section>
+      <OverviewTotals
+        items={[
+          { label: "总人数", value: todaySubmission.total, tone: "neutral" },
+          { label: "工作项", value: metrics.totalTasks, tone: "neutral" },
+          { label: "已完成", value: metrics.completedTasks, tone: "success" },
+          { label: "待跟进", value: followUp, tone: "warning" },
+          { label: "工作计划", value: totalPlans, tone: "info" },
+          { label: "今日提交", value: todaySubmission.submitted, tone: "success" },
+        ]}
+      />
 
       <section aria-label="阻塞作战室">
         <Alert
@@ -214,42 +93,59 @@ export function BossDashboard({
         />
       </section>
 
+      <section aria-label="今日工作计划">
+        <Card className="overflow-hidden">
+          <CardHeader className="flex items-end justify-between gap-3 py-3.5">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">今日工作计划</h2>
+              <p className="mt-1 text-xs text-muted-foreground">按成员查看计划、进度和交付方向</p>
+            </div>
+            <ButtonLink href="/reports" variant="ghost" size="small">
+              查看日报 <ArrowRight className="size-3.5" aria-hidden />
+            </ButtonLink>
+          </CardHeader>
+          <CardBody className="p-4 pt-3">
+            {breakdown.members.length ? (
+              <PlanStrip>
+                {breakdown.members.map((member) => (
+                  <MemberPlanColumn
+                    key={member.id}
+                    member={member}
+                    projectNames={projectNames}
+                  />
+                ))}
+              </PlanStrip>
+            ) : (
+              <EmptyState text="暂无团队成员数据" />
+            )}
+          </CardBody>
+        </Card>
+      </section>
+
       <section className="grid gap-5 xl:grid-cols-2" aria-label="工作分析图表">
-        <ConversionFunnel
+        <MetricDistribution
           title="工作分类与精力投入"
           description="按本周已提交日报中的实际工作条目统计"
-          valueLabel="当前分类条目"
-          valueSuffix="条"
-          periods={[
-            {
-              id: "week",
-              label: "本周",
-              stages: breakdown.categoryBreakdown.map((item) => ({
-                id: item.name,
-                label: item.name,
-                value: item.value,
-                detail: `${item.value} 条实际工作记录`,
-              })),
-            },
-          ]}
+          emptyText="本周暂无已提交的实际工作"
+          items={breakdown.categoryBreakdown.map((item, index) => ({
+            id: item.name,
+            label: item.name,
+            value: item.value,
+            suffix: "项",
+            tone: index === 0 ? "success" : index === 1 ? "info" : "neutral",
+          }))}
         />
-        <ConversionFunnel
+        <MetricDistribution
           title="核心交付物量化统计"
           description="从日报产出物中提取数量并按类型汇总"
-          valueLabel="当前交付物"
-          valueSuffix="件"
-          periods={[
-            {
-              id: "week",
-              label: "本周",
-              stages: breakdown.deliverableSummary.map((item) => ({
-                id: item.unitId,
-                label: item.label,
-                value: item.quantity,
-                detail: `${item.quantity} ${item.unit}`,
-              })),
-            },
-          ]}
+          emptyText="本周日报暂未登记量化产出"
+          items={breakdown.deliverableSummary.slice(0, 10).map((item) => ({
+            id: item.unitId,
+            label: item.label,
+            value: item.quantity,
+            suffix: item.unit || "项",
+            tone: "info",
+          }))}
         />
       </section>
 
@@ -389,36 +285,96 @@ export function BossDashboard({
   );
 }
 
-function MetricCell({
-  label,
-  icon,
-  iconClass,
-  className,
-  children,
+function OverviewTotals({
+  items,
 }: {
-  label: string;
-  icon: React.ReactNode;
-  iconClass: string;
-  className?: string;
-  children: React.ReactNode;
+  items: Array<{
+    label: string;
+    value: number;
+    tone: "neutral" | "info" | "success" | "warning";
+  }>;
 }) {
   return (
-    <div className={cx("min-w-0 p-4 sm:p-5", className)}>
-      <div className="flex items-center gap-2">
-        <span
-          className={cx(
-            "grid size-7 place-items-center rounded-md border",
-            iconClass,
+    <Card className="overflow-hidden">
+      <CardBody className="grid grid-cols-2 divide-x divide-y divide-border p-0 md:grid-cols-3 xl:grid-cols-6 xl:divide-y-0">
+        {items.map((item) => (
+          <div key={item.label} className="min-w-0 px-4 py-3.5 xl:px-5">
+            <p className="truncate text-xs font-medium text-muted-foreground">{item.label}</p>
+            <p
+              className={cx(
+                "mt-1 text-xl font-semibold tabular-nums",
+                item.tone === "success"
+                  ? "text-emerald-700"
+                  : item.tone === "warning"
+                    ? "text-amber-700"
+                    : item.tone === "info"
+                      ? "text-blue-700"
+                      : "text-slate-900",
+              )}
+            >
+              {item.value}
+            </p>
+          </div>
+        ))}
+      </CardBody>
+    </Card>
+  );
+}
+
+function MemberPlanColumn({
+  member,
+  projectNames,
+}: {
+  member: DashboardBreakdown["members"][number];
+  projectNames: Map<string, string>;
+}) {
+  const fulfillment = member.todayPlans
+    ? percent(member.todayCompleted, member.todayPlans)
+    : 0;
+
+  return (
+    <Card className="w-[255px] shrink-0 overflow-hidden">
+      <CardBody className="p-3">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex min-w-0 items-center gap-2">
+            <Avatar initials={member.name.slice(0, 1)} size="sm" />
+            <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
+          </div>
+          <Badge color={member.openBlockers ? "danger" : member.todaySubmitted ? "success" : "warning"}>
+            {member.openBlockers ? `${member.openBlockers} 项阻塞` : member.todaySubmitted ? "已提交" : "待跟进"}
+          </Badge>
+        </div>
+        <div className="mt-3 flex items-center justify-between text-xs">
+          <span className="text-muted-foreground">计划 {member.todayPlans} 项</span>
+          <span className="font-semibold tabular-nums text-slate-700">完成 {fulfillment}%</span>
+        </div>
+        <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-slate-100" role="progressbar" aria-label={`${member.name} 今日计划完成率`} aria-valuemin={0} aria-valuemax={100} aria-valuenow={fulfillment}>
+          <div className={cx("h-full rounded-full", member.openBlockers ? "bg-rose-600" : "bg-emerald-500")} style={{ width: `${fulfillment}%` }} />
+        </div>
+        <List
+          dataSource={member.todayPlanItems.slice(0, 4)}
+          rowKey={(item, index) => `${member.id}-${index}-${item.content}`}
+          className="mt-3 space-y-1.5"
+          itemClassName="border-slate-200/80 bg-slate-50/70 p-2"
+          emptyState={<p className="px-1 py-2 text-xs text-muted-foreground">今日暂无工作计划</p>}
+          renderItem={(item, index) => (
+            <ListItem
+              index={String(index + 1).padStart(2, "0")}
+              title={
+                <div className="min-w-0">
+                  <div className="flex min-w-0 items-center gap-1.5">
+                    <Tag color="neutral" className="max-w-[100px] truncate">{item.projectId ? projectNames.get(item.projectId) ?? "未关联项目" : "未关联项目"}</Tag>
+                    <span className="truncate">{item.content}</span>
+                  </div>
+                  <p className="mt-1 truncate text-[11px] font-normal text-muted-foreground">{item.category}</p>
+                </div>
+              }
+              trailing={<Badge color={item.status === "DONE" ? "success" : item.status === "BLOCKED" ? "danger" : "warning"}>{statusLabel(item.status)}</Badge>}
+            />
           )}
-        >
-          {icon}
-        </span>
-        <span className="text-xs font-medium text-muted-foreground">
-          {label}
-        </span>
-      </div>
-      <div className="mt-3">{children}</div>
-    </div>
+        />
+      </CardBody>
+    </Card>
   );
 }
 
@@ -642,9 +598,12 @@ function percent(value: number, total: number) {
   return total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
 }
 
-function formatDeliverable(item: { unitName: string; quantity: number }) {
-  const match = item.unitName.match(/^(.*)（(.*)）$/u);
-  return match
-    ? `${match[1]} ${item.quantity} ${match[2]}`
-    : `${item.unitName} ${item.quantity}`;
+function statusLabel(status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELED") {
+  return {
+    TODO: "待开始",
+    IN_PROGRESS: "进行中",
+    BLOCKED: "阻塞",
+    DONE: "完成",
+    CANCELED: "已取消",
+  }[status];
 }

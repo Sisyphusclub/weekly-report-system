@@ -8,6 +8,7 @@ import { blockerVisibility } from "@/lib/blockers";
 import { getSubmissionData, type SubmissionData } from "@/lib/submission-data";
 
 export type DashboardMetrics = {
+  totalTasks: number;
   submittedReports: number;
   dueReports: number;
   onTimeReports: number;
@@ -29,6 +30,20 @@ export type DashboardBreakdown = {
     todayActuals: number;
     todayCompleted: number;
     todaySubmitted: boolean;
+    todayPlanItems: Array<{
+      content: string;
+      status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELED";
+      category: string;
+      projectId: string | null | undefined;
+      deliverables: string[];
+    }>;
+    todayActualItems: Array<{
+      content: string;
+      status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELED";
+      category: string;
+      projectId: string | null | undefined;
+      deliverables: string[];
+    }>;
   }>;
   projects: Array<{
     id: string;
@@ -240,6 +255,20 @@ export async function getDashboardBreakdown(
       todayCompleted: todayWorks.filter((entry) => entry.status === "DONE")
         .length,
       todaySubmitted: Boolean(todayReport),
+      todayPlanItems: todayPlans.map(({ content, status, category, projectId, deliverables }) => ({
+        content,
+        status,
+        category,
+        projectId,
+        deliverables,
+      })),
+      todayActualItems: todayWorks.map(({ content, status, category, projectId, deliverables }) => ({
+        content,
+        status,
+        category,
+        projectId,
+        deliverables,
+      })),
     };
   });
   const trendDates = range ? dateRange(start, end) : dates;
@@ -456,6 +485,7 @@ export async function getDashboardMetrics(
     return parsed.success ? parsed.data : [];
   });
   return {
+    totalTasks: weeklyWorks.length,
     ...weeklySubmissionMetrics(data),
     openBlockers: open[0].value,
     urgentBlockers: urgent[0].value,

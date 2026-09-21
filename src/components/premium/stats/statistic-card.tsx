@@ -11,6 +11,7 @@ export interface StatisticProps {
   suffix?: string;
   progress?: number;
   tone?: StatisticTone;
+  className?: string;
 }
 
 export function Statistic({
@@ -19,9 +20,10 @@ export function Statistic({
   suffix,
   progress,
   tone = "neutral",
+  className,
 }: StatisticProps) {
   return (
-    <dl className="min-w-0 flex-1">
+    <dl className={cx("min-w-0 flex-1", className)}>
       <dt
         className={cx(
           "text-xs text-muted-foreground",
