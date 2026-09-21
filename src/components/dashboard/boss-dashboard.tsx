@@ -15,10 +15,9 @@ import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { List, ListItem } from "@/components/premium/list";
 import { Modal } from "@/components/premium/modal";
-import { DonutDistribution } from "@/components/premium/stats/donut-distribution";
 import { Table } from "@/components/premium/table";
-import { MetricDistribution } from "@/components/premium/stats/metric-distribution";
 import { PlanStrip } from "@/components/dashboard/plan-strip";
+import { WorkAnalyticsCharts } from "@/components/dashboard/work-analytics-charts";
 import {
   Tabs,
   TabsContent,
@@ -160,33 +159,19 @@ export function BossDashboard({
         </Card>
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-2" aria-label="工作分析图表">
-        <DonutDistribution
-          title="工作分类与精力投入"
-          description="按本周已提交日报中的实际工作条目统计"
-          emptyText="本周暂无已提交的实际工作"
-          items={breakdown.categoryBreakdown.map((item) => ({
-            id: item.name,
-            label: item.name,
-            value: item.value,
-          }))}
-        />
-        <MetricDistribution
-          title="核心交付物量化统计"
-          description="从日报产出物中提取数量并按类型汇总"
-          emptyText="本周日报暂未登记量化产出"
-          items={[...breakdown.deliverableSummary]
-            .sort((a, b) => b.quantity - a.quantity)
-            .slice(0, 10)
-            .map((item) => ({
-            id: item.unitId,
-            label: item.label,
-            value: item.quantity,
-            suffix: item.unit || "项",
-            tone: "info",
-            }))}
-        />
-      </section>
+      <WorkAnalyticsCharts
+        categories={breakdown.categoryBreakdown.map((item) => ({
+          id: item.name,
+          label: item.name,
+          value: item.value,
+        }))}
+        deliverables={breakdown.deliverableSummary.map((item) => ({
+          id: item.unitId,
+          label: item.label,
+          value: item.quantity,
+          unit: item.unit || "项",
+        }))}
+      />
 
       <section aria-label="团队协同视图">
         <Tabs defaultValue="projects" variant="underline">
