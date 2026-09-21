@@ -1,4 +1,4 @@
-import { and, asc, eq } from "drizzle-orm";
+import { and, asc, eq, gte, lte, ne } from "drizzle-orm";
 import { hashPassword } from "better-auth/crypto";
 import { closePool, getDb } from "../src/lib/db/index.js";
 import {
@@ -74,6 +74,21 @@ function snapshot(
   };
 }
 
+type DemoEntryStatus =
+  | "TODO"
+  | "IN_PROGRESS"
+  | "BLOCKED"
+  | "DONE"
+  | "CANCELED";
+
+type DemoDailyEntry = {
+  content: string;
+  status: DemoEntryStatus;
+  category: string;
+  deliverables: string[];
+  projectId: string;
+};
+
 async function main() {
   if (process.env.APP_ENV !== "development")
     throw new Error("Demo seed is available only when APP_ENV=development");
@@ -117,7 +132,13 @@ async function main() {
       if (existing) {
         if (existing.organizationId !== org.id)
           throw new Error(`用户 ${input.username} 已属于其他组织`);
-        return existing;
+        await tx
+          .update(user)
+          .set({ name: input.name, title: input.title, status: "ACTIVE" })
+          .where(eq(user.id, existing.id));
+        return (
+          await tx.select().from(user).where(eq(user.id, existing.id)).limit(1)
+        )[0];
       }
       const created = {
         id: crypto.randomUUID(),
@@ -157,10 +178,80 @@ async function main() {
     });
     const employee = await ensureUser({
       username: "demo_employee",
-      name: "周雨桐",
+      name: "李正远",
       role: "EMPLOYEE",
-      title: "内容运营",
+      title: "内容运营工程师",
     });
+    const demoTeam = [
+      boss,
+      employee,
+      ...(await Promise.all([
+        ["demo_yujipeng", "于继鹏", "后端开发"],
+        ["demo_lixue", "李雪", "产品运营"],
+        ["demo_luchuanmin", "卢传民", "研发工程师"],
+        ["demo_yanglifei", "杨力飞", "测试工程师"],
+        ["demo_yuyuanxin", "于元鑫", "前端开发"],
+        ["demo_yumiao", "于淼", "项目运营"],
+        ["demo_pujingjing", "朴景璟", "产品经理"],
+        ["demo_liutianyi", "刘天一", "研发工程师"],
+        ["demo_wangsiyuan", "王思远", "数据分析"],
+        ["demo_chenlu", "陈璐", "交付运营"],
+        ["demo_zhaozihan", "赵子涵", "测试工程师"],
+      ].map(([username, name, title]) =>
+        ensureUser({
+          username,
+          name,
+          role: "EMPLOYEE",
+          title,
+        }),
+      ))),
+    ];
+    const zhangweichen = await ensureUser({
+      username: "zhangweichen",
+      name: "张尉晨",
+      role: "EMPLOYEE",
+      title: "研发工程师",
+    });
+    demoTeam.push(zhangweichen);
+    const [staleDemoMember] = await tx
+      .select({ id: user.id })
+      .from(user)
+      .where(eq(user.username, "demo_sunmingyuan"))
+      .limit(1);
+    if (staleDemoMember)
+      await tx
+        .update(user)
+        .set({ status: "DISABLED" })
+        .where(eq(user.id, staleDemoMember.id));
+    if (staleDemoMember)
+      await tx
+        .delete(projectMember)
+        .where(
+          and(
+            eq(projectMember.organizationId, org.id),
+            eq(projectMember.userId, staleDemoMember.id),
+          ),
+        );
+    if (staleDemoMember)
+      await tx
+        .update(report)
+        .set({
+          status: "DRAFT",
+          planEntries: [],
+          workEntries: [],
+          blockers: [],
+          submittedAt: null,
+          revisionNumber: 0,
+        })
+        .where(
+          and(
+            eq(report.organizationId, org.id),
+            eq(report.authorId, staleDemoMember.id),
+            eq(report.type, "DAILY"),
+            gte(report.reportDate, monday),
+            lte(report.reportDate, addDays(monday, 6)),
+          ),
+        );
 
     async function migrateLegacyDemoUser(
       oldUsername: string,
@@ -403,7 +494,7 @@ async function main() {
     };
 
     for (const projectId of [projects.growth.id, projects.content.id])
-      for (const userId of [boss.id, employee.id])
+      for (const userId of demoTeam.map((member) => member.id))
         await tx
           .insert(projectMember)
           .values({ organizationId: org.id, projectId, userId })
@@ -523,9 +614,14 @@ async function main() {
       date: string,
       status: "DRAFT" | "SUBMITTED",
       summary: string,
+      overrideEntries?: {
+        planEntries: DemoDailyEntry[];
+        workEntries: DemoDailyEntry[];
+        blockers?: unknown[];
+      },
     ) {
       const isEmployee = authorId === employee.id;
-      const planEntries = isEmployee
+      const defaultPlanEntries = isEmployee
         ? [
             {
               content: "协助教师导出整本教材资源",
@@ -558,7 +654,7 @@ async function main() {
               projectId: projects.growth.id,
             },
           ];
-      const workEntries = isEmployee
+      const defaultWorkEntries = isEmployee
         ? [
             {
               content: "协助教师导出整本教材资源",
@@ -591,11 +687,13 @@ async function main() {
               projectId: projects.growth.id,
             },
           ];
+      const planEntries = overrideEntries?.planEntries ?? defaultPlanEntries;
+      const workEntries = overrideEntries?.workEntries ?? defaultWorkEntries;
       const structured = {
         summary,
         planEntries,
         workEntries,
-        blockers: [],
+        blockers: overrideEntries?.blockers ?? [],
       };
       const submitted = status === "SUBMITTED";
       const submittedAt = submitted
@@ -649,35 +747,185 @@ async function main() {
       )[0];
     }
 
-    const reportDates = [0, 2, 4]
-      .map((offset) => addDays(monday, offset))
-      .filter((date) => date <= today);
-    const dailyReports = [];
-    for (const date of reportDates) {
-      dailyReports.push(
-        await ensureDailyReport(
-          employee.id,
-          date,
-          "SUBMITTED",
-          `完成${date === reportDates.at(-1) ? "渠道数据整理与实验跟进" : "增长实验和内容协同"}。`,
+    const planCountByName: Record<string, number> = {
+      林晓峰: 2,
+      李正远: 3,
+      于继鹏: 2,
+      李雪: 1,
+      卢传民: 2,
+      杨力飞: 1,
+      于元鑫: 1,
+      于淼: 3,
+      "朴景璟": 4,
+      刘天一: 4,
+      王思远: 2,
+      陈璐: 1,
+      赵子涵: 1,
+      张尉晨: 1,
+    };
+    const todayOrder = [
+      employee,
+      ...demoTeam.filter((member) => member.id !== employee.id),
+    ];
+    const todayOffset = Math.max(
+      0,
+      Math.min(
+        4,
+        Math.round(
+          (new Date(`${today}T00:00:00Z`).getTime() -
+            new Date(`${monday}T00:00:00Z`).getTime()) /
+            86_400_000,
         ),
-      );
-      if (date === reportDates.at(-1))
-        dailyReports.push(
-          await ensureDailyReport(
-            boss.id,
-            date,
-            "SUBMITTED",
-            "完成团队进度同步，确认本周风险与下周重点。",
+      ),
+    );
+    const categorySequence = [
+      "综合事务",
+      "综合事务",
+      "测试",
+      ...Array.from({ length: 25 }, () => "修复"),
+      ...Array.from({ length: 7 }, () => "开发"),
+      ...Array.from({ length: 5 }, () => "需求"),
+      ...Array.from({ length: 2 }, () => "测试"),
+      ...Array.from({ length: 3 }, () => "部署"),
+      ...Array.from({ length: 1 }, () => "综合事务"),
+      ...Array.from({ length: 1 }, () => "回归"),
+      ...Array.from({ length: 28 }, () => "项目协同"),
+    ];
+    const deliverablesByIndex: Record<number, string[]> = {
+      0: ["教材 1 本", "章节 13 章"],
+      1: ["章节 3 章"],
+      2: ["提出缺陷 2 个"],
+      3: ["回归测试 38 个"],
+      4: ["开发 22 项"],
+      5: ["文档 11 份"],
+      6: ["接口 5 个"],
+      7: ["文件 5 份"],
+      8: ["开发 4 个"],
+      9: ["功能 3 项"],
+      10: ["缺陷票 2 个"],
+      11: ["页面 1 个"],
+      12: ["接口 1 项"],
+    };
+    const nonDoneStatuses: Record<number, DemoEntryStatus> = {
+      25: "IN_PROGRESS",
+      46: "IN_PROGRESS",
+      60: "IN_PROGRESS",
+      61: "BLOCKED",
+      72: "IN_PROGRESS",
+    };
+    let globalWorkIndex = 0;
+    const buildPlanEntries = (member: (typeof demoTeam)[number]) => {
+      if (member.id === employee.id)
+        return [
+          {
+            content: "协助教师导出整本教材资源",
+            status: "DONE" as const,
+            category: "综合事务",
+            deliverables: [],
+            projectId: projects.content.id,
+          },
+          {
+            content: "协助教师完成 3 个独立章节内容导出",
+            status: "DONE" as const,
+            category: "综合事务",
+            deliverables: [],
+            projectId: projects.content.id,
+          },
+          {
+            content: "数智云编辑器打印导出测试与缺陷排查",
+            status: "DONE" as const,
+            category: "测试",
+            deliverables: [],
+            projectId: projects.growth.id,
+          },
+        ];
+      const count = planCountByName[member.name] ?? 1;
+      return Array.from({ length: count }, (_, index) => ({
+        content: `${member.name} · ${["推进本周重点事项", "完成协同事项核对", "整理交付数据", "跟进风险闭环"][index % 4]}`,
+        status: "DONE" as const,
+        category: ["开发", "需求", "测试", "综合事务"][index % 4],
+        deliverables: [],
+        projectId: index % 2 ? projects.content.id : projects.growth.id,
+      }));
+    };
+    const buildWorkEntry = (
+      member: (typeof demoTeam)[number],
+      localIndex: number,
+    ): DemoDailyEntry => {
+      const index = globalWorkIndex;
+      const employeeWork =
+        member.id === employee.id && todayOffset >= 0 && localIndex < 3
+          ? [
+              "协助教师导出整本教材资源",
+              "协助教师完成 3 个独立章节内容导出",
+              "数智云编辑器打印导出测试与缺陷排查",
+            ][localIndex]
+          : null;
+      const projectId =
+        member.id === employee.id && localIndex === 2
+          ? projects.growth.id
+          : localIndex % 2
+            ? projects.content.id
+            : projects.growth.id;
+      const entry = {
+        content:
+          employeeWork ??
+          `${member.name} · ${["完成接口联调", "推进版本修复", "整理需求验收", "执行回归检查"][localIndex % 4]}`,
+        status: nonDoneStatuses[index] ?? ("DONE" as const),
+        category: categorySequence[index] ?? "项目协同",
+        deliverables: deliverablesByIndex[index] ?? [],
+        projectId,
+      };
+      globalWorkIndex += 1;
+      return entry;
+    };
+    for (const member of demoTeam)
+      await tx
+        .update(report)
+        .set({
+          status: "DRAFT",
+          planEntries: [],
+          workEntries: [],
+          blockers: [],
+          submittedAt: null,
+          revisionNumber: 0,
+        })
+        .where(
+          and(
+            eq(report.organizationId, org.id),
+            eq(report.authorId, member.id),
+            eq(report.type, "DAILY"),
+            gte(report.reportDate, monday),
+            lte(report.reportDate, addDays(monday, 6)),
+            ne(report.reportDate, today),
           ),
         );
+    const entriesByMember = new Map<string, DemoDailyEntry[]>();
+    for (const member of demoTeam) entriesByMember.set(member.id, []);
+    for (const member of todayOrder) {
+      const count = planCountByName[member.name] ?? 1;
+      const entries = entriesByMember.get(member.id)!;
+      for (let index = 0; index < count; index++)
+        entries.push(buildWorkEntry(member, index));
     }
-    if (today >= monday)
-      await ensureDailyReport(
-        employee.id,
-        today,
-        "DRAFT",
-        "补充今日渠道数据与待协调事项。 ",
+    for (let index = 0; index < 47; index++) {
+      const member = todayOrder[(index + 3) % todayOrder.length];
+      entriesByMember.get(member.id)!.push(buildWorkEntry(member, index));
+    }
+    const reportDates = [today];
+    const dailyReports = [];
+    for (const member of demoTeam)
+      dailyReports.push(
+        await ensureDailyReport(
+          member.id,
+          today,
+          "SUBMITTED",
+          `${member.name} 完成今日工作填报，已同步计划与实际进度。`,
+          {
+            planEntries: buildPlanEntries(member),
+            workEntries: entriesByMember.get(member.id) ?? [],
+          },
+        ),
       );
 
     const weeklyStatus = today >= friday ? "SUBMITTED" : "DRAFT";
