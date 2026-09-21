@@ -197,15 +197,6 @@ export default async function DashboardPage() {
           breakdown={breakdown}
           todaySubmission={{ submitted: todaySubmitted, total: todayEligible }}
           memberCount={data.members.length}
-          reports={reports.items.map((item) => ({
-            id: item.id,
-            author: item.author,
-            type: item.type,
-            date: item.date,
-            weekStart: item.weekStart,
-            summary: item.summary,
-            status: item.status,
-          }))}
         />
       </WorkspaceShell>
     );

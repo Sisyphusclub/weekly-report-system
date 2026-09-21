@@ -77,6 +77,8 @@ export type DashboardBreakdown = {
   }>;
   blockerItems: Array<{
     id: string;
+    reporterId: string;
+    coordinatorId: string | null;
     projectName: string;
     description: string;
     severity: "NORMAL" | "IMPORTANT" | "URGENT";
@@ -255,20 +257,24 @@ export async function getDashboardBreakdown(
       todayCompleted: todayWorks.filter((entry) => entry.status === "DONE")
         .length,
       todaySubmitted: Boolean(todayReport),
-      todayPlanItems: todayPlans.map(({ content, status, category, projectId, deliverables }) => ({
-        content,
-        status,
-        category,
-        projectId,
-        deliverables,
-      })),
-      todayActualItems: todayWorks.map(({ content, status, category, projectId, deliverables }) => ({
-        content,
-        status,
-        category,
-        projectId,
-        deliverables,
-      })),
+      todayPlanItems: todayPlans.map(
+        ({ content, status, category, projectId, deliverables }) => ({
+          content,
+          status,
+          category,
+          projectId,
+          deliverables,
+        }),
+      ),
+      todayActualItems: todayWorks.map(
+        ({ content, status, category, projectId, deliverables }) => ({
+          content,
+          status,
+          category,
+          projectId,
+          deliverables,
+        }),
+      ),
     };
   });
   const trendDates = range ? dateRange(start, end) : dates;
@@ -349,6 +355,8 @@ export async function getDashboardBreakdown(
     })
     .map((item) => ({
       id: item.id,
+      reporterId: item.reporterId,
+      coordinatorId: item.coordinatorId,
       projectName: item.projectId
         ? (projectNames.get(item.projectId) ?? "未关联项目")
         : "未关联项目",
