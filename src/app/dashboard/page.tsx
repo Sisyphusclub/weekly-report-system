@@ -202,6 +202,7 @@ export default async function DashboardPage() {
           metrics={metrics}
           breakdown={breakdown}
           todaySubmission={{ submitted: todaySubmitted, total: todayEligible }}
+          memberCount={data.members.length}
           reports={reports.items.map((item) => ({
             id: item.id,
             author: item.author,

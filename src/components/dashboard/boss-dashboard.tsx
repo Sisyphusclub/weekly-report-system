@@ -37,11 +37,13 @@ export function BossDashboard({
   metrics,
   breakdown,
   todaySubmission,
+  memberCount,
   reports,
 }: {
   metrics: DashboardMetrics;
   breakdown: DashboardBreakdown;
   todaySubmission: { submitted: number; total: number };
+  memberCount: number;
   reports: RecentReport[];
 }) {
   const totalPlans = breakdown.planFulfillment.due;
@@ -54,7 +56,7 @@ export function BossDashboard({
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
       <OverviewTotals
         items={[
-          { label: "总人数", value: todaySubmission.total, tone: "neutral" },
+          { label: "总人数", value: memberCount, tone: "neutral" },
           { label: "工作项", value: metrics.totalTasks, tone: "neutral" },
           { label: "已完成", value: metrics.completedTasks, tone: "success" },
           { label: "待跟进", value: followUp, tone: "warning" },
