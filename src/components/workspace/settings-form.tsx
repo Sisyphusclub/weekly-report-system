@@ -2,8 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "@/components/premium/forms";
-import { Textarea } from "@/components/premium/forms";
+import { FormStatus, Input, Textarea, type FormStatusTone } from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 
 export function SettingsForm({
@@ -17,6 +16,7 @@ export function SettingsForm({
   const busy = useRef(false);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<FormStatusTone>("neutral");
   const [blocked, setBlocked] = useState(false);
   const [currentVersion, setCurrentVersion] = useState(version);
   async function save(event: React.FormEvent<HTMLFormElement>) {
@@ -26,6 +26,7 @@ export function SettingsForm({
     busy.current = true;
     setPending(true);
     setMessage("");
+    setMessageTone("neutral");
     try {
       const response = await fetch("/api/admin/settings", {
         method: "PATCH",
@@ -35,15 +36,18 @@ export function SettingsForm({
       const result = await response.json();
       if (!response.ok) {
         setMessage(result.error ?? "保存失败，请稍后重试");
+        setMessageTone("error");
         if (response.status === 409 || response.status >= 500) setBlocked(true);
         return;
       }
       setCurrentVersion(result.version);
       setMessage("设置已保存");
+      setMessageTone("success");
       router.refresh();
     } catch {
       setBlocked(true);
       setMessage("未能确认保存结果，请保留内容并刷新核对");
+      setMessageTone("error");
     } finally {
       busy.current = false;
       setPending(false);
@@ -52,7 +56,7 @@ export function SettingsForm({
   return (
     <form
       onSubmit={save}
-      className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
+      className="flex flex-col gap-4 rounded-xl border border-border p-6"
     >
       <h2 className="text-xl font-medium leading-7">组织信息</h2>
       <Input
@@ -87,9 +91,7 @@ export function SettingsForm({
         )}
       </div>
       {message && (
-        <p role="status" className="text-sm font-normal leading-5 text-slate-500">
-          {message}
-        </p>
+        <FormStatus tone={messageTone}>{message}</FormStatus>
       )}
     </form>
   );

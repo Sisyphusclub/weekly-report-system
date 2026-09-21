@@ -47,9 +47,9 @@ export interface AnimatedBadgeProps extends Omit<
 const STATUS_CLASS: Record<AnimatedBadgeStatus, string> = {
   neutral: "border-border bg-card text-muted-foreground",
   info: "border-primary/30 bg-primary/10 text-primary",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  warning: "border-amber-200 bg-amber-50 text-amber-700",
-  danger: "border-rose-200 bg-rose-50 text-rose-700",
+  success: "border-success-border bg-success-subtle text-success",
+  warning: "border-warning-border bg-warning-subtle text-warning",
+  danger: "border-danger-border bg-danger-subtle text-destructive",
   loading: "border-primary/30 bg-primary/10 text-primary",
 };
 
@@ -130,7 +130,7 @@ export function AnimatedBadge({
   children,
   icon,
   showIcon = true,
-  pulse = status === "loading",
+  pulse = false,
   contentKey,
   className,
   ...rest

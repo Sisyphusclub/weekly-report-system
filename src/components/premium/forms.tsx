@@ -49,6 +49,38 @@ export interface InputProps extends Omit<
   }>;
 }
 
+export type FormStatusTone = "neutral" | "success" | "error" | "warning";
+
+const FORM_STATUS_CLASS: Record<FormStatusTone, string> = {
+  neutral: "text-muted-foreground",
+  success: "text-success",
+  error: "text-destructive",
+  warning: "text-warning",
+};
+
+export function FormStatus({
+  children,
+  tone = "neutral",
+  role = "status",
+  className,
+}: {
+  children: ReactNode;
+  tone?: FormStatusTone;
+  role?: "status" | "alert";
+  className?: string;
+}) {
+  return (
+    <p
+      role={role}
+      aria-live={role === "alert" ? "assertive" : "polite"}
+      aria-atomic="true"
+      className={cn("text-sm leading-5", FORM_STATUS_CLASS[tone], className)}
+    >
+      {children}
+    </p>
+  );
+}
+
 export interface DatePickerProps {
   label?: ReactNode;
   value?: string;

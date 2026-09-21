@@ -2,8 +2,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { shanghaiDate } from "@/lib/daily-input";
-import { DatePicker, Textarea } from "@/components/premium/forms";
-import { Select, SelectItem } from "@/components/premium/forms";
+import {
+  DatePicker,
+  FormStatus,
+  Select,
+  SelectItem,
+  Textarea,
+  type FormStatusTone,
+} from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 export function TaskForm({
   projects,
@@ -46,12 +52,14 @@ export function TaskForm({
   const [dueDate, setDueDate] = useState(initial?.dueDate ?? "");
   const [workDate, setWorkDate] = useState(initial?.workDate ?? shanghaiDate());
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<FormStatusTone>("neutral");
   const [pending, setPending] = useState(false);
   async function submit(event: React.FormEvent) {
     event.preventDefault();
     if (pending) return;
     setPending(true);
     setMessage("");
+    setMessageTone("neutral");
     try {
       const response = await fetch("/api/tasks", {
         method: "POST",
@@ -72,7 +80,8 @@ export function TaskForm({
       });
       const result = await response.json();
       if (!response.ok) {
-        setMessage(result.error ?? "创建任务失败");
+        setMessage(result.error ?? (initial ? "更新任务失败" : "创建任务失败"));
+        setMessageTone("error");
         return;
       }
       if (!initial) {
@@ -80,9 +89,11 @@ export function TaskForm({
         setDueDate("");
       }
       setMessage(initial ? "任务已更新" : "任务已创建");
+      setMessageTone("success");
       router.refresh();
     } catch {
-      setMessage("创建失败，请稍后重试");
+      setMessage(initial ? "未能保存任务，请稍后重试" : "未能创建任务，请稍后重试");
+      setMessageTone("error");
     } finally {
       setPending(false);
     }
@@ -90,11 +101,15 @@ export function TaskForm({
   return (
     <form
       onSubmit={submit}
-      className="flex flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
+      className="flex flex-col gap-4 rounded-xl border border-border p-6"
     >
-      <h2 className="text-xl font-medium leading-7">创建任务</h2>
+      <h2 className="text-xl font-medium leading-7">
+        {initial ? "编辑任务" : "创建任务"}
+      </h2>
       {(!projects.length || !categories.length) && (
-        <p role="status">暂无可用项目或分类，请联系管理员配置后创建任务。</p>
+        <FormStatus tone="warning">
+          暂无可用项目或分类，请联系管理员配置后再创建任务。
+        </FormStatus>
       )}
       <Textarea
         label="任务内容"
@@ -182,9 +197,9 @@ export function TaskForm({
         />
       </div>
       <Button type="submit" disabled={pending || !projectId || !categoryId}>
-        {pending ? "正在创建" : "创建任务"}
+        {pending ? (initial ? "正在保存" : "正在创建") : initial ? "保存修改" : "创建任务"}
       </Button>
-      {message && <p role="status">{message}</p>}
+      {message && <FormStatus tone={messageTone}>{message}</FormStatus>}
     </form>
   );
 }

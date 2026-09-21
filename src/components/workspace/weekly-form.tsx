@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Textarea } from "@/components/premium/forms";
+import { FormStatus, Textarea, type FormStatusTone } from "@/components/premium/forms";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 export function WeeklyForm({
   date,
@@ -20,11 +20,13 @@ export function WeeklyForm({
   const [reportId, setReportId] = useState(initialReportId);
   const [currentVersion, setVersion] = useState(version);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<FormStatusTone>("neutral");
   const [pending, setPending] = useState(false);
   async function save(submit: boolean) {
     if (pending || submitted) return;
     setPending(true);
     setMessage("");
+    setMessageTone("neutral");
     try {
       const response = await fetch("/api/reports/weekly", {
         method: "POST",
@@ -38,15 +40,18 @@ export function WeeklyForm({
       });
       const result = await response.json();
       if (!response.ok) {
-        setMessage(result.error);
+        setMessage(result.error ?? "保存周报失败，请稍后重试");
+        setMessageTone("error");
         return;
       }
       setVersion(result.version);
       setSubmitted(result.status === "SUBMITTED");
       setReportId(result.id);
       setMessage(submit ? "周报已提交" : "周报草稿已保存");
+      setMessageTone("success");
     } catch {
       setMessage("未能确认保存结果，内容已保留，请刷新核对后重试");
+      setMessageTone("error");
     } finally {
       setPending(false);
     }
@@ -57,7 +62,7 @@ export function WeeklyForm({
         e.preventDefault();
         void save(false);
       }}
-      className="flex max-w-3xl flex-col gap-4 rounded-xl border border-slate-200/80 p-6"
+      className="flex max-w-3xl flex-col gap-4 rounded-xl border border-border p-6"
     >
       <p className="text-base font-medium leading-6">
         {date} 周 · {submitted ? "已提交" : "草稿"}
@@ -94,7 +99,7 @@ export function WeeklyForm({
           </ButtonLink>
         )}
       </div>
-      {message && <p role="status">{message}</p>}
+      {message && <FormStatus tone={messageTone}>{message}</FormStatus>}
     </form>
   );
 }
