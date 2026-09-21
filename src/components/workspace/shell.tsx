@@ -109,7 +109,7 @@ export function WorkspaceShell({
     }));
 
   return (
-    <div className="min-h-svh bg-slate-50 text-slate-700">
+    <div className="min-h-svh bg-background text-foreground">
       <a
         href="#main-content"
         className="sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[60] focus:not-sr-only focus:rounded-xl focus:bg-background focus:px-4 focus:py-2 focus:text-sm focus:shadow-lg focus:ring-2 focus:ring-ring"
@@ -218,7 +218,7 @@ export function WorkspaceShell({
           <AnimatedSidebarRail />
         </AnimatedSidebar>
 
-        <AnimatedSidebarInset className="bg-slate-50">
+        <AnimatedSidebarInset className="bg-background">
           <header className="sticky top-0 z-30 flex min-h-16 shrink-0 items-center justify-between gap-4 border-b border-border bg-card/90 px-4 backdrop-blur-xl sm:px-6 xl:px-8">
             <div className="flex min-w-0 items-center gap-3">
               <AnimatedSidebarTrigger className="-ml-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
@@ -236,7 +236,7 @@ export function WorkspaceShell({
             </div>
             <div className="flex shrink-0 items-center gap-2">
               <div className="hidden items-center gap-2 rounded-full border border-border bg-muted/60 px-3 py-1.5 sm:flex">
-                <span className="size-2 rounded-full bg-emerald-600" />
+                <span className="size-2 rounded-full bg-success" />
                 <span className="text-xs text-muted-foreground">系统正常</span>
               </div>
               <div className="hidden px-2 text-xs text-muted-foreground md:block">

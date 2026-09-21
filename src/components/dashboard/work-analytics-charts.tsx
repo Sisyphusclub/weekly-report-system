@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  Label,
   LabelList,
   Pie,
   PieChart,
@@ -42,94 +43,179 @@ const chartColors = [
 export function WorkAnalyticsCharts({
   categories,
   deliverables,
+  embedded = false,
 }: {
   categories: readonly CategoryDatum[];
   deliverables: readonly DeliverableDatum[];
+  embedded?: boolean;
 }) {
+  if (embedded) {
+    return (
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="py-3.5">
+          <h2 className="text-sm font-semibold text-foreground">
+            投入与交付分析
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            本周工作分类占比与核心产出量
+          </p>
+        </CardHeader>
+        <CardBody className="divide-y divide-border p-0">
+          <ChartSection
+            title="工作分类与精力投入"
+            description="按实际工作条目统计"
+          >
+            <CategoryDonut data={categories} compact />
+          </ChartSection>
+          <ChartSection
+            title="核心交付物量化统计"
+            description="按产出数量降序排列"
+          >
+            <DeliverableBars data={deliverables} compact />
+          </ChartSection>
+        </CardBody>
+      </Card>
+    );
+  }
+
   return (
     <section className="grid gap-5 xl:grid-cols-2" aria-label="工作分析图表">
-      <CategoryDonut data={categories} />
-      <DeliverableBars data={deliverables} />
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="py-3.5">
+          <h2 className="text-sm font-semibold text-foreground">
+            工作分类与精力投入
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            按本周已提交日报中的实际工作条目统计
+          </p>
+        </CardHeader>
+        <CardBody className="p-4">
+          <CategoryDonut data={categories} />
+        </CardBody>
+      </Card>
+      <Card className="min-w-0 overflow-hidden">
+        <CardHeader className="py-3.5">
+          <h2 className="text-sm font-semibold text-foreground">
+            核心交付物量化统计
+          </h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            从日报产出物中提取数量并按类型汇总
+          </p>
+        </CardHeader>
+        <CardBody className="p-4">
+          <DeliverableBars data={deliverables} />
+        </CardBody>
+      </Card>
     </section>
   );
 }
 
-function CategoryDonut({ data: source }: { data: readonly CategoryDatum[] }) {
-  const data = source.filter((item) => item.value > 0).map((item, index) => ({
-    ...item,
-    key: `category_${index}`,
-    fill: chartColors[index % chartColors.length],
-  }));
+function ChartSection({
+  title,
+  description,
+  children,
+}: {
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="px-4 py-3.5">
+      <div className="mb-2.5 flex items-baseline justify-between gap-3">
+        <h3 className="text-xs font-semibold text-foreground">{title}</h3>
+        <p className="text-xs text-muted-foreground">{description}</p>
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function CategoryDonut({
+  data: source,
+  compact = false,
+}: {
+  data: readonly CategoryDatum[];
+  compact?: boolean;
+}) {
+  const data = source
+    .filter((item) => item.value > 0)
+    .slice(0, 5)
+    .map((item, index) => ({
+      ...item,
+      key: `category_${index}`,
+      fill: chartColors[index % chartColors.length],
+    }));
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const config: ChartConfig = Object.fromEntries(
     data.map((item) => [
       item.key,
-      { label: item.label, color: item.fill },
+      {
+        label: `${item.label} ${Math.round((item.value / total) * 100)}%`,
+        color: item.fill,
+      },
     ]),
   );
 
+  if (!data.length) {
+    return (
+      <ChartEmptyState text="本周暂无已提交的实际工作" compact={compact} />
+    );
+  }
+
   return (
-    <Card className="min-w-0 overflow-hidden">
-      <CardHeader className="py-3.5">
-        <h2 className="text-sm font-semibold text-foreground">工作分类与精力投入</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          按本周已提交日报中的实际工作条目统计
-        </p>
-      </CardHeader>
-      <CardBody className="p-4">
-        {data.length ? (
-          <div className="relative">
-            <ChartContainer
-              config={config}
-              className="h-[250px] w-full"
-              aria-label="工作分类占比环形图"
-            >
-              <PieChart>
-                <ChartTooltip
-                  content={<ChartTooltipContent nameKey="key" hideLabel />}
-                />
-                <Pie
-                  data={data}
-                  dataKey="value"
-                  nameKey="key"
-                  innerRadius="58%"
-                  outerRadius="78%"
-                  paddingAngle={2}
-                  stroke="var(--card)"
-                  strokeWidth={2}
-                >
-                  {data.map((item) => (
-                    <Cell key={item.key} fill={`var(--color-${item.key})`} />
-                  ))}
-                </Pie>
-                <ChartLegend
-                  verticalAlign="bottom"
-                  content={
-                    <ChartLegendContent
-                      nameKey="key"
-                      className="!grid !grid-cols-2 !gap-x-4 !gap-y-2 !pt-1 text-xs"
-                    />
-                  }
-                />
-              </PieChart>
-            </ChartContainer>
-            <div className="pointer-events-none absolute inset-x-0 top-[76px] text-center">
-              <p className="text-2xl font-semibold tabular-nums text-foreground">{total}</p>
-              <p className="mt-0.5 text-xs text-muted-foreground">工作项</p>
-            </div>
-          </div>
-        ) : (
-          <ChartEmptyState text="本周暂无已提交的实际工作" />
-        )}
-      </CardBody>
-    </Card>
+    <ChartContainer
+      config={config}
+      className={compact ? "h-[180px] w-full" : "h-[280px] w-full"}
+      aria-label="工作分类占比环形图"
+    >
+      <PieChart>
+        <ChartTooltip
+          content={<ChartTooltipContent nameKey="key" hideLabel />}
+        />
+        <Pie
+          data={data}
+          dataKey="value"
+          nameKey="key"
+          innerRadius={40}
+          outerRadius={58}
+          paddingAngle={2}
+          stroke="var(--card)"
+          strokeWidth={2}
+          isAnimationActive={false}
+        >
+          {data.map((item) => (
+            <Cell key={item.key} fill={`var(--color-${item.key})`} />
+          ))}
+          <Label
+            position="center"
+            value={`${total} 工作项`}
+            className="fill-foreground text-sm font-semibold"
+          />
+        </Pie>
+        <ChartLegend
+          verticalAlign="bottom"
+          content={
+            <ChartLegendContent
+              nameKey="key"
+              className="!grid !grid-cols-2 !items-start !justify-start !gap-x-3 !gap-y-1.5 !pt-1 text-xs sm:!grid-cols-3"
+            />
+          }
+        />
+      </PieChart>
+    </ChartContainer>
   );
 }
 
-function DeliverableBars({ data: source }: { data: readonly DeliverableDatum[] }) {
+function DeliverableBars({
+  data: source,
+  compact = false,
+}: {
+  data: readonly DeliverableDatum[];
+  compact?: boolean;
+}) {
   const data = [...source]
     .sort((a, b) => b.value - a.value)
-    .slice(0, 10)
+    .slice(0, compact ? 6 : 10)
     .map((item) => ({
       ...item,
       displayValue: `${item.value} ${item.unit || "项"}`,
@@ -141,58 +227,76 @@ function DeliverableBars({ data: source }: { data: readonly DeliverableDatum[] }
     },
   };
 
+  if (!data.length) {
+    return (
+      <ChartEmptyState text="本周日报暂未登记量化产出" compact={compact} />
+    );
+  }
+
   return (
-    <Card className="min-w-0 overflow-hidden">
-      <CardHeader className="py-3.5">
-        <h2 className="text-sm font-semibold text-foreground">核心交付物量化统计</h2>
-        <p className="mt-1 text-xs text-muted-foreground">
-          从日报产出物中提取数量并按类型汇总
-        </p>
-      </CardHeader>
-      <CardBody className="p-4">
-        {data.length ? (
-          <ChartContainer config={config} className="h-[250px] w-full" aria-label="核心交付物数量横向排行榜">
-            <BarChart
-              accessibilityLayer
-              data={data}
-              layout="vertical"
-              margin={{ left: 2, right: 48, top: 4, bottom: 4 }}
-            >
-              <CartesianGrid horizontal={false} stroke="var(--be-chart-grid)" strokeDasharray="3 3" />
-              <XAxis dataKey="value" type="number" hide />
-              <YAxis
-                dataKey="label"
-                type="category"
-                tickLine={false}
-                axisLine={false}
-                width={72}
-                tick={{ fill: "var(--be-text-regular)", fontSize: 12 }}
-              />
-              <ChartTooltip
-                cursor={false}
-                content={<ChartTooltipContent hideLabel />}
-              />
-              <Bar dataKey="value" fill="var(--color-value)" radius={4} barSize={14}>
-                <LabelList
-                  dataKey="displayValue"
-                  position="right"
-                  offset={8}
-                  className="fill-slate-700 text-xs font-medium"
-                />
-              </Bar>
-            </BarChart>
-          </ChartContainer>
-        ) : (
-          <ChartEmptyState text="本周日报暂未登记量化产出" />
-        )}
-      </CardBody>
-    </Card>
+    <ChartContainer
+      config={config}
+      className={compact ? "h-[180px] w-full" : "h-[280px] w-full"}
+      aria-label="核心交付物数量横向排行榜"
+    >
+      <BarChart
+        accessibilityLayer
+        data={data}
+        layout="vertical"
+        margin={{ left: 2, right: 52, top: 4, bottom: 4 }}
+      >
+        <CartesianGrid
+          horizontal={false}
+          stroke="var(--be-chart-grid)"
+          strokeDasharray="3 3"
+        />
+        <XAxis dataKey="value" type="number" hide />
+        <YAxis
+          dataKey="label"
+          type="category"
+          tickLine={false}
+          axisLine={false}
+          width={72}
+          tick={{ fill: "var(--be-text-regular)", fontSize: 12 }}
+        />
+        <ChartTooltip
+          cursor={false}
+          content={<ChartTooltipContent hideLabel />}
+        />
+        <Bar
+          dataKey="value"
+          fill="var(--color-value)"
+          radius={4}
+          barSize={14}
+          isAnimationActive={false}
+        >
+          <LabelList
+            dataKey="displayValue"
+            position="right"
+            offset={8}
+            className="fill-foreground text-xs font-medium"
+          />
+        </Bar>
+      </BarChart>
+    </ChartContainer>
   );
 }
 
-function ChartEmptyState({ text }: { text: string }) {
+function ChartEmptyState({
+  text,
+  compact = false,
+}: {
+  text: string;
+  compact?: boolean;
+}) {
   return (
-    <div className="grid min-h-[250px] place-items-center rounded-lg border border-dashed border-border bg-muted/30 px-4 text-center text-sm text-muted-foreground">
+    <div
+      className={
+        compact
+          ? "grid min-h-[180px] place-items-center border border-dashed border-border bg-muted/30 px-4 text-center text-sm text-muted-foreground"
+          : "grid min-h-[280px] place-items-center border border-dashed border-border bg-muted/30 px-4 text-center text-sm text-muted-foreground"
+      }
+    >
       {text}
     </div>
   );

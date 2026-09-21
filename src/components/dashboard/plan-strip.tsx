@@ -40,25 +40,22 @@ export function PlanStrip({ children }: { children: React.ReactNode }) {
         <Button
           variant="secondary"
           iconOnly
+          leadingIcon={RiArrowLeftSLine}
           aria-label="向左查看更多"
           onClick={() => move(-1)}
           className="absolute left-2 top-1/2 size-8 -translate-y-1/2 rounded-full p-0 shadow-md"
-        >
-          <RiArrowLeftSLine className="size-4" aria-hidden />
-        </Button>
+        ></Button>
       )}
       {canRight && (
         <Button
           variant="secondary"
           iconOnly
+          leadingIcon={RiArrowRightSLine}
           aria-label="向右查看更多"
           onClick={() => move(1)}
           className="absolute right-2 top-1/2 size-8 -translate-y-1/2 rounded-full p-0 shadow-md"
-        >
-          <RiArrowRightSLine className="size-4" aria-hidden />
-        </Button>
+        ></Button>
       )}
     </div>
   );
 }
-

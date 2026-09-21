@@ -94,9 +94,17 @@
   --color-primary-foreground: #ffffff;
   --color-destructive: var(--be-danger-text);
   --color-destructive-foreground: #ffffff;
+  --color-danger-subtle: var(--be-danger-bg);
+  --color-danger-border: var(--be-danger-border);
   --color-success: var(--be-success-text);
+  --color-success-subtle: var(--be-success-bg);
+  --color-success-border: var(--be-success-border);
   --color-warning: var(--be-warning-text);
+  --color-warning-subtle: var(--be-warning-bg);
+  --color-warning-border: var(--be-warning-border);
   --color-info: var(--be-info-text);
+  --color-info-subtle: var(--be-info-bg);
+  --color-info-border: var(--be-info-border);
   --color-chart-1: var(--be-chart-1);
   --color-chart-2: var(--be-chart-2);
   --color-chart-3: var(--be-chart-3);

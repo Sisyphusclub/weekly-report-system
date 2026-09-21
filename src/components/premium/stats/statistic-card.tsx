@@ -27,7 +27,7 @@ export function Statistic({
       <dt
         className={cx(
           "text-xs text-muted-foreground",
-          tone === "danger" && "text-rose-700",
+          tone === "danger" && "text-destructive",
         )}
       >
         {label}
@@ -35,7 +35,7 @@ export function Statistic({
       <dd
         className={cx(
           "mt-1 text-2xl font-bold tabular-nums text-foreground",
-          tone === "danger" && "text-rose-700",
+          tone === "danger" && "text-destructive",
         )}
       >
         {value}
@@ -81,7 +81,8 @@ export function StatisticCard({
     <Card
       className={cx(
         "h-full min-h-24",
-        tone === "danger" && "border-rose-200 bg-rose-50/70 text-rose-700",
+        tone === "danger" &&
+          "border-danger-border bg-danger-subtle text-destructive",
         className,
       )}
     >
@@ -89,11 +90,11 @@ export function StatisticCard({
         <span
           className={cx(
             "grid size-10 shrink-0 place-items-center rounded-lg border border-transparent bg-muted text-muted-foreground",
-            tone === "info" && "border-blue-200 bg-blue-50 text-blue-700",
+            tone === "info" && "border-info-border bg-info-subtle text-info",
             tone === "success" &&
-              "border-emerald-200 bg-emerald-50 text-emerald-700",
+              "border-success-border bg-success-subtle text-success",
             tone === "danger" &&
-              "border-rose-700 bg-rose-700 text-white shadow-sm",
+              "border-destructive bg-destructive text-destructive-foreground shadow-sm",
           )}
         >
           <Icon className="size-5" aria-hidden />

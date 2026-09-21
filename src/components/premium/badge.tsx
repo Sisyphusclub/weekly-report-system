@@ -1,16 +1,14 @@
 "use client";
 
 import type { ComponentProps, ReactNode } from "react";
-import { AnimatedBadge, type AnimatedBadgeStatus } from "@/components/motion/animated-badge";
+import {
+  AnimatedBadge,
+  type AnimatedBadgeStatus,
+} from "@/components/motion/animated-badge";
 import { cx } from "@/utils/cx";
 
 export type BadgeTone =
-  | "neutral"
-  | "info"
-  | "success"
-  | "warning"
-  | "danger"
-  | "processing";
+  "neutral" | "info" | "success" | "warning" | "danger" | "processing";
 
 const statusByTone: Record<BadgeTone, AnimatedBadgeStatus> = {
   neutral: "neutral",
@@ -22,12 +20,12 @@ const statusByTone: Record<BadgeTone, AnimatedBadgeStatus> = {
 };
 
 const toneClass: Record<BadgeTone, string> = {
-  neutral: "border-slate-200 bg-slate-100 text-slate-700",
-  info: "border-blue-200 bg-blue-50 text-blue-700",
-  success: "border-emerald-200 bg-emerald-50 text-emerald-700",
-  warning: "border-amber-200 bg-amber-50 text-amber-700",
-  danger: "border-rose-200 bg-rose-50 text-rose-700",
-  processing: "border-blue-200 bg-blue-50 text-blue-700",
+  neutral: "border-border bg-muted text-foreground",
+  info: "border-info-border bg-info-subtle text-info",
+  success: "border-success-border bg-success-subtle text-success",
+  warning: "border-warning-border bg-warning-subtle text-warning",
+  danger: "border-danger-border bg-danger-subtle text-destructive",
+  processing: "border-info-border bg-info-subtle text-info",
 };
 
 export interface BadgeProps extends Omit<

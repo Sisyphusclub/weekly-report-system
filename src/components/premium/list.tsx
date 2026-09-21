@@ -57,10 +57,10 @@ export function ListItem({ index, title, trailing, footer }: ListItemProps) {
   return (
     <article className="min-w-0">
       <div className="grid min-w-0 grid-cols-[24px_minmax(0,1fr)_auto] items-start gap-x-2.5">
-        <p className="pt-0.5 text-xs font-semibold tabular-nums text-slate-500">
+        <p className="pt-0.5 text-xs font-semibold tabular-nums text-muted-foreground">
           {index}
         </p>
-        <h4 className="min-w-0 text-sm font-medium leading-5 text-slate-800">
+        <h4 className="min-w-0 text-sm font-medium leading-5 text-foreground">
           {title}
         </h4>
         {trailing}

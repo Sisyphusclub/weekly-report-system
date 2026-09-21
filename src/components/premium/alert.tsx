@@ -6,10 +6,9 @@ type AlertType = "info" | "success" | "warning" | "error";
 
 const typeClass: Record<AlertType, string> = {
   info: "border-primary/25 bg-primary/5 text-primary",
-  success:
-    "border-emerald-200 bg-emerald-50/70 text-emerald-700",
-  warning: "border-amber-200 bg-amber-50/70 text-amber-700",
-  error: "border-rose-200 bg-rose-50/70 text-rose-700",
+  success: "border-success-border bg-success-subtle text-success",
+  warning: "border-warning-border bg-warning-subtle text-warning",
+  error: "border-danger-border bg-danger-subtle text-destructive",
 };
 
 const iconByType = {
@@ -21,9 +20,9 @@ const iconByType = {
 
 const iconClass: Record<AlertType, string> = {
   info: "bg-primary text-primary-foreground",
-  success: "bg-emerald-700 text-white",
-  warning: "bg-amber-700 text-white",
-  error: "bg-rose-700 text-white",
+  success: "bg-success text-card",
+  warning: "bg-warning text-card",
+  error: "bg-destructive text-destructive-foreground",
 };
 
 export interface AlertProps extends Omit<ComponentProps<"aside">, "title"> {
