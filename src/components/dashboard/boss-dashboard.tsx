@@ -12,6 +12,7 @@ import {
   Users,
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 import { Alert } from "@/components/premium/alert";
 import { Avatar } from "@/components/premium/avatar";
 import { Badge, Tag } from "@/components/premium/badge";
@@ -25,9 +26,11 @@ import {
   TabsTrigger,
 } from "@/components/motion/tabs";
 import { WorkAnalyticsCharts } from "@/components/dashboard/work-analytics-charts";
+import { PlanStrip } from "@/components/dashboard/plan-strip";
 import { Button } from "@/components/motion/button/base";
 import { ProgressCircle } from "@/components/premium/stats/progress-circle";
 import { StatisticCard } from "@/components/premium/stats/statistic-card";
+import { DatePicker, Select, SelectItem } from "@/components/premium/forms";
 import type { DashboardBreakdown, DashboardMetrics } from "@/lib/metrics";
 import { cx } from "@/utils/cx";
 
@@ -39,12 +42,19 @@ export function BossDashboard({
   breakdown,
   todaySubmission,
   memberCount,
+  selectedDate,
+  selectedProjectId,
+  availableProjects,
 }: {
   metrics: DashboardMetrics;
   breakdown: DashboardBreakdown;
   todaySubmission: { submitted: number; total: number };
   memberCount: number;
+  selectedDate: string;
+  selectedProjectId?: string;
+  availableProjects: Array<{ id: string; name: string }>;
 }) {
+  const router = useRouter();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const projectNames = new Map(
@@ -65,16 +75,34 @@ export function BossDashboard({
 
   return (
     <div className="mx-auto w-full max-w-7xl">
-      <Tabs defaultValue="overview" variant="underline" size="large">
+      <DashboardFilters
+        selectedDate={selectedDate}
+        selectedProject={selectedProjectId}
+        availableProjects={availableProjects}
+        onDateChange={(date) => {
+          const params = new URLSearchParams(window.location.search);
+          if (date) params.set("date", date);
+          else params.delete("date");
+          router.push(`/dashboard?${params.toString()}`);
+        }}
+        onProjectChange={(projectId) => {
+          const params = new URLSearchParams(window.location.search);
+          if (projectId && projectId !== "ALL")
+            params.set("project", projectId);
+          else params.delete("project");
+          router.push(`/dashboard?${params.toString()}`);
+        }}
+      />
+      <Tabs defaultValue="daily" variant="underline" size="large">
         <div className="border-b border-border">
           <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="overview">
-              <ChartNoAxesCombined className="mr-2 size-4" aria-hidden />
-              数据与效能大盘
-            </TabsTrigger>
             <TabsTrigger value="daily">
               <ClipboardList className="mr-2 size-4" aria-hidden />
-              今日全员日报速览
+              全员日报
+            </TabsTrigger>
+            <TabsTrigger value="overview">
+              <ChartNoAxesCombined className="mr-2 size-4" aria-hidden />
+              项目与效能
             </TabsTrigger>
           </TabsList>
         </div>
@@ -197,6 +225,7 @@ export function BossDashboard({
 
               <WorkAnalyticsCharts
                 embedded
+                periodLabel="当日"
                 categories={breakdown.categoryBreakdown.map((item) => ({
                   id: item.name,
                   label: item.name,
@@ -221,7 +250,7 @@ export function BossDashboard({
                     </h2>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    默认展示需要跟进的成员，点击姓名查看今日计划与实际
+                    默认展示需要跟进的成员，点击姓名查看当日计划与实际
                   </p>
                 </div>
                 <Tag color="neutral" className="shrink-0">
@@ -285,11 +314,18 @@ export function BossDashboard({
         </TabsContent>
 
         <TabsContent value="daily">
+          <DailySummary
+            breakdown={breakdown}
+            todaySubmission={todaySubmission}
+            memberCount={memberCount}
+            selectedDate={selectedDate}
+          />
           <DailyOverviewGrid
             members={breakdown.members}
             blockerItems={breakdown.blockerItems}
             projectNames={projectNames}
             onOpenMember={setSelectedMember}
+            selectedDate={selectedDate}
           />
         </TabsContent>
       </Tabs>
@@ -298,7 +334,9 @@ export function BossDashboard({
         open={Boolean(selectedMember)}
         onClose={() => setSelectedMember(null)}
         title={
-          selectedMember ? `${selectedMember.name} · 今日明细` : "今日明细"
+          selectedMember
+            ? `${selectedMember.name} · ${selectedDate.replaceAll("-", ".")} 明细`
+            : "日报明细"
         }
         description="查看该成员的计划、实际工作和提交状态。"
         className="max-w-[480px]"
@@ -313,7 +351,7 @@ export function BossDashboard({
         onClose={() => setSelectedProject(null)}
         title={
           selectedProject
-            ? `${selectedProject.name} · 今日日报流水`
+            ? `${selectedProject.name} · 当日日报流水`
             : "项目日报流水"
         }
         description="查看关联该项目的全员计划与实际工作记录。"
@@ -330,23 +368,287 @@ export function BossDashboard({
   );
 }
 
+function DashboardFilters({
+  selectedDate,
+  selectedProject,
+  availableProjects,
+  onDateChange,
+  onProjectChange,
+}: {
+  selectedDate: string;
+  selectedProject?: string;
+  availableProjects: Array<{ id: string; name: string }>;
+  onDateChange: (value: string) => void;
+  onProjectChange: (value: string) => void;
+}) {
+  return (
+    <div className="mb-4 flex flex-wrap items-end gap-3">
+      <DatePicker
+        label="日报日期"
+        value={selectedDate}
+        onChange={onDateChange}
+        size="small"
+        className="w-[180px]"
+        aria-label="日报日期"
+      />
+      <div className="w-[220px]">
+        <label className="mb-1.5 block px-1 text-sm font-medium text-foreground">
+          项目
+        </label>
+        <Select
+          selectedKey={selectedProject ?? "ALL"}
+          onSelectionChange={onProjectChange}
+          aria-label="项目"
+          triggerClassName="min-h-9 rounded-lg"
+        >
+          <SelectItem id="ALL">全部项目</SelectItem>
+          {availableProjects.map((project) => (
+            <SelectItem
+              key={project.id}
+              id={project.id}
+              textValue={project.name}
+            >
+              {project.name}
+            </SelectItem>
+          ))}
+        </Select>
+      </div>
+    </div>
+  );
+}
+
+function DailySummary({
+  breakdown,
+  todaySubmission,
+  memberCount,
+  selectedDate,
+}: {
+  breakdown: DashboardBreakdown;
+  todaySubmission: { submitted: number; total: number };
+  memberCount: number;
+  selectedDate: string;
+}) {
+  const categoryMax = Math.max(
+    ...breakdown.categoryBreakdown.map((item) => item.value),
+    1,
+  );
+  const deliverableMax = Math.max(
+    ...breakdown.deliverableSummary.map((item) => item.quantity),
+    1,
+  );
+  const actualItems = breakdown.members.flatMap(
+    (member) => member.todayActualItems,
+  );
+  const completedActuals = actualItems.filter(
+    (item) => item.status === "DONE",
+  ).length;
+  const followUpActuals = actualItems.filter(
+    (item) => item.status !== "DONE",
+  ).length;
+  return (
+    <div className="mb-4 flex flex-col gap-4">
+      <section
+        className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-6"
+        aria-label="日报统计"
+      >
+        <StatisticCard
+          icon={Users}
+          label="部门人数"
+          value={memberCount}
+          suffix="人"
+          tone="neutral"
+        />
+        <StatisticCard
+          icon={ClipboardList}
+          label="工作项总数"
+          value={breakdown.members.reduce(
+            (sum, member) => sum + member.todayActualItems.length,
+            0,
+          )}
+          suffix="项"
+          tone="info"
+        />
+        <StatisticCard
+          icon={CalendarCheck2}
+          label="已完成"
+          value={completedActuals}
+          suffix="项"
+          tone="success"
+        />
+        <StatisticCard
+          icon={CircleAlert}
+          label="待跟进"
+          value={followUpActuals}
+          suffix="项"
+          tone="danger"
+        />
+        <StatisticCard
+          icon={Gauge}
+          label="工作计划"
+          value={breakdown.todayPlanFulfillment.due}
+          suffix="项"
+          tone="neutral"
+        />
+        <StatisticCard
+          icon={CalendarCheck2}
+          label="已提交"
+          value={todaySubmission.submitted}
+          suffix={`/ ${todaySubmission.total} 人`}
+          tone="success"
+        />
+      </section>
+
+      <Card>
+        <CardHeader className="flex items-start justify-between gap-3 py-3.5">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground">
+              当日工作计划
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {selectedDate.replaceAll("-", ".")} · 按成员查看计划状态
+            </p>
+          </div>
+          <Tag color="neutral">
+            {breakdown.todayPlanFulfillment.completed}/
+            {breakdown.todayPlanFulfillment.due} 已完成
+          </Tag>
+        </CardHeader>
+        <CardBody className="p-0">
+          <PlanStrip>
+            {breakdown.members.map((member) => (
+              <article
+                key={member.id}
+                className="w-[236px] shrink-0 rounded-xl border border-border bg-card p-3.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Avatar initials={member.name.slice(0, 1)} size="sm" />
+                    <span className="truncate text-sm font-semibold text-foreground">
+                      {member.name}
+                    </span>
+                  </div>
+                  <Badge color={member.todaySubmitted ? "success" : "warning"}>
+                    {member.todaySubmitted ? "已提交" : "未提交"}
+                  </Badge>
+                </div>
+                <div className="mt-3 space-y-2">
+                  {member.todayPlanItems.slice(0, 3).map((item, index) => (
+                    <div
+                      key={`${member.id}-plan-${index}`}
+                      className="flex items-start gap-2 text-xs text-muted-foreground"
+                    >
+                      <span
+                        className={cx(
+                          "mt-1 size-1.5 shrink-0 rounded-full",
+                          item.status === "DONE" ? "bg-success" : "bg-warning",
+                        )}
+                      />
+                      <span className="line-clamp-2">{item.content}</span>
+                    </div>
+                  ))}
+                  {!member.todayPlanItems.length ? (
+                    <p className="text-xs text-muted-foreground">暂无计划</p>
+                  ) : null}
+                </div>
+              </article>
+            ))}
+          </PlanStrip>
+        </CardBody>
+      </Card>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        <Card>
+          <CardHeader className="py-3.5">
+            <h2 className="text-sm font-semibold text-foreground">
+              工作类型分布
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              按实际工作条目统计
+            </p>
+          </CardHeader>
+          <CardBody className="space-y-3">
+            {breakdown.categoryBreakdown.length ? (
+              breakdown.categoryBreakdown.slice(0, 8).map((item) => (
+                <div key={item.name} className="flex items-center gap-3">
+                  <span className="w-16 shrink-0 truncate text-xs text-muted-foreground">
+                    {item.name}
+                  </span>
+                  <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary"
+                      style={{
+                        width: `${Math.round((item.value / categoryMax) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="w-8 text-right text-xs font-semibold tabular-nums text-foreground">
+                    {item.value}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <EmptyState text="暂无实际工作" />
+            )}
+          </CardBody>
+        </Card>
+        <Card>
+          <CardHeader className="py-3.5">
+            <h2 className="text-sm font-semibold text-foreground">
+              产出物统计
+            </h2>
+            <p className="mt-1 text-xs text-muted-foreground">
+              从日报产出字段汇总
+            </p>
+          </CardHeader>
+          <CardBody className="space-y-3">
+            {breakdown.deliverableSummary.length ? (
+              breakdown.deliverableSummary.slice(0, 8).map((item) => (
+                <div key={item.unitId} className="flex items-center gap-3">
+                  <span className="w-20 shrink-0 truncate text-xs text-muted-foreground">
+                    {item.label}
+                  </span>
+                  <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-info"
+                      style={{
+                        width: `${Math.round((item.quantity / deliverableMax) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  <span className="w-14 text-right text-xs font-semibold tabular-nums text-foreground">
+                    {item.quantity} {item.unit}
+                  </span>
+                </div>
+              ))
+            ) : (
+              <EmptyState text="暂无登记产出" />
+            )}
+          </CardBody>
+        </Card>
+      </div>
+    </div>
+  );
+}
+
 function DailyOverviewGrid({
   members,
   blockerItems,
   projectNames,
   onOpenMember,
+  selectedDate,
 }: {
   members: DashboardBreakdown["members"];
   blockerItems: DashboardBreakdown["blockerItems"];
   projectNames: Map<string, string>;
   onOpenMember: (member: Member) => void;
+  selectedDate: string;
 }) {
   if (!members.length) return <EmptyState text="暂无团队日报数据" />;
 
   return (
     <section
       className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
-      aria-label="今日全员日报速览"
+      aria-label={`${selectedDate} 全员日报速览`}
     >
       {members.map((member, index) => (
         <MemberDailyCard
@@ -420,7 +722,7 @@ function MemberDailyCard({
       <CardBody className="space-y-4 p-4">
         <section>
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 className="text-xs font-semibold text-foreground">今日计划</h3>
+            <h3 className="text-xs font-semibold text-foreground">当日计划</h3>
             <span className="text-xs tabular-nums text-muted-foreground">
               {member.todayPlanItems.length} 项
             </span>
@@ -433,7 +735,7 @@ function MemberDailyCard({
             className="space-y-0"
             itemClassName="rounded-none border-0 border-b border-border bg-transparent px-0 py-2 last:border-b-0"
             emptyState={
-              <p className="text-xs text-muted-foreground">今日暂无计划</p>
+              <p className="text-xs text-muted-foreground">当日暂无计划</p>
             }
             renderItem={(item, itemIndex) => (
               <ListItem
@@ -453,7 +755,7 @@ function MemberDailyCard({
         </section>
         <section className="border-t border-border pt-3">
           <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 className="text-xs font-semibold text-foreground">实际完成</h3>
+            <h3 className="text-xs font-semibold text-foreground">实际工作</h3>
             <span className="text-xs tabular-nums text-muted-foreground">
               {member.todayActualItems.length} 项
             </span>
@@ -466,7 +768,7 @@ function MemberDailyCard({
             className="space-y-0"
             itemClassName="rounded-none border-0 border-b border-border bg-transparent px-0 py-2.5 last:border-b-0"
             emptyState={
-              <p className="text-xs text-muted-foreground">今日暂无实际工作</p>
+              <p className="text-xs text-muted-foreground">当日暂无实际工作</p>
             }
             renderItem={(item, itemIndex) => (
               <ListItem
@@ -523,7 +825,7 @@ function ProjectReportDetail({
     .filter((record) => record.plans.length || record.actuals.length);
 
   if (!records.length) {
-    return <EmptyState text="今日暂无关联该项目的日报记录" />;
+    return <EmptyState text="当日暂无关联该项目的日报记录" />;
   }
 
   return (
@@ -543,10 +845,10 @@ function ProjectReportDetail({
             </div>
           </div>
           {plans.length ? (
-            <ProjectEntryGroup title="今日计划" items={plans} />
+            <ProjectEntryGroup title="当日计划" items={plans} />
           ) : null}
           {actuals.length ? (
-            <ProjectEntryGroup title="实际完成" items={actuals} actual />
+            <ProjectEntryGroup title="实际工作" items={actuals} actual />
           ) : null}
         </section>
       ))}
@@ -702,7 +1004,7 @@ function MemberDetail({
   return (
     <div className="space-y-5">
       <div className="grid grid-cols-3 divide-x divide-border rounded-lg border border-border bg-muted/50">
-        <SummaryCell label="今日计划" value={`${member.todayPlans} 项`} />
+        <SummaryCell label="当日计划" value={`${member.todayPlans} 项`} />
         <SummaryCell label="已完成" value={`${member.todayCompleted} 项`} />
         <SummaryCell
           label="提交状态"
@@ -710,7 +1012,7 @@ function MemberDetail({
         />
       </div>
       <section>
-        <h3 className="text-sm font-semibold text-foreground">今日计划</h3>
+        <h3 className="text-sm font-semibold text-foreground">当日计划</h3>
         <List
           dataSource={member.todayPlanItems}
           rowKey={(item, index) => `plan-${index}-${item.content}`}
@@ -741,7 +1043,7 @@ function MemberDetail({
         />
       </section>
       <section>
-        <h3 className="text-sm font-semibold text-foreground">今日实际完成</h3>
+        <h3 className="text-sm font-semibold text-foreground">当日实际工作</h3>
         <List
           dataSource={member.todayActualItems}
           rowKey={(item, index) => `actual-${index}-${item.content}`}

@@ -6,6 +6,9 @@ import { dailyEntriesSchema, shanghaiDate } from "@/lib/daily-input";
 import { weeklySubmissionMetrics } from "@/lib/submission-metrics";
 import { blockerVisibility } from "@/lib/blockers";
 import { getSubmissionData, type SubmissionData } from "@/lib/submission-data";
+import { summarizeDeliverables } from "@/lib/daily-dashboard";
+
+export { summarizeDeliverables } from "@/lib/daily-dashboard";
 
 export type DashboardMetrics = {
   totalTasks: number;
@@ -84,7 +87,11 @@ export type DashboardBreakdown = {
     severity: "NORMAL" | "IMPORTANT" | "URGENT";
   }>;
 };
-export type DashboardDateRange = { from: string; to: string };
+export type DashboardDateRange = {
+  from: string;
+  to: string;
+  projectId?: string;
+};
 
 export async function getDashboardBreakdown(
   actor: Actor,
@@ -95,6 +102,8 @@ export async function getDashboardBreakdown(
   const dates = range ? [range.from, range.to] : weekDates(shanghaiDate(now));
   const start = dates[0];
   const end = dates[dates.length - 1];
+  const focusDate = range?.from ?? shanghaiDate(now);
+  const isSingleDay = Boolean(range && range.from === range.to);
   const db = getDb();
   const data = submissionData ?? (await getSubmissionData(actor, now));
   const employeeProjectIds =
@@ -154,6 +163,7 @@ export async function getDashboardBreakdown(
         and(
           eq(project.organizationId, actor.organizationId),
           ne(project.status, "ARCHIVED"),
+          range?.projectId ? eq(project.id, range.projectId) : undefined,
           actor.role === "EMPLOYEE"
             ? resolvedEmployeeProjectIds?.length
               ? or(
@@ -172,8 +182,18 @@ export async function getDashboardBreakdown(
     return {
       ...item,
       reportDate: item.reportDate ?? start,
-      plans: plans.success ? plans.data : [],
-      works: works.success ? works.data : [],
+      plans: plans.success
+        ? plans.data.filter((entry) =>
+            range?.projectId ? entry.projectId === range.projectId : true,
+          )
+        : [],
+      works: works.success
+        ? works.data.filter(
+            (entry) =>
+              entry.status !== "CANCELED" &&
+              (range?.projectId ? entry.projectId === range.projectId : true),
+          )
+        : [],
     };
   });
   const planRows = structuredReports.flatMap((item) =>
@@ -231,62 +251,77 @@ export async function getDashboardBreakdown(
       : [],
   ]);
   const ownerById = new Map(owners.map((item) => [item.id, item]));
-  const today = shanghaiDate(now);
-  const memberRows = data.members.map((member) => {
-    const submissions = weeklySubmissionMetrics({ ...data, members: [member] });
-    const todayReport = structuredReports.find(
-      (item) => item.authorId === member.id && item.reportDate === today,
+  const scopedBlockers = blockers.filter(
+    (item) => !range?.projectId || item.projectId === range.projectId,
+  );
+  const memberRows = data.members
+    .map((member) => {
+      const submissions = weeklySubmissionMetrics({
+        ...data,
+        members: [member],
+      });
+      const todayReport = structuredReports.find(
+        (item) => item.authorId === member.id && item.reportDate === focusDate,
+      );
+      const todayPlans = todayReport?.plans ?? [];
+      const todayWorks = todayReport?.works ?? [];
+      return {
+        id: member.id,
+        name: member.name,
+        due: isSingleDay ? 1 : submissions.dueReports,
+        submitted: isSingleDay
+          ? todayReport
+            ? 1
+            : 0
+          : submissions.submittedReports,
+        openBlockers: scopedBlockers.filter(
+          (row) =>
+            row.status !== "RESOLVED" &&
+            (row.reporterId === member.id || row.coordinatorId === member.id),
+        ).length,
+        completed: workRows.filter(
+          (entry) => entry.authorId === member.id && entry.status === "DONE",
+        ).length,
+        todayPlans: todayPlans.length,
+        todayActuals: todayWorks.length,
+        todayCompleted: todayWorks.filter((entry) => entry.status === "DONE")
+          .length,
+        todaySubmitted: Boolean(todayReport),
+        todayPlanItems: todayPlans.map(
+          ({ content, status, category, projectId, deliverables }) => ({
+            content,
+            status,
+            category,
+            projectId,
+            deliverables,
+          }),
+        ),
+        todayActualItems: todayWorks.map(
+          ({ content, status, category, projectId, deliverables }) => ({
+            content,
+            status,
+            category,
+            projectId,
+            deliverables,
+          }),
+        ),
+      };
+    })
+    .filter(
+      (member) =>
+        !range?.projectId || member.todayPlans > 0 || member.todayActuals > 0,
     );
-    const todayPlans = todayReport?.plans ?? [];
-    const todayWorks = todayReport?.works ?? [];
-    return {
-      id: member.id,
-      name: member.name,
-      due: submissions.dueReports,
-      submitted: submissions.submittedReports,
-      openBlockers: blockers.filter(
-        (row) =>
-          row.status !== "RESOLVED" &&
-          (row.reporterId === member.id || row.coordinatorId === member.id),
-      ).length,
-      completed: workRows.filter(
-        (entry) => entry.authorId === member.id && entry.status === "DONE",
-      ).length,
-      todayPlans: todayPlans.length,
-      todayActuals: todayWorks.length,
-      todayCompleted: todayWorks.filter((entry) => entry.status === "DONE")
-        .length,
-      todaySubmitted: Boolean(todayReport),
-      todayPlanItems: todayPlans.map(
-        ({ content, status, category, projectId, deliverables }) => ({
-          content,
-          status,
-          category,
-          projectId,
-          deliverables,
-        }),
-      ),
-      todayActualItems: todayWorks.map(
-        ({ content, status, category, projectId, deliverables }) => ({
-          content,
-          status,
-          category,
-          projectId,
-          deliverables,
-        }),
-      ),
-    };
-  });
   const trendDates = range ? dateRange(start, end) : dates;
   const blockerTrend = trendDates.map((date) => ({
     date,
-    opened: blockers.filter((item) => shanghaiDate(item.createdAt) === date)
-      .length,
-    resolved: blockers.filter(
+    opened: scopedBlockers.filter(
+      (item) => shanghaiDate(item.createdAt) === date,
+    ).length,
+    resolved: scopedBlockers.filter(
       (item) => item.resolvedAt && shanghaiDate(item.resolvedAt) === date,
     ).length,
   }));
-  const resolutionDurations = blockers
+  const resolutionDurations = scopedBlockers
     .filter((item) => item.resolvedAt)
     .map(
       (item) =>
@@ -306,7 +341,9 @@ export async function getDashboardBreakdown(
   const completedPlans = planRows.filter(
     (plan) => plan.status === "DONE",
   ).length;
-  const todayDuePlans = planRows.filter((plan) => plan.reportDate === today);
+  const todayDuePlans = planRows.filter(
+    (plan) => plan.reportDate === focusDate,
+  );
   const todayCompletedPlans = todayDuePlans.filter(
     (plan) => plan.status === "DONE",
   ).length;
@@ -315,7 +352,7 @@ export async function getDashboardBreakdown(
       (entry) => entry.projectId === item.id,
     );
     const projectPlans = planRows.filter(
-      (entry) => entry.projectId === item.id && entry.reportDate === today,
+      (entry) => entry.projectId === item.id && entry.reportDate === focusDate,
     );
     return {
       id: item.id,
@@ -347,7 +384,7 @@ export async function getDashboardBreakdown(
   }, new Map<string, number>());
   const deliverableSummary = summarizeDeliverables(workRows);
   const projectNames = new Map(projectRows.map((item) => [item.id, item.name]));
-  const blockerItems = blockers
+  const blockerItems = scopedBlockers
     .filter((item) => item.status !== "RESOLVED")
     .sort((a, b) => {
       const rank = { URGENT: 0, IMPORTANT: 1, NORMAL: 2 } as const;
@@ -398,40 +435,6 @@ export async function getDashboardBreakdown(
     deliverableSummary,
     blockerItems,
   };
-}
-
-export function summarizeDeliverables(
-  entries: Array<{ deliverables: string[] }>,
-) {
-  const totals = new Map<
-    string,
-    {
-      unitId: string;
-      label: string;
-      unit: string;
-      unitName: string;
-      quantity: number;
-    }
-  >();
-  for (const raw of entries.flatMap((entry) => entry.deliverables)) {
-    const normalized = raw.trim().replace(/^产出[：:]\s*/, "");
-    if (!normalized) continue;
-    const match = normalized.match(/^(.*?)\s*(\d+(?:\.\d+)?)\s*([^\d\s]+)?$/u);
-    const label = match?.[1]?.trim() || normalized;
-    const quantity = match ? Number(match[2]) : 1;
-    const unit = match?.[3]?.trim() ?? "";
-    const unitName = unit ? `${label}（${unit}）` : label;
-    const unitId = `${label}:${unit}`;
-    const current = totals.get(unitId);
-    totals.set(unitId, {
-      unitId,
-      label,
-      unit,
-      unitName,
-      quantity: (current?.quantity ?? 0) + quantity,
-    });
-  }
-  return [...totals.values()].sort((a, b) => b.quantity - a.quantity);
 }
 
 function dateRange(from: string, to: string) {

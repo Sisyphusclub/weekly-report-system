@@ -37,14 +37,23 @@ import { type WorkStatus } from "@/components/dashboard/task-item-row";
 import { EmployeeDashboard } from "@/components/dashboard/employee-dashboard";
 import { blockerVisibility } from "@/lib/blockers";
 import { cx } from "@/utils/cx";
-import { dailySubmissionStatus } from "@/lib/submission-metrics";
 
 export const metadata = { title: "工作看板" };
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ date?: string; project?: string }>;
+}) {
   const actor = await requireUser();
   const db = getDb();
   const now = new Date();
+  const params = await searchParams;
+  const requestedDate = params.date?.trim() ?? "";
+  const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
+    ? requestedDate
+    : shanghaiDate(now);
+  const selectedProject = params.project?.trim() || undefined;
   const data = await getSubmissionData(actor, now);
   if (actor.role === "ADMIN") {
     const counts = await Promise.all([
@@ -167,36 +176,48 @@ export default async function DashboardPage() {
       </WorkspaceShell>
     );
   }
-  const [metrics, breakdown, reports] = await Promise.all([
+  const [metrics, breakdown, reports, availableProjects] = await Promise.all([
     getDashboardMetrics(actor, now, data),
-    getDashboardBreakdown(actor, now, data),
+    getDashboardBreakdown(actor, now, data, {
+      from: selectedDate,
+      to: selectedDate,
+      projectId: selectedProject,
+    }),
     listReports(actor, "", 1),
+    db
+      .select({ id: project.id, name: project.name })
+      .from(project)
+      .where(
+        and(
+          eq(project.organizationId, actor.organizationId),
+          ne(project.status, "ARCHIVED"),
+        ),
+      )
+      .orderBy(project.name),
   ]);
   const rate = submissionRate(metrics.submittedReports, metrics.dueReports);
   const today = shanghaiDate(now).replaceAll("-", ".");
   const isBoss = actor.role === "BOSS";
   if (isBoss) {
-    const todayStatuses = data.members.map((member) =>
-      dailySubmissionStatus(data, member),
-    );
-    const todayEligible = todayStatuses.filter(
-      (status) => !["EXEMPT", "REST_DAY", "NOT_STARTED"].includes(status),
-    ).length;
-    const todaySubmitted = todayStatuses.filter(
-      (status) => status === "SUBMITTED" || status === "LATE",
+    const todayEligible = breakdown.members.length;
+    const todaySubmitted = breakdown.members.filter(
+      (member) => member.todaySubmitted,
     ).length;
     return (
       <WorkspaceShell actor={actor} selected="dashboard">
         <PageIntro
-          eyebrow="负责人视角 · 今日"
+          eyebrow={`负责人视角 · ${selectedDate.replaceAll("-", ".")}`}
           title="团队工作驾驶舱"
-          description="在一屏内查看提交进度、阻塞风险、计划兑现率和核心交付物。"
+          description="按日期查看团队日报、计划、实际工作和产出。"
         />
         <BossDashboard
           metrics={metrics}
           breakdown={breakdown}
           todaySubmission={{ submitted: todaySubmitted, total: todayEligible }}
-          memberCount={data.members.length}
+          memberCount={breakdown.members.length}
+          selectedDate={selectedDate}
+          selectedProjectId={selectedProject}
+          availableProjects={availableProjects}
         />
       </WorkspaceShell>
     );

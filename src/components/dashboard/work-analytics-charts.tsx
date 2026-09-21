@@ -44,10 +44,12 @@ export function WorkAnalyticsCharts({
   categories,
   deliverables,
   embedded = false,
+  periodLabel = "本周",
 }: {
   categories: readonly CategoryDatum[];
   deliverables: readonly DeliverableDatum[];
   embedded?: boolean;
+  periodLabel?: string;
 }) {
   if (embedded) {
     return (
@@ -57,7 +59,7 @@ export function WorkAnalyticsCharts({
             投入与交付分析
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            本周工作分类占比与核心产出量
+            {periodLabel}工作分类占比与核心产出量
           </p>
         </CardHeader>
         <CardBody className="divide-y divide-border p-0">
@@ -86,7 +88,7 @@ export function WorkAnalyticsCharts({
             工作分类与精力投入
           </h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            按本周已提交日报中的实际工作条目统计
+            按{periodLabel}已提交日报中的实际工作条目统计
           </p>
         </CardHeader>
         <CardBody className="p-4">
@@ -158,7 +160,10 @@ function CategoryDonut({
 
   if (!data.length) {
     return (
-      <ChartEmptyState text="本周暂无已提交的实际工作" compact={compact} />
+      <ChartEmptyState
+        text={`${compact ? "当日" : "本周"}暂无已提交的实际工作`}
+        compact={compact}
+      />
     );
   }
 
@@ -229,7 +234,10 @@ function DeliverableBars({
 
   if (!data.length) {
     return (
-      <ChartEmptyState text="本周日报暂未登记量化产出" compact={compact} />
+      <ChartEmptyState
+        text={`${compact ? "当日" : "本周"}日报暂未登记量化产出`}
+        compact={compact}
+      />
     );
   }
 
