@@ -1,4 +1,4 @@
-import type { ComponentType } from "react";
+import type { ComponentType, ReactNode } from "react";
 import { ArrowRight } from "lucide-react";
 import { Card, CardBody } from "@/components/premium/cards/card";
 import { cx } from "@/utils/cx";
@@ -65,12 +65,14 @@ export function Statistic({
 export interface StatisticCardProps extends StatisticProps {
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   href?: string;
+  trailing?: ReactNode;
   className?: string;
 }
 
 export function StatisticCard({
   icon: Icon,
   href,
+  trailing,
   className,
   tone = "neutral",
   ...statisticProps
@@ -97,6 +99,7 @@ export function StatisticCard({
           <Icon className="size-5" aria-hidden />
         </span>
         <Statistic tone={tone} {...statisticProps} />
+        {trailing}
         {href ? <ArrowRight className="size-4 shrink-0" aria-hidden /> : null}
       </CardBody>
     </Card>

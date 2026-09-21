@@ -2,14 +2,20 @@
 
 import {
   ArrowRight,
+  CalendarCheck2,
+  CircleAlert,
   FolderKanban,
+  Gauge,
   Users,
 } from "lucide-react";
+import { useState } from "react";
 import { Alert } from "@/components/premium/alert";
 import { Avatar } from "@/components/premium/avatar";
 import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { List, ListItem } from "@/components/premium/list";
+import { Modal } from "@/components/premium/modal";
+import { DonutDistribution } from "@/components/premium/stats/donut-distribution";
 import { Table } from "@/components/premium/table";
 import { MetricDistribution } from "@/components/premium/stats/metric-distribution";
 import { PlanStrip } from "@/components/dashboard/plan-strip";
@@ -19,7 +25,9 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/motion/tabs";
-import { ButtonLink } from "@/components/motion/button/base";
+import { Button, ButtonLink } from "@/components/motion/button/base";
+import { ProgressCircle } from "@/components/premium/stats/progress-circle";
+import { StatisticCard } from "@/components/premium/stats/statistic-card";
 import type { DashboardBreakdown, DashboardMetrics } from "@/lib/metrics";
 import { cx } from "@/utils/cx";
 
@@ -46,24 +54,53 @@ export function BossDashboard({
   memberCount: number;
   reports: RecentReport[];
 }) {
-  const totalPlans = breakdown.planFulfillment.due;
-  const followUp = metrics.inProgressTasks + metrics.openBlockers;
+  const [assignmentOpen, setAssignmentOpen] = useState(false);
+  const [coordinatorId, setCoordinatorId] = useState<string | null>(null);
   const projectNames = new Map(breakdown.projects.map((item) => [item.id, item.name]));
   const blockedItems = breakdown.blockerItems.slice(0, 3);
   const hasBlockers = metrics.openBlockers > 0 && blockedItems.length > 0;
+  const submissionRate = todaySubmission.total
+    ? percent(todaySubmission.submitted, todaySubmission.total)
+    : 0;
+  const planRate = breakdown.todayPlanFulfillment.rate ?? 0;
+  const selectedCoordinator = breakdown.members.find(
+    (member) => member.id === coordinatorId,
+  );
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-5">
-      <OverviewTotals
-        items={[
-          { label: "总人数", value: memberCount, tone: "neutral" },
-          { label: "工作项", value: metrics.totalTasks, tone: "neutral" },
-          { label: "已完成", value: metrics.completedTasks, tone: "success" },
-          { label: "待跟进", value: followUp, tone: "warning" },
-          { label: "工作计划", value: totalPlans, tone: "info" },
-          { label: "今日提交", value: todaySubmission.submitted, tone: "success" },
-        ]}
-      />
+      <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="团队指标概览">
+        <StatisticCard
+          icon={Users}
+          label="团队人数"
+          value={memberCount}
+          suffix="人"
+          tone="neutral"
+        />
+        <StatisticCard
+          icon={CalendarCheck2}
+          label="今日提交"
+          value={todaySubmission.submitted}
+          suffix={`/ ${todaySubmission.total} 人`}
+          tone="success"
+          trailing={<ProgressCircle value={submissionRate} size={38} stroke={3.5} tone="success" label="今日提交率" />}
+        />
+        <StatisticCard
+          icon={Gauge}
+          label="计划兑现率"
+          value={planRate}
+          suffix="%"
+          tone="info"
+          trailing={<ProgressCircle value={planRate} size={38} stroke={3.5} tone="primary" label="计划兑现率" />}
+        />
+        <StatisticCard
+          icon={CircleAlert}
+          label="待处理阻塞"
+          value={metrics.openBlockers}
+          suffix="项"
+          tone={metrics.openBlockers > 0 ? "danger" : "neutral"}
+        />
+      </section>
 
       <section aria-label="阻塞作战室">
         <Alert
@@ -82,15 +119,14 @@ export function BossDashboard({
               : "团队当前没有需要负责人介入的开放卡点。"
           }
           action={
-            <ButtonLink
-              href={hasBlockers ? "/blockers" : "/boss/members"}
-              variant={hasBlockers ? "secondary" : "ghost"}
+            <Button
+              variant="primary"
               size="small"
-              className={hasBlockers ? "text-rose-700" : "text-emerald-700"}
+              onClick={() => setAssignmentOpen(true)}
             >
               {hasBlockers ? "立即指派协调人" : "查看团队状态"}
               <ArrowRight className="size-3.5" aria-hidden />
-            </ButtonLink>
+            </Button>
           }
         />
       </section>
@@ -125,29 +161,30 @@ export function BossDashboard({
       </section>
 
       <section className="grid gap-5 xl:grid-cols-2" aria-label="工作分析图表">
-        <MetricDistribution
+        <DonutDistribution
           title="工作分类与精力投入"
           description="按本周已提交日报中的实际工作条目统计"
           emptyText="本周暂无已提交的实际工作"
-          items={breakdown.categoryBreakdown.map((item, index) => ({
+          items={breakdown.categoryBreakdown.map((item) => ({
             id: item.name,
             label: item.name,
             value: item.value,
-            suffix: "项",
-            tone: index === 0 ? "success" : index === 1 ? "info" : "neutral",
           }))}
         />
         <MetricDistribution
           title="核心交付物量化统计"
           description="从日报产出物中提取数量并按类型汇总"
           emptyText="本周日报暂未登记量化产出"
-          items={breakdown.deliverableSummary.slice(0, 10).map((item) => ({
+          items={[...breakdown.deliverableSummary]
+            .sort((a, b) => b.quantity - a.quantity)
+            .slice(0, 10)
+            .map((item) => ({
             id: item.unitId,
             label: item.label,
             value: item.quantity,
             suffix: item.unit || "项",
             tone: "info",
-          }))}
+            }))}
         />
       </section>
 
@@ -283,43 +320,49 @@ export function BossDashboard({
           />
         </CardBody>
       </Card>
-    </div>
-  );
-}
 
-function OverviewTotals({
-  items,
-}: {
-  items: Array<{
-    label: string;
-    value: number;
-    tone: "neutral" | "info" | "success" | "warning";
-  }>;
-}) {
-  return (
-    <Card className="overflow-hidden">
-      <CardBody className="grid grid-cols-2 divide-x divide-y divide-border p-0 md:grid-cols-3 xl:grid-cols-6 xl:divide-y-0">
-        {items.map((item) => (
-          <div key={item.label} className="min-w-0 px-4 py-3.5 xl:px-5">
-            <p className="truncate text-xs font-medium text-muted-foreground">{item.label}</p>
-            <p
-              className={cx(
-                "mt-1 text-xl font-semibold tabular-nums",
-                item.tone === "success"
-                  ? "text-emerald-700"
-                  : item.tone === "warning"
-                    ? "text-amber-700"
-                    : item.tone === "info"
-                      ? "text-blue-700"
-                      : "text-slate-900",
-              )}
+      <Modal
+        open={assignmentOpen}
+        onClose={() => setAssignmentOpen(false)}
+        title="指派协调人"
+        description={hasBlockers ? "为当前待协调卡点选择一位负责人。" : "当前没有开放卡点，可先选择后续协同负责人。"}
+        footer={
+          <>
+            <Button variant="secondary" size="small" onClick={() => setAssignmentOpen(false)}>
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              size="small"
+              disabled={!selectedCoordinator}
+              onClick={() => setAssignmentOpen(false)}
             >
-              {item.value}
-            </p>
-          </div>
-        ))}
-      </CardBody>
-    </Card>
+              确认指派
+            </Button>
+          </>
+        }
+      >
+        <div className="space-y-2">
+          {breakdown.members.map((member) => (
+            <Button
+              key={member.id}
+              variant={coordinatorId === member.id ? "secondary" : "ghost"}
+              className="h-auto w-full justify-start rounded-lg border border-border px-3 py-2.5 text-left"
+              onClick={() => setCoordinatorId(member.id)}
+            >
+              <Avatar initials={member.name.slice(0, 1)} size="sm" />
+              <span className="ml-2 min-w-0 flex-1">
+                <span className="block text-sm font-medium text-slate-900">{member.name}</span>
+                <span className="mt-0.5 block text-xs text-slate-500">
+                  今日计划 {member.todayPlans} 项 · 已完成 {member.todayCompleted} 项
+                </span>
+              </span>
+              {member.openBlockers > 0 ? <Badge color="danger">{member.openBlockers} 项阻塞</Badge> : null}
+            </Button>
+          ))}
+        </div>
+      </Modal>
+    </div>
   );
 }
 
@@ -335,16 +378,25 @@ function MemberPlanColumn({
     : 0;
 
   return (
-    <Card className="w-[255px] shrink-0 overflow-hidden">
-      <CardBody className="p-3">
+    <Card className="h-[420px] min-h-[420px] w-[240px] min-w-[240px] shrink-0 overflow-hidden">
+      <CardBody className="flex h-full flex-col p-3">
         <div className="flex items-center justify-between gap-2">
           <div className="flex min-w-0 items-center gap-2">
             <Avatar initials={member.name.slice(0, 1)} size="sm" />
-            <p className="truncate text-sm font-semibold text-foreground">{member.name}</p>
+            <p className="whitespace-nowrap text-sm font-semibold text-foreground">{member.name}</p>
           </div>
-          <Badge color={member.openBlockers ? "danger" : member.todaySubmitted ? "success" : "warning"}>
-            {member.openBlockers ? `${member.openBlockers} 项阻塞` : member.todaySubmitted ? "已提交" : "待跟进"}
-          </Badge>
+          <span
+            className={cx(
+              "size-2 shrink-0 rounded-full",
+              member.openBlockers
+                ? "bg-rose-600"
+                : member.todaySubmitted
+                  ? "bg-emerald-600"
+                  : "bg-amber-500",
+            )}
+            title={member.openBlockers ? "存在阻塞" : member.todaySubmitted ? "已提交" : "待跟进"}
+            aria-label={member.openBlockers ? "存在阻塞" : member.todaySubmitted ? "已提交" : "待跟进"}
+          />
         </div>
         <div className="mt-3 flex items-center justify-between text-xs">
           <span className="text-muted-foreground">计划 {member.todayPlans} 项</span>
@@ -356,7 +408,7 @@ function MemberPlanColumn({
         <List
           dataSource={member.todayPlanItems.slice(0, 4)}
           rowKey={(item, index) => `${member.id}-${index}-${item.content}`}
-          className="mt-3 space-y-1.5"
+          className="mt-3 min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1"
           itemClassName="border-slate-200/80 bg-slate-50/70 p-2"
           emptyState={<p className="px-1 py-2 text-xs text-muted-foreground">今日暂无工作计划</p>}
           renderItem={(item, index) => (
@@ -365,13 +417,26 @@ function MemberPlanColumn({
               title={
                 <div className="min-w-0">
                   <div className="flex min-w-0 items-center gap-1.5">
-                    <Tag color="neutral" className="max-w-[100px] truncate">{item.projectId ? projectNames.get(item.projectId) ?? "未关联项目" : "未关联项目"}</Tag>
-                    <span className="truncate">{item.content}</span>
+                    <Tag color="neutral" className="max-w-[108px] shrink-0 truncate">{item.projectId ? projectNames.get(item.projectId) ?? "未关联项目" : "未关联项目"}</Tag>
+                    <span className="min-w-0 break-words text-sm leading-5">{item.content}</span>
                   </div>
-                  <p className="mt-1 truncate text-[11px] font-normal text-muted-foreground">{item.category}</p>
+                  <p className="mt-1 text-[11px] font-normal text-muted-foreground">{item.category}</p>
                 </div>
               }
-              trailing={<Badge color={item.status === "DONE" ? "success" : item.status === "BLOCKED" ? "danger" : "warning"}>{statusLabel(item.status)}</Badge>}
+              trailing={
+                <span
+                  className={cx(
+                    "mt-1.5 size-2 shrink-0 rounded-full",
+                    item.status === "DONE"
+                      ? "bg-emerald-600"
+                      : item.status === "BLOCKED"
+                        ? "bg-rose-600"
+                        : "bg-amber-500",
+                  )}
+                  title={statusLabel(item.status)}
+                  aria-label={statusLabel(item.status)}
+                />
+              }
             />
           )}
         />
@@ -453,12 +518,24 @@ function ProjectOverview({
           </p>
         )}
         {project.deliverables.length ? (
-          <div className="flex flex-wrap gap-1.5 border-t border-border pt-3">
-            {project.deliverables.map((item) => (
-              <Tag key={item.unitId} color="info">
-                {item.unitName} {item.quantity}
+          <div className="flex min-w-0 items-center gap-1.5 border-t border-border pt-3">
+            <div className="min-w-0 flex-1 overflow-hidden whitespace-nowrap">
+              {project.deliverables.slice(0, 3).map((item, index) => (
+                <span key={item.unitId} className="inline-flex max-w-[46%] align-middle">
+                  <Tag color="info" className="max-w-full truncate">
+                    {item.unitName} {item.quantity}
+                  </Tag>
+                  {index < Math.min(project.deliverables.length, 3) - 1 ? (
+                    <span className="px-1 text-xs text-muted-foreground">·</span>
+                  ) : null}
+                </span>
+              ))}
+            </div>
+            {project.deliverables.length > 3 ? (
+              <Tag color="neutral" className="shrink-0">
+                +{project.deliverables.length - 3} 项
               </Tag>
-            ))}
+            ) : null}
           </div>
         ) : null}
       </CardBody>
