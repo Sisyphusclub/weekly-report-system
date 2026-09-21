@@ -597,6 +597,12 @@ async function main() {
         workEntries,
         blockers: [],
       };
+      const submitted = status === "SUBMITTED";
+      const submittedAt = submitted
+        ? date === today
+          ? new Date()
+          : atShanghai(date, 17, 30)
+        : null;
       const [existing] = await tx
         .select()
         .from(report)
@@ -610,12 +616,19 @@ async function main() {
         )
         .limit(1);
       if (existing) {
-        await tx.update(report).set(structured).where(eq(report.id, existing.id));
+        await tx
+          .update(report)
+          .set({
+            ...structured,
+            status,
+            submittedAt,
+            revisionNumber: submitted ? 1 : 0,
+          })
+          .where(eq(report.id, existing.id));
         return (
           await tx.select().from(report).where(eq(report.id, existing.id)).limit(1)
         )[0];
       }
-      const submitted = status === "SUBMITTED";
       const created = {
         id: crypto.randomUUID(),
         organizationId: org.id,
@@ -624,7 +637,7 @@ async function main() {
         status,
         reportDate: date,
         dueAt: atShanghai(date, 18),
-        submittedAt: submitted ? atShanghai(date, 17, 30) : null,
+        submittedAt,
         ...structured,
         wasLate: false,
         revisionNumber: submitted ? 1 : 0,
