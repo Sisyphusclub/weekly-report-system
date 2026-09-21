@@ -35,11 +35,11 @@ export function AuthSplit({
   return (
     <section
       className={cn(
-        "grid min-h-screen w-full bg-background lg:grid-cols-2",
+        "grid min-h-svh w-full bg-background lg:grid-cols-2",
         className,
       )}
     >
-      <div className="flex items-center justify-center p-6 sm:p-12">
+      <div className="flex items-center justify-center px-6 py-[max(1.5rem,env(safe-area-inset-top))] pb-[max(1.5rem,env(safe-area-inset-bottom))] sm:p-12">
         <div className="w-full max-w-sm">
           <div className="flex items-center gap-3">
             <span className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground shadow-sm">

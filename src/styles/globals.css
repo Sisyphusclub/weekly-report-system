@@ -1,4 +1,11 @@
-@import "tailwindcss";
+/* Limit Tailwind's content graph to application code. The repository also
+ * contains installed skill docs with example utilities such as
+ * `bg-[url('...')]`; scanning those examples makes Turbopack treat the
+ * placeholder as a real asset during production builds. */
+@import "tailwindcss" source(none);
+@source "../app";
+@source "../components";
+@source "../styles";
 @import "./theme.css";
 
 @custom-variant dark (&:where(.dark, .dark *));
@@ -9,15 +16,20 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-variant-ligatures: contextual;
   font-kerning: normal;
+  -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 html {
   background: var(--be-bg-canvas);
+  overscroll-behavior-y: none;
 }
 
 body {
   background: var(--be-bg-canvas);
   color: var(--be-text-regular);
+  min-width: 320px;
+  line-height: 1.5;
 }
 
 h1,
@@ -33,7 +45,28 @@ h6 {
   border-color: var(--be-border);
 }
 
+:where(button, a, input, select, textarea):focus-visible {
+  outline: 2px solid var(--be-primary);
+  outline-offset: 2px;
+}
+
+:where(button, a) {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+}
+
 @media (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+@media (pointer: coarse) {
   input,
   select,
   textarea {

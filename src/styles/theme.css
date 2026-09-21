@@ -43,6 +43,10 @@
   --be-chart-4: #64748b;
   --be-chart-5: #7c3aed;
   --be-chart-grid: #e2e8f0;
+  --be-focus-ring: #2563eb;
+  --be-radius-control: 10px;
+  --be-radius-panel: 12px;
+  --be-space-page: 24px;
   color-scheme: light;
 }
 
@@ -75,6 +79,7 @@
   --be-chart-4: #94a3b8;
   --be-chart-5: #a78bfa;
   --be-chart-grid: #475569;
+  --be-focus-ring: #93c5fd;
   color-scheme: dark;
 }
 
@@ -110,4 +115,5 @@
   --color-chart-3: var(--be-chart-3);
   --color-chart-4: var(--be-chart-4);
   --color-chart-5: var(--be-chart-5);
+  --color-focus-ring: var(--be-focus-ring);
 }

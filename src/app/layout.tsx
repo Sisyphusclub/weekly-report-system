@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "@/styles/globals.css";
 
 export const metadata: Metadata = {
@@ -6,12 +6,23 @@ export const metadata: Metadata = {
   description: "日报、周报与项目协作工作台",
   robots: { index: false, follow: false },
 };
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+  colorScheme: "light dark",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f8fafc" },
+    { media: "(prefers-color-scheme: dark)", color: "#0f172a" },
+  ],
+};
 export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="zh-CN">
-      <body className="min-h-screen bg-slate-50 text-sm leading-5 text-slate-700 antialiased">
+      <body className="min-h-screen bg-background text-sm text-foreground antialiased">
         {children}
       </body>
     </html>
