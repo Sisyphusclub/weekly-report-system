@@ -194,13 +194,17 @@ export function WorkspaceShell({
                 <AnimatedSidebarMenuButton
                   href="/security"
                   icon={<KeyRound className="size-4" />}
+                  className="gap-2.5 px-1 [&>span[aria-hidden=true]]:size-9"
                 >
                   账号安全
                 </AnimatedSidebarMenuButton>
               </AnimatedSidebarMenuItem>
             </AnimatedSidebarMenu>
-            <SignOutButton collapseLabel />
-            <div className="mt-1 hidden min-h-11 items-center gap-3 overflow-hidden rounded-xl px-2 md:flex">
+            <SignOutButton
+              collapseLabel
+              className="gap-2.5 px-1 [&>svg]:size-9 [&>svg]:p-2.5"
+            />
+            <div className="mt-1 hidden min-h-11 items-center gap-2.5 overflow-hidden rounded-xl px-1 md:flex">
               <span className="grid size-9 shrink-0 place-items-center rounded-full bg-primary/10 text-xs font-semibold text-primary">
                 {initials(actor.name)}
               </span>
