@@ -593,7 +593,7 @@ export function DailyForm({
         />
       </section>
 
-      <Panel className="overflow-hidden border-border-strong/80 shadow-md">
+      <Panel className="overflow-hidden border-border-strong/80 shadow-none">
         <CardHeader className="flex flex-wrap items-center justify-between gap-3 bg-muted/40 px-5 py-4 sm:px-6">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
