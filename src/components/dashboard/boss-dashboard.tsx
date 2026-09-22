@@ -85,12 +85,18 @@ export function BossDashboard({
       />
       <Tabs defaultValue="daily" variant="underline" size="large">
         <div className="border-b border-border">
-          <TabsList className="w-full sm:w-auto">
-            <TabsTrigger value="daily">
+          <TabsList className="w-full gap-0 border-b-0 sm:w-auto">
+            <TabsTrigger
+              value="daily"
+              className="flex-1 justify-center sm:w-[136px] sm:flex-none"
+            >
               <ClipboardList className="mr-2 size-4" aria-hidden />
               全员日报
             </TabsTrigger>
-            <TabsTrigger value="overview">
+            <TabsTrigger
+              value="overview"
+              className="flex-1 justify-center sm:w-[136px] sm:flex-none"
+            >
               <ChartNoAxesCombined className="mr-2 size-4" aria-hidden />
               项目与效能
             </TabsTrigger>
