@@ -694,7 +694,7 @@ export function DailyForm({
           </div>
 
           {blockerOpen ? (
-            <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50 p-4">
+            <div className="mt-3 border-t border-border pt-4">
               {projects.length ? (
                 <div className="space-y-3">
                   {blockers.map((blocker, index) => (
