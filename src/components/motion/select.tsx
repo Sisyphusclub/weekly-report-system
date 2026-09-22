@@ -20,6 +20,7 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
 
@@ -289,10 +290,15 @@ export interface SelectContentProps {
 
 export function SelectContent({ className, children }: SelectContentProps) {
   const ctx = useSelectContext("SelectContent");
+  const [mounted, setMounted] = useState(false);
   const innerRef = useRef<HTMLDivElement>(null);
+  const panelRef = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(0);
+  const [position, setPosition] = useState({ left: 0, top: 0, width: 0 });
   const open = ctx.open;
   const { setPlacement } = ctx;
+
+  useEffect(() => setMounted(true), []);
 
   useLayoutEffect(() => {
     const node = innerRef.current;
@@ -309,12 +315,39 @@ export function SelectContent({ className, children }: SelectContentProps) {
     if (!open) return;
     const trigger = document.getElementById(ctx.triggerId);
     const node = innerRef.current;
-    if (!trigger || !node) return;
-    const rect = trigger.getBoundingClientRect();
-    const h = node.offsetHeight;
-    const below = window.innerHeight - rect.bottom;
-    const above = rect.top;
-    setPlacement(below < h + 16 && above > below ? "top" : "bottom");
+    const panel = panelRef.current;
+    if (!trigger || !node || !panel) return;
+
+    const updatePlacement = () => {
+      const rect = trigger.getBoundingClientRect();
+      const maxHeight = Number.parseFloat(
+        window.getComputedStyle(panel).maxHeight,
+      );
+      const panelHeight = Number.isFinite(maxHeight)
+        ? Math.min(node.offsetHeight, maxHeight)
+        : node.offsetHeight;
+      const below = window.innerHeight - rect.bottom;
+      const above = rect.top;
+      const nextPlacement =
+        below < panelHeight + 16 && above > below ? "top" : "bottom";
+      const top =
+        nextPlacement === "top"
+          ? Math.max(8, rect.top - panelHeight - 8)
+          : Math.min(
+              window.innerHeight - panelHeight - 8,
+              rect.bottom + 8,
+            );
+      setPlacement(nextPlacement);
+      setPosition({ left: rect.left, top, width: rect.width });
+    };
+
+    updatePlacement();
+    window.addEventListener("resize", updatePlacement);
+    window.addEventListener("scroll", updatePlacement, true);
+    return () => {
+      window.removeEventListener("resize", updatePlacement);
+      window.removeEventListener("scroll", updatePlacement, true);
+    };
   }, [open, ctx.triggerId, setPlacement]);
 
   // Specify EVERY corner + both margins each render. The near edge (facing the
@@ -335,7 +368,7 @@ export function SelectContent({ className, children }: SelectContentProps) {
   // Items stay mounted (open just animates the panel) so each item's label
   // registration persists — otherwise the trigger would fall back to the
   // placeholder the moment the panel closes.
-  return (
+  const content = (
     <motion.div
       id={ctx.listId}
       role="listbox"
@@ -379,16 +412,21 @@ export function SelectContent({ className, children }: SelectContentProps) {
       }
       style={{
         transformOrigin: isTop ? "bottom" : "top",
-        overflow: "hidden",
+        left: position.left,
+        top: position.top,
+        width: position.width || undefined,
+        overflowX: "hidden",
+        overflowY: open ? "auto" : "hidden",
         pointerEvents: open ? "auto" : "none",
       }}
+      onPointerDown={(event) => event.stopPropagation()}
       // flush against the trigger, then separates into its own rounded pill;
       // sits above or below depending on available space
       className={cn(
-        "absolute left-0 right-0 z-20 rounded-xl border border-border bg-background shadow-lg",
-        isTop ? "bottom-full" : "top-full",
+        "fixed z-[60] rounded-xl border border-border bg-background shadow-lg",
         className,
       )}
+      ref={panelRef}
     >
       <motion.div
         ref={innerRef}
@@ -401,6 +439,10 @@ export function SelectContent({ className, children }: SelectContentProps) {
       </motion.div>
     </motion.div>
   );
+
+  return mounted && typeof document !== "undefined"
+    ? createPortal(content, document.body)
+    : content;
 }
 
 export interface SelectItemProps {

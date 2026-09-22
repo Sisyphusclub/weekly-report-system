@@ -589,7 +589,7 @@ export function Select({
       >
         <SelectValue placeholder={placeholder ?? ariaLabel ?? "请选择"} />
       </SelectTrigger>
-      <SelectContent className="max-h-64 overflow-auto bg-card">
+      <SelectContent className="max-h-96 overflow-auto bg-card">
         {children}
       </SelectContent>
     </BeuiSelect>
