@@ -141,14 +141,16 @@ export function CompactCard({
         className,
       )}
     >
-      <div
-        aria-hidden
-        className="absolute inset-px overflow-hidden rounded-[calc(0.75rem-1px)]"
-      >
-        {texture ?? <CardTexture active={active} />}
-      </div>
+      {texture !== null ? (
+        <div
+          aria-hidden={texture === undefined ? true : undefined}
+          className="relative h-16 overflow-hidden"
+        >
+          {texture === undefined ? <CardTexture active={active} /> : texture}
+        </div>
+      ) : null}
 
-      <div className="relative mt-10 rounded-t-xl border-border border-t bg-background px-4 pt-4 pb-3.5">
+      <div className="relative rounded-t-xl border-border border-t bg-background px-4 pt-4 pb-3.5">
         <div className="flex items-start justify-between gap-5">
           <span className="inline-flex min-h-9 items-center gap-2 rounded-lg border border-border bg-background px-3 font-medium text-foreground text-xs">
             <span className="grid size-4 place-items-center rounded-full bg-primary text-primary-foreground">

@@ -118,6 +118,7 @@ const ProjectCard = memo(function ProjectCard({
 }) {
   const status =
     lane === "risk" ? "需要协调" : lane === "active" ? "推进中" : "进展稳定";
+  const total = project.completed + project.inProgress + project.blocked;
   const footerLabel = project.deliverables.length
     ? project.deliverables
         .slice(0, 2)
@@ -129,7 +130,7 @@ const ProjectCard = memo(function ProjectCard({
     <CompactCard
       status={status}
       title={project.name}
-      description={`负责人：${project.owner?.name ?? "未设置"} · 已完成 ${project.completed} 项`}
+      description={`负责人：${project.owner?.name ?? "未设置"}`}
       details={[
         { icon: UsersRound, label: `${project.members.length} 人协同` },
         lane === "risk"
@@ -143,7 +144,7 @@ const ProjectCard = memo(function ProjectCard({
       peopleCount={project.members.length}
       actionLabel="查看报告"
       href={`/reports?project=${project.id}`}
-      texture={<ProgressTexture project={project} />}
+      texture={total > 0 ? <ProgressTexture project={project} /> : null}
       className="max-w-none"
     />
   );
@@ -154,12 +155,12 @@ function ProgressTexture({ project }: { project: CollaborationProject }) {
     {
       label: "完成",
       value: project.completed,
-      className: "bg-primary",
+      className: "bg-chart-1",
     },
     {
       label: "进行中",
       value: project.inProgress,
-      className: "bg-amber-700",
+      className: "bg-chart-3",
     },
     {
       label: "阻塞",
@@ -169,17 +170,37 @@ function ProgressTexture({ project }: { project: CollaborationProject }) {
   ];
 
   return (
-    <div className="flex size-full items-end gap-1 bg-muted px-4 pb-4">
-      {segments.map((segment) =>
-        segment.value > 0 ? (
-          <span
-            key={segment.label}
-            title={`${segment.label} ${segment.value}`}
-            className={`h-2 rounded-sm ${segment.className}`}
-            style={{ flexBasis: 0, flexGrow: segment.value }}
-          />
-        ) : null,
-      )}
+    <div
+      role="img"
+      aria-label={segments
+        .map(({ label, value }) => `${label} ${value} 项`)
+        .join("，")}
+      className="flex size-full flex-col justify-center gap-2 bg-muted/60 px-4"
+    >
+      <div
+        aria-hidden
+        className="flex items-center justify-between gap-2 text-xs text-foreground tabular-nums"
+      >
+        {segments.map(({ label, value }) => (
+          <span key={label} className="whitespace-nowrap">
+            {label} {value}
+          </span>
+        ))}
+      </div>
+      <div
+        aria-hidden
+        className="flex h-2 w-full gap-1 overflow-hidden rounded-sm"
+      >
+        {segments.map((segment) =>
+          segment.value > 0 ? (
+            <span
+              key={segment.label}
+              className={`h-full min-w-0 rounded-sm ${segment.className}`}
+              style={{ flexBasis: 0, flexGrow: segment.value }}
+            />
+          ) : null,
+        )}
+      </div>
     </div>
   );
 }
