@@ -61,7 +61,7 @@ export function AuthSplit({
         </div>
       </div>
 
-      <div className="relative hidden overflow-hidden lg:block">
+      <div className="relative hidden overflow-hidden bg-auth-panel lg:block">
         <Silk
           className="absolute inset-0"
           color="#315f74"
@@ -72,7 +72,7 @@ export function AuthSplit({
         />
         <div className="absolute inset-0 bg-foreground/5" />
         <div className="relative flex h-full flex-col justify-between p-12 xl:p-16">
-          <div className="flex items-center gap-2 text-sm font-medium text-white/80">
+          <div className="flex items-center gap-2 text-sm font-medium text-auth-panel-foreground/80">
             <ShieldCheck className="size-4" aria-hidden />
             内部安全工作区
           </div>
@@ -83,7 +83,7 @@ export function AuthSplit({
               transition={
                 reduce ? { duration: 0 } : { duration: 0.5, ease: EASE_OUT }
               }
-              className="text-sm font-medium text-white/80"
+              className="text-sm font-medium text-auth-panel-foreground/80"
             >
               {panelEyebrow}
             </motion.p>
@@ -97,7 +97,7 @@ export function AuthSplit({
                   ? { duration: 0 }
                   : { duration: 0.6, ease: EASE_OUT, delay: 0.1 }
               }
-              className="mt-3 max-w-lg text-balance text-4xl font-semibold leading-tight text-white"
+              className="mt-3 max-w-lg text-balance text-4xl font-semibold leading-tight text-auth-panel-foreground"
             >
               {panelTitle}
             </motion.h2>
@@ -109,7 +109,7 @@ export function AuthSplit({
                   ? { duration: 0 }
                   : { duration: 0.5, ease: EASE_OUT, delay: 0.18 }
               }
-              className="mt-5 max-w-lg text-sm leading-7 text-white/75"
+              className="mt-5 max-w-lg text-sm leading-7 text-auth-panel-foreground/75"
             >
               {panelDescription}
             </motion.p>

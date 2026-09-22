@@ -18,6 +18,8 @@
   --be-bg-canvas: #f8fafc;
   --be-bg-card: #ffffff;
   --be-bg-muted: #f1f5f9;
+  --be-auth-panel: #071a24;
+  --be-auth-panel-foreground: #f8fafc;
   --be-border: #e2e8f0;
   --be-border-strong: #cbd5e1;
   --be-text-primary: #0f172a;
@@ -86,6 +88,8 @@
 @theme inline {
   --color-background: var(--be-bg-canvas);
   --color-foreground: var(--be-text-primary);
+  --color-auth-panel: var(--be-auth-panel);
+  --color-auth-panel-foreground: var(--be-auth-panel-foreground);
   --color-card: var(--be-bg-card);
   --color-card-foreground: var(--be-text-primary);
   --color-popover: var(--be-bg-card);
