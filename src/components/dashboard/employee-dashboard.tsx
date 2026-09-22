@@ -189,8 +189,8 @@ export function EmployeeDashboard({
         </Col>
       </Row>
 
-      <Card className="overflow-hidden">
-        <CardHeader>
+      <Card className="overflow-hidden border-border/80 shadow-xs">
+        <CardHeader className="bg-muted/25">
           <Inline justify="between" gap="md" wrap>
             <section>
               <h2 className="text-base font-semibold text-foreground">
@@ -211,7 +211,7 @@ export function EmployeeDashboard({
             type="warning"
             showIcon
             message={`${openBlockers} 项卡点待协调`}
-            className="rounded-none border-x-0 border-t-0"
+            className="rounded-none border-x-0 border-t-0 bg-warning-subtle/65"
             action={
               <ButtonLink
                 href="/blockers"
@@ -228,7 +228,7 @@ export function EmployeeDashboard({
 
         <CardBody className="p-0">
           <Row>
-            <Col span={12} lg={6}>
+            <Col span={12} lg={6} className="bg-info-subtle/15">
               <WorkColumn
                 title="今日工作计划"
                 entries={plans}
@@ -236,7 +236,11 @@ export function EmployeeDashboard({
                 kind="plan"
               />
             </Col>
-            <Col span={12} lg={6} className="border-t border-border lg:border-t-0 lg:border-l">
+            <Col
+              span={12}
+              lg={6}
+              className="border-t border-border bg-success-subtle/15 lg:border-t-0 lg:border-l"
+            >
               <WorkColumn
                 title="今日实际完成"
                 entries={works}
@@ -248,8 +252,8 @@ export function EmployeeDashboard({
         </CardBody>
       </Card>
 
-      <Card className="overflow-hidden">
-        <CardHeader>
+      <Card className="overflow-hidden border-border/80 shadow-xs">
+        <CardHeader className="bg-muted/25">
           <Inline justify="between" gap="md">
             <Inline gap="sm">
               <FileText className="size-4 text-primary" aria-hidden />
@@ -272,7 +276,7 @@ export function EmployeeDashboard({
             columns={reportColumns}
             dataSource={recentReports.slice(0, 5)}
             rowKey="id"
-            size="middle"
+            size="small"
             emptyState="提交日报后，报告会显示在这里。"
           />
         </CardBody>

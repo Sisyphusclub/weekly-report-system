@@ -35,7 +35,6 @@ export function Statistic({
       <dd
         className={cx(
           "mt-1 text-2xl font-bold tabular-nums text-foreground",
-          tone === "danger" && "text-destructive",
         )}
       >
         {value}
@@ -93,7 +92,7 @@ export function StatisticCard({
             tone === "success" &&
               "border-success-border bg-success-subtle text-success",
             tone === "danger" &&
-              "border-destructive bg-destructive text-destructive-foreground shadow-sm",
+              "border-danger-border bg-danger-subtle text-destructive",
           )}
         >
           <Icon className="size-5" aria-hidden />
