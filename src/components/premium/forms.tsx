@@ -527,8 +527,8 @@ export function Textarea({
           onChange?.(event.target.value)
         }
         className={cn(
-          "min-h-28 w-full resize-y rounded-xl border border-border bg-card px-3.5 py-3 text-sm leading-6 text-foreground outline-none transition-colors",
-          "placeholder:text-muted-foreground/70 focus:border-foreground/40 focus:ring-2 focus:ring-ring/40",
+          "min-h-28 w-full resize-y rounded-xl border border-border bg-card px-3.5 py-3 text-sm leading-6 text-foreground outline-none transition-[border-color,box-shadow] duration-150",
+          "placeholder:text-muted-foreground/70 focus:border-foreground/40 focus:ring-2 focus:ring-ring/35 focus-visible:!outline-none",
           "disabled:cursor-not-allowed disabled:opacity-60",
           className,
         )}
