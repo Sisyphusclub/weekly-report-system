@@ -700,7 +700,7 @@ export function DailyForm({
                   {blockers.map((blocker, index) => (
                     <div
                       key={index}
-                      className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_180px_140px_auto] lg:items-end"
+                      className="grid min-w-0 gap-x-3 gap-y-2.5 lg:grid-cols-[minmax(0,1fr)_minmax(170px,220px)_minmax(120px,160px)_auto] lg:items-start"
                     >
                       <Textarea
                         label={`卡点 ${index + 1}`}
@@ -721,50 +721,62 @@ export function DailyForm({
                         maxLength={5000}
                         className="min-h-20"
                       />
-                      <Select
-                        aria-label={`卡点 ${index + 1} 关联项目`}
-                        selectedKey={blocker.projectId}
-                        onSelectionChange={(projectId) =>
-                          updateBlockers(
-                            blockers.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? { ...item, projectId }
-                                : item,
-                            ),
-                          )
-                        }
-                        isDisabled={disabled}
-                      >
-                        {projects.map((item) => (
-                          <SelectItem key={item.id} id={item.id}>
-                            {item.name}
-                          </SelectItem>
-                        ))}
-                      </Select>
-                      <Select
-                        aria-label={`卡点 ${index + 1} 严重程度`}
-                        selectedKey={blocker.severity}
-                        onSelectionChange={(severity) =>
-                          updateBlockers(
-                            blockers.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? {
-                                    ...item,
-                                    severity:
-                                      severity as DailyBlocker["severity"],
-                                  }
-                                : item,
-                            ),
-                          )
-                        }
-                        isDisabled={disabled}
-                      >
-                        {severityOptions.map(([value, label]) => (
-                          <SelectItem key={value} id={value}>
-                            {label}
-                          </SelectItem>
-                        ))}
-                      </Select>
+                      <div className="min-w-0 space-y-1.5">
+                        <span className="block px-1 text-xs font-medium text-slate-600">
+                          关联项目
+                        </span>
+                        <Select
+                          aria-label={`卡点 ${index + 1} 关联项目`}
+                          selectedKey={blocker.projectId}
+                          onSelectionChange={(projectId) =>
+                            updateBlockers(
+                              blockers.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? { ...item, projectId }
+                                  : item,
+                              ),
+                            )
+                          }
+                          isDisabled={disabled}
+                          triggerClassName="min-h-10"
+                        >
+                          {projects.map((item) => (
+                            <SelectItem key={item.id} id={item.id}>
+                              {item.name}
+                            </SelectItem>
+                          ))}
+                        </Select>
+                      </div>
+                      <div className="min-w-0 space-y-1.5">
+                        <span className="block px-1 text-xs font-medium text-slate-600">
+                          严重程度
+                        </span>
+                        <Select
+                          aria-label={`卡点 ${index + 1} 严重程度`}
+                          selectedKey={blocker.severity}
+                          onSelectionChange={(severity) =>
+                            updateBlockers(
+                              blockers.map((item, itemIndex) =>
+                                itemIndex === index
+                                  ? {
+                                      ...item,
+                                      severity:
+                                        severity as DailyBlocker["severity"],
+                                    }
+                                  : item,
+                              ),
+                            )
+                          }
+                          isDisabled={disabled}
+                          triggerClassName="min-h-10"
+                        >
+                          {severityOptions.map(([value, label]) => (
+                            <SelectItem key={value} id={value}>
+                              {label}
+                            </SelectItem>
+                          ))}
+                        </Select>
+                      </div>
                       <Button
                         type="button"
                         variant="ghost"
@@ -779,7 +791,7 @@ export function DailyForm({
                           if (!next.length) setBlockerOpen(false);
                         }}
                         aria-label={`删除卡点 ${index + 1}`}
-                        className="text-rose-700"
+                        className="mt-0 text-rose-700 lg:mt-6"
                       >
                         <Trash2 className="size-4" aria-hidden />
                       </Button>
@@ -793,7 +805,7 @@ export function DailyForm({
                     onClick={() =>
                       updateBlockers([...blockers, blankBlocker(projects)])
                     }
-                    className="text-rose-700"
+                    className="mt-0.5 text-rose-700"
                   >
                     <Plus className="size-3.5" aria-hidden />
                     添加卡点
