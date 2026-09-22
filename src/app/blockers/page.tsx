@@ -7,6 +7,7 @@ import { blocker, user, project } from "@/lib/db/schema";
 import { blockerVisibility } from "@/lib/blockers";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
 import { BlockerForm } from "@/components/workspace/blocker-form";
 
 const severityLabel = {
@@ -18,6 +19,16 @@ const statusLabel = {
   OPEN: "待处理",
   ACKNOWLEDGED: "已接收",
   RESOLVED: "已解决",
+} as const;
+const severityTone = {
+  NORMAL: "neutral",
+  IMPORTANT: "warning",
+  URGENT: "danger",
+} as const;
+const statusTone = {
+  OPEN: "warning",
+  ACKNOWLEDGED: "info",
+  RESOLVED: "success",
 } as const;
 
 export const metadata = { title: "阻塞中心" };
@@ -103,7 +114,7 @@ export default async function BlockersPage({
     <WorkspaceShell actor={actor} selected="blockers">
       <header>
         <h1 className="text-2xl font-medium leading-8">阻塞中心</h1>
-        <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
+        <p className="mt-2 text-sm font-normal leading-5 text-muted-foreground">
           {actor.role === "BOSS"
             ? "查看团队阻塞情况，事项由提出人和项目协作方跟进。"
             : "集中查看需要协调的事项，敏感内容只向相关人员展示。"}
@@ -141,7 +152,7 @@ export default async function BlockersPage({
           </ButtonLink>
         ))}
       </nav>
-      <section className="rounded-xl border border-slate-200/80 p-6">
+      <section className="rounded-xl border border-border bg-card p-6">
         {visible.length ? (
           <ul className="divide-y divide-separator-border">
             {visible.map(
@@ -152,28 +163,26 @@ export default async function BlockersPage({
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-base font-medium leading-6">
+                      <Badge color={severityTone[item.severity]}>
                         {severityLabel[item.severity]}
-                      </span>
-                      <span className="text-sm font-normal leading-5 text-slate-500">
+                      </Badge>
+                      <Badge color={statusTone[item.status]}>
                         {statusLabel[item.status]}
-                      </span>
+                      </Badge>
                       {item.isSensitive && (
-                        <span className="text-sm font-normal leading-5 text-slate-500">
-                          敏感
-                        </span>
+                        <Badge color="neutral">敏感内容</Badge>
                       )}
                     </div>
                     <p className="mt-2 whitespace-pre-wrap break-words">
                       {item.description}
                     </p>
-                    <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
+                    <p className="mt-2 text-sm font-normal leading-5 text-muted-foreground">
                       提出人：{reporter}
                       {coordinatorName ? ` · 协同人：${coordinatorName}` : ""}
                       {projectName ? ` · 项目：${projectName}` : ""}
                     </p>
                     {item.resolution && (
-                      <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
+                      <p className="mt-2 text-sm font-normal leading-5 text-muted-foreground">
                         处理说明：{item.resolution}
                       </p>
                     )}
@@ -193,13 +202,13 @@ export default async function BlockersPage({
         ) : (
           <div className="py-12 text-center">
             <p className="text-base font-medium leading-6">暂无可见阻塞</p>
-            <p className="mt-2 text-sm font-normal leading-5 text-slate-500">
+            <p className="mt-2 text-sm font-normal leading-5 text-muted-foreground">
               新的阻塞记录会显示在这里。
             </p>
           </div>
         )}
       </section>
-      <footer className="flex gap-3">
+      <footer className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
         {page > 1 && (
           <ButtonLink
             href={`/blockers?status=${status}${severity ? `&severity=${severity}` : ""}&page=${page - 1}`}

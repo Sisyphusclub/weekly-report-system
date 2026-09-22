@@ -19,12 +19,17 @@ export function BlockerStream({
     IMPORTANT: "重要",
     URGENT: "紧急",
   } as const;
+  const severityClass = {
+    NORMAL: "border-border bg-card",
+    IMPORTANT: "border-warning-border bg-warning-subtle",
+    URGENT: "border-danger-border bg-danger-subtle",
+  } as const;
   return (
     <div className="grid gap-3 lg:grid-cols-3">
       {items.map((item) => (
         <article
           key={item.id}
-          className="rounded-xl border border-rose-200 bg-rose-50 p-4"
+          className={`rounded-xl border p-4 ${severityClass[item.severity]}`}
         >
           <div className="flex items-center justify-between gap-2">
             <Badge
@@ -39,14 +44,14 @@ export function BlockerStream({
             >
               {severityLabel[item.severity]}
             </Badge>
-            <span className="text-[11px] font-normal leading-4 text-rose-700">
+            <span className="text-[11px] font-normal leading-4 text-muted-foreground">
               {item.age}
             </span>
           </div>
-          <p className="mt-3 line-clamp-2 text-sm font-medium leading-5 text-rose-700">
+          <p className="mt-3 line-clamp-2 text-sm font-medium leading-5 text-foreground">
             {item.description}
           </p>
-          <div className="mt-2 flex min-w-0 items-center gap-2 text-xs font-normal leading-4 text-rose-700">
+          <div className="mt-2 flex min-w-0 items-center gap-2 text-xs font-normal leading-4 text-muted-foreground">
             <Badge color="neutral" variant="caption" showIcon={false}>
               {item.projectName ?? "未关联项目"}
             </Badge>
@@ -64,7 +69,7 @@ export function BlockerStream({
         </article>
       ))}
       {items.length === 0 && (
-        <div className="lg:col-span-3 rounded-xl border border-dashed border-slate-200/80 px-4 py-8 text-center text-sm font-normal leading-5 text-slate-500">
+        <div className="lg:col-span-3 rounded-xl border border-dashed border-border px-4 py-8 text-center text-sm font-normal leading-5 text-muted-foreground">
           当前没有待协调阻塞
         </div>
       )}

@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/motion/button/base";
-import { Textarea } from "@/components/premium/forms";
+import { FormStatus, Textarea } from "@/components/premium/forms";
 type Item = {
   id: string;
   body: string;
@@ -11,6 +11,11 @@ type Item = {
   deletedAt: string | null;
   parentId: string | null;
 };
+
+const commentDateFormatter = new Intl.DateTimeFormat("zh-CN", {
+  dateStyle: "medium",
+  timeStyle: "short",
+});
 export function BlockerCommentSection({
   blockerId,
   actorId,
@@ -27,10 +32,14 @@ export function BlockerCommentSection({
   const [editing, setEditing] = useState<string | null>(null);
   const [replyTo, setReplyTo] = useState<string | null>(null);
   async function load() {
-    const r = await fetch(`/api/blockers/${blockerId}/comments`);
-    const d = await r.json();
-    if (r.ok) setItems(d.items);
-    else setMessage(d.error ?? "评论加载失败");
+    try {
+      const r = await fetch(`/api/blockers/${blockerId}/comments`);
+      const d = await r.json();
+      if (r.ok) setItems(d.items);
+      else setMessage(d.error ?? "评论加载失败");
+    } catch {
+      setMessage("评论暂时无法加载，请刷新后重试");
+    }
   }
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -39,56 +48,72 @@ export function BlockerCommentSection({
   async function submit() {
     if (!body.trim() || pending) return;
     setPending(true);
-    const r = await fetch(`/api/blockers/${blockerId}/comments`, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ body, parentId: replyTo }),
-    });
-    const d = await r.json();
-    if (r.ok) {
-      setBody("");
-      setReplyTo(null);
-      await load();
-    } else setMessage(d.error ?? "评论发布失败");
-    setPending(false);
+    setMessage("");
+    try {
+      const r = await fetch(`/api/blockers/${blockerId}/comments`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ body, parentId: replyTo }),
+      });
+      const d = await r.json();
+      if (r.ok) {
+        setBody("");
+        setReplyTo(null);
+        await load();
+      } else setMessage(d.error ?? "评论发布失败");
+    } catch {
+      setMessage("评论暂时无法发布，请稍后重试");
+    } finally {
+      setPending(false);
+    }
   }
   async function update(id: string) {
     setPending(true);
-    const r = await fetch(`/api/blockers/${blockerId}/comments/${id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ body }),
-    });
-    if (r.ok) {
-      setEditing(null);
-      setBody("");
-      await load();
-    } else setMessage("评论更新失败");
-    setPending(false);
+    try {
+      const r = await fetch(`/api/blockers/${blockerId}/comments/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ body }),
+      });
+      if (r.ok) {
+        setEditing(null);
+        setBody("");
+        await load();
+      } else setMessage("评论更新失败");
+    } catch {
+      setMessage("评论暂时无法更新，请稍后重试");
+    } finally {
+      setPending(false);
+    }
   }
   async function remove(id: string) {
     setPending(true);
-    const r = await fetch(`/api/blockers/${blockerId}/comments/${id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ deleted: true }),
-    });
-    if (r.ok) await load();
-    else setMessage("评论删除失败");
-    setPending(false);
+    try {
+      const r = await fetch(`/api/blockers/${blockerId}/comments/${id}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ deleted: true }),
+      });
+      if (r.ok) await load();
+      else setMessage("评论删除失败");
+    } catch {
+      setMessage("评论暂时无法删除，请稍后重试");
+    } finally {
+      setPending(false);
+    }
   }
   return (
-    <section className="mt-6 flex flex-col gap-3 rounded-xl border border-slate-200/80 p-6">
+    <section className="mt-6 flex flex-col gap-3 rounded-xl border border-border bg-card p-6">
       <h2 className="text-xl font-medium leading-7">
         阻塞评论{items.length ? `（${items.length}）` : ""}
       </h2>
       {items.length ? (
         <ul className="flex flex-col gap-2">
           {items.map((item) => (
-            <li key={item.id} className="border-b border-slate-200 pb-2">
+            <li key={item.id} className="border-b border-border pb-2">
               <strong>{item.authorName}</strong>
-              <span className="ml-2 text-sm font-normal leading-5 text-slate-500">
-                {new Date(item.createdAt).toLocaleString("zh-CN")}
+              <span className="ml-2 text-sm font-normal leading-5 text-muted-foreground">
+                {commentDateFormatter.format(new Date(item.createdAt))}
               </span>
               {editing === item.id ? (
                 <Textarea
@@ -153,7 +178,7 @@ export function BlockerCommentSection({
           ))}
         </ul>
       ) : (
-        <p className="text-slate-500">暂无评论</p>
+        <p className="text-muted-foreground">暂无评论</p>
       )}
       {!readOnly ? (
         <>
@@ -180,7 +205,11 @@ export function BlockerCommentSection({
       ) : (
         <p className="text-sm text-muted-foreground">评论仅供查看</p>
       )}
-      {message && <p role="alert">{message}</p>}
+      {message && (
+        <FormStatus tone="error" role="alert">
+          {message}
+        </FormStatus>
+      )}
     </section>
   );
 }

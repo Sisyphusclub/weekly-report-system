@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
-import { Textarea } from "@/components/premium/forms";
+import {
+  FormStatus,
+  Textarea,
+  type FormStatusTone,
+} from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 import { Select, SelectItem } from "@/components/premium/forms";
 import { Checkbox } from "@/components/premium/forms";
@@ -12,11 +16,13 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
   const [description, setDescription] = useState("");
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<FormStatusTone>("neutral");
   async function submit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (pending) return;
     setPending(true);
     setMessage("");
+    setMessageTone("neutral");
     try {
       const response = await fetch("/api/blockers", {
         method: "POST",
@@ -25,14 +31,17 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
       });
       const result = await response.json();
       if (!response.ok) {
-        setMessage(result.error);
+        setMessage(result.error ?? "提交阻塞失败，请稍后重试");
+        setMessageTone("error");
         return;
       }
       setMessage("阻塞已提交");
+      setMessageTone("success");
       setDescription("");
       router.refresh();
     } catch {
       setMessage("未能确认保存结果，请保留内容并刷新列表核对后再试");
+      setMessageTone("error");
     } finally {
       setPending(false);
     }
@@ -40,7 +49,7 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
   return (
     <form
       onSubmit={submit}
-      className={`flex flex-col gap-4 ${compact ? "" : "rounded-xl border border-slate-200/80 bg-white p-5 shadow-xs"}`}
+      className={`flex flex-col gap-4 ${compact ? "" : "rounded-xl border border-border bg-card p-5 shadow-xs"}`}
     >
       <h2 className={compact ? "sr-only" : "text-xl font-medium leading-7"}>
         提交阻塞
@@ -73,7 +82,7 @@ export function BlockerForm({ compact = false }: { compact?: boolean }) {
       <Button type="submit" disabled={pending}>
         {pending ? "正在提交…" : "提交阻塞"}
       </Button>
-      {message && <p role="status">{message}</p>}
+      {message && <FormStatus tone={messageTone}>{message}</FormStatus>}
     </form>
   );
 }

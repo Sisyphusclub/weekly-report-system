@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { Button } from "@/components/motion/button/base";
-import { Textarea } from "@/components/premium/forms";
+import { FormStatus, Textarea } from "@/components/premium/forms";
 export function BlockerActions({
   id,
   version,
@@ -22,6 +22,7 @@ export function BlockerActions({
       return;
     }
     setPending(true);
+    setMessage("");
     try {
       const r = await fetch(`/api/blockers/${id}`, {
         method: "PATCH",
@@ -33,7 +34,7 @@ export function BlockerActions({
         }),
       });
       const result = await r.json();
-      if (!r.ok) setMessage(result.error);
+      if (!r.ok) setMessage(result.error ?? "操作失败，请稍后重试");
       else location.reload();
     } catch {
       setMessage("操作失败，请刷新后重试");
@@ -66,14 +67,20 @@ export function BlockerActions({
       </div>
       {canResolve && (
         <Textarea
+          label="解决说明"
           value={resolution}
           onChange={(value) => setResolution(value)}
           maxLength={5000}
-          placeholder="解决说明"
+          placeholder="说明已采取的处理措施…"
           rows={4}
+          isDisabled={pending}
         />
       )}
-      {message && <p role="status">{message}</p>}
+      {message && (
+        <FormStatus tone="error" role="alert">
+          {message}
+        </FormStatus>
+      )}
     </div>
   );
 }
