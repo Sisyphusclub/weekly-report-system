@@ -306,6 +306,31 @@ function EmptyColumn({ kind }: { kind: EntryKind }) {
   );
 }
 
+function SummaryMetric({
+  label,
+  value,
+  detail,
+  accentClass,
+}: {
+  label: string;
+  value: string | number;
+  detail: string;
+  accentClass: string;
+}) {
+  return (
+    <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-xs">
+      <div className="flex items-center gap-2">
+        <span className={`size-2 rounded-full ${accentClass}`} aria-hidden />
+        <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      </div>
+      <p className="mt-2 text-2xl font-semibold tracking-tight text-foreground">
+        {value}
+      </p>
+      <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+    </div>
+  );
+}
+
 export function DailyForm({
   date,
   reporterName,
@@ -513,22 +538,8 @@ export function DailyForm({
         }
         title="今日工作台"
         description={`汇报人：${reporterName}，计划与实际在同一处核销。`}
-      />
-
-      <Panel className="overflow-hidden">
-        <CardHeader className="flex flex-wrap items-center justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <ClipboardCheck className="size-4 text-primary" aria-hidden />
-              <h2 className="text-base font-semibold text-foreground">
-                今日计划与实际
-              </h2>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              左侧维护计划，核销后自动带入右侧实际完成。
-            </p>
-          </div>
-          <div className="flex flex-wrap items-center gap-2">
+        actions={
+          <>
             <ReportDateControl
               value={selectedDate}
               disabled={state.dirty || state.pending || submitting}
@@ -541,14 +552,62 @@ export function DailyForm({
             />
             <Button
               type="button"
-              size="small"
+              size="medium"
               disabled={disabled || plans.length >= 100}
               onClick={() => openEntryModal("plan")}
             >
               <Plus className="size-3.5" aria-hidden />
               添加计划
             </Button>
+          </>
+        }
+      />
+
+      <section
+        aria-label="今日工作摘要"
+        className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
+      >
+        <SummaryMetric
+          label="工作计划"
+          value={plans.length}
+          detail="今天需要推进的事项"
+          accentClass="bg-info"
+        />
+        <SummaryMetric
+          label="已核销"
+          value={reconciledPlans}
+          detail="已从计划转入实际"
+          accentClass="bg-success"
+        />
+        <SummaryMetric
+          label="实际完成"
+          value={completedWorks}
+          detail="已登记完成的工作"
+          accentClass="bg-primary"
+        />
+        <SummaryMetric
+          label="计划达成率"
+          value={`${fulfillment}%`}
+          detail={state.dirty ? "修改后待同步" : "当前日报状态"}
+          accentClass={fulfillment === 100 ? "bg-success" : "bg-warning"}
+        />
+      </section>
+
+      <Panel className="overflow-hidden border-border-strong/80 shadow-md">
+        <CardHeader className="flex flex-wrap items-center justify-between gap-3 bg-muted/40 px-5 py-4 sm:px-6">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <ClipboardCheck className="size-4 text-primary" aria-hidden />
+              <h2 className="text-base font-semibold text-foreground">工作执行台</h2>
+              <Badge color="info">计划 → 实际</Badge>
+            </div>
+            <p className="mt-1 text-xs text-muted-foreground">
+              左侧维护计划，核销后自动带入右侧实际完成。
+            </p>
           </div>
+          <span className="text-xs font-medium text-muted-foreground">
+            {selectedDate === date ? "今天" : selectedDate}
+          </span>
         </CardHeader>
 
         <CardBody className="min-w-0 p-0">
@@ -556,13 +615,14 @@ export function DailyForm({
             <Col
               span={12}
               lg={6}
-              className="flex min-w-0 flex-col border-b border-border p-5 lg:border-b-0"
+              className="flex min-w-0 flex-col border-b border-info-border/70 bg-info-subtle/25 p-5 lg:border-b-0 lg:border-r lg:border-info-border/70 sm:p-6"
             >
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
-                  <h3 className="text-sm font-semibold text-foreground">
-                    今日工作计划
-                  </h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-foreground">今日工作计划</h3>
+                    <Badge color="info">待推进</Badge>
+                  </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
                     {reconciledPlans}/{plans.length} 项已核销
                   </p>
@@ -572,7 +632,7 @@ export function DailyForm({
                 <List
                   dataSource={plans}
                   rowKey={(_, index) => `plan-${index}`}
-                  itemClassName="min-h-[96px] border-slate-200 bg-slate-50/70 lg:h-[96px] lg:overflow-hidden"
+                  itemClassName="min-h-[96px] border-info-border/70 border-l-2 bg-card/90 shadow-xs lg:h-[96px] lg:overflow-hidden"
                   renderItem={(entry, index) => (
                     <PlanListItem
                       entry={entry}
@@ -610,12 +670,13 @@ export function DailyForm({
             <Col
               span={12}
               lg={6}
-              className="flex min-w-0 flex-col border-l border-slate-100 p-5"
+              className="flex min-w-0 flex-col bg-success-subtle/20 p-5 sm:p-6"
             >
               <div className="mb-3">
-                <h3 className="text-sm font-semibold text-foreground">
-                  今日实际完成
-                </h3>
+                <div className="flex items-center gap-2">
+                  <h3 className="text-sm font-semibold text-foreground">今日实际完成</h3>
+                  <Badge color="success">已完成</Badge>
+                </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {completedWorks}/{works.length} 项已完成
                 </p>
@@ -624,7 +685,7 @@ export function DailyForm({
                 <List
                   dataSource={works}
                   rowKey={(_, index) => `work-${index}`}
-                  itemClassName="min-h-[96px] border-slate-200 bg-white shadow-xs lg:h-[96px] lg:overflow-hidden"
+                  itemClassName="min-h-[96px] border-success-border/70 border-l-2 bg-card shadow-xs lg:h-[96px] lg:overflow-hidden"
                   renderItem={(entry, index) => (
                     <WorkListItem
                       entry={entry}
@@ -661,7 +722,7 @@ export function DailyForm({
                 size="small"
                 disabled={disabled || works.length >= 100}
                 onClick={() => openEntryModal("work")}
-                className="mt-3 text-primary"
+                className="mt-3 w-full justify-start border border-dashed border-success-border text-success hover:bg-success-subtle"
               >
                 <Plus className="size-3.5" aria-hidden />
                 插入临时工作
@@ -670,24 +731,24 @@ export function DailyForm({
           </Row>
         </CardBody>
 
-        <div className="border-t border-border bg-muted/30 p-4 sm:p-5">
+        <div className="border-t border-warning-border/70 bg-warning-subtle/45 p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <Checkbox
               isSelected={blockerOpen}
               onChange={toggleBlockers}
               isDisabled={disabled}
             >
-              <span className="font-medium text-slate-800">
+              <span className="font-medium text-foreground">
                 今日存在卡点或阻碍事项
               </span>
             </Checkbox>
-            <span className="text-xs text-slate-500">
+            <span className="text-xs text-muted-foreground">
               勾选后展开输入卡点和关联项目
             </span>
           </div>
 
           {blockerOpen ? (
-            <div className="mt-4 rounded-lg border border-border bg-card p-3.5 sm:p-4">
+            <div className="mt-4 rounded-lg border border-warning-border bg-card p-3.5 sm:p-4">
               {projects.length ? (
                 <div className="space-y-3">
                   {blockers.map((blocker, index) => (
@@ -715,7 +776,7 @@ export function DailyForm({
                         className="min-h-20"
                       />
                       <div className="min-w-0 space-y-1.5">
-                        <span className="block px-1 text-xs font-medium text-slate-600">
+                        <span className="block px-1 text-xs font-medium text-muted-foreground">
                           关联项目
                         </span>
                         <Select
@@ -741,7 +802,7 @@ export function DailyForm({
                         </Select>
                       </div>
                       <div className="min-w-0 space-y-1.5">
-                        <span className="block px-1 text-xs font-medium text-slate-600">
+                        <span className="block px-1 text-xs font-medium text-muted-foreground">
                           严重程度
                         </span>
                         <Select
@@ -785,7 +846,7 @@ export function DailyForm({
                           if (!next.length) setBlockerOpen(false);
                         }}
                         aria-label={`删除卡点 ${index + 1}`}
-                        className="mt-0 text-rose-700 lg:mt-6"
+                        className="mt-0 text-warning lg:mt-6"
                       />
                     </div>
                   ))}
@@ -797,14 +858,14 @@ export function DailyForm({
                     onClick={() =>
                       updateBlockers([...blockers, blankBlocker(projects)])
                     }
-                    className="mt-0.5 text-rose-700"
+                    className="mt-0.5 text-warning"
                   >
                     <Plus className="size-3.5" aria-hidden />
                     添加卡点
                   </Button>
                 </div>
               ) : (
-                <p className="flex items-center gap-2 text-sm text-rose-700">
+                <p className="flex items-center gap-2 text-sm text-warning">
                   <AlertTriangle className="size-4 shrink-0" aria-hidden />
                   暂无可关联项目，请联系管理员配置项目。
                 </p>
@@ -1111,6 +1172,19 @@ export function DailyForm({
                 今日计划 {plans.length} 项 · 已完成 {completedWorks} 项 · 达成率{" "}
                 {fulfillment}%
               </p>
+              <div
+                className="mt-2 h-1.5 max-w-56 overflow-hidden rounded-full bg-muted"
+                role="progressbar"
+                aria-label="计划达成率"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={fulfillment}
+              >
+                <div
+                  className="h-full rounded-full bg-primary transition-[width] duration-300"
+                  style={{ width: `${fulfillment}%` }}
+                />
+              </div>
               {state.message ? (
                 <p
                   role="status"
