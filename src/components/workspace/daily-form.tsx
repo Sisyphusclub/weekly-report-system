@@ -198,13 +198,12 @@ function PlanListItem({
             variant="ghost"
             size="xs"
             iconOnly
+            leadingIcon={Trash2}
             disabled={disabled}
             onClick={onRemove}
             aria-label={`删除第 ${index + 1} 项计划`}
             className="text-slate-400 hover:text-rose-700"
-          >
-            <Trash2 className="size-3.5" aria-hidden />
-          </Button>
+          />
         </div>
       }
     />
@@ -264,13 +263,12 @@ function WorkListItem({
                 variant="ghost"
                 size="xs"
                 iconOnly
+                leadingIcon={Trash2}
                 disabled={disabled}
                 onClick={onRemove}
                 aria-label={`删除第 ${index + 1} 项实际工作`}
                 className="text-slate-400 hover:text-rose-700"
-              >
-                <Trash2 className="size-3.5" aria-hidden />
-              </Button>
+              />
             </div>
           </div>
         </div>
@@ -782,6 +780,7 @@ export function DailyForm({
                         variant="ghost"
                         size="icon"
                         iconOnly
+                        leadingIcon={Trash2}
                         disabled={disabled}
                         onClick={() => {
                           const next = blockers.filter(
@@ -792,9 +791,7 @@ export function DailyForm({
                         }}
                         aria-label={`删除卡点 ${index + 1}`}
                         className="mt-0 text-rose-700 lg:mt-6"
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </Button>
+                      />
                     </div>
                   ))}
                   <Button
@@ -1087,6 +1084,7 @@ export function DailyForm({
                         variant="ghost"
                         size="icon"
                         iconOnly
+                        leadingIcon={Trash2}
                         disabled={disabled}
                         onClick={() =>
                           setEntryDraft({
@@ -1097,9 +1095,7 @@ export function DailyForm({
                           })
                         }
                         aria-label={`删除交付物 ${deliverableIndex + 1}`}
-                      >
-                        <Trash2 className="size-4" aria-hidden />
-                      </Button>
+                      />
                     </div>
                   ),
                 )}
