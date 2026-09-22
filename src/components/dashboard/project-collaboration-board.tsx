@@ -1,6 +1,7 @@
 "use client";
 
 import { CircleAlert, CircleCheck, ListChecks, UsersRound } from "lucide-react";
+import { memo } from "react";
 import { CompactCard } from "@/components/premium/cards/compact-card";
 import { EmptyStateBoard } from "@/components/premium/empty-states/empty-state-board";
 
@@ -108,7 +109,7 @@ export function ProjectCollaborationBoard({
   );
 }
 
-function ProjectCard({
+const ProjectCard = memo(function ProjectCard({
   project,
   lane,
 }: {
@@ -146,7 +147,7 @@ function ProjectCard({
       className="max-w-none"
     />
   );
-}
+});
 
 function ProgressTexture({ project }: { project: CollaborationProject }) {
   const segments = [

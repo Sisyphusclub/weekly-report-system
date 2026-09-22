@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { memo, useMemo } from "react";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import {
   ChartContainer,
@@ -40,7 +41,7 @@ const chartColors = [
   "var(--be-chart-5)",
 ];
 
-export function WorkAnalyticsCharts({
+export const WorkAnalyticsCharts = memo(function WorkAnalyticsCharts({
   categories,
   deliverables,
   embedded = false,
@@ -110,7 +111,7 @@ export function WorkAnalyticsCharts({
       </Card>
     </section>
   );
-}
+});
 
 function ChartSection({
   title,
@@ -132,21 +133,25 @@ function ChartSection({
   );
 }
 
-function CategoryDonut({
+const CategoryDonut = memo(function CategoryDonut({
   data: source,
   compact = false,
 }: {
   data: readonly CategoryDatum[];
   compact?: boolean;
 }) {
-  const data = source
-    .filter((item) => item.value > 0)
-    .slice(0, 5)
-    .map((item, index) => ({
-      ...item,
-      key: `category_${index}`,
-      fill: chartColors[index % chartColors.length],
-    }));
+  const data = useMemo(
+    () =>
+      source
+        .filter((item) => item.value > 0)
+        .slice(0, 5)
+        .map((item, index) => ({
+          ...item,
+          key: `category_${index}`,
+          fill: chartColors[index % chartColors.length],
+        })),
+    [source],
+  );
   const total = data.reduce((sum, item) => sum + item.value, 0);
   const config: ChartConfig = Object.fromEntries(
     data.map((item) => [
@@ -209,22 +214,26 @@ function CategoryDonut({
       </PieChart>
     </ChartContainer>
   );
-}
+});
 
-function DeliverableBars({
+const DeliverableBars = memo(function DeliverableBars({
   data: source,
   compact = false,
 }: {
   data: readonly DeliverableDatum[];
   compact?: boolean;
 }) {
-  const data = [...source]
-    .sort((a, b) => b.value - a.value)
-    .slice(0, compact ? 6 : 10)
-    .map((item) => ({
-      ...item,
-      displayValue: `${item.value} ${item.unit || "项"}`,
-    }));
+  const data = useMemo(
+    () =>
+      [...source]
+        .sort((a, b) => b.value - a.value)
+        .slice(0, compact ? 6 : 10)
+        .map((item) => ({
+          ...item,
+          displayValue: `${item.value} ${item.unit || "项"}`,
+        })),
+    [compact, source],
+  );
   const config: ChartConfig = {
     value: {
       label: "交付物",
@@ -288,7 +297,7 @@ function DeliverableBars({
       </BarChart>
     </ChartContainer>
   );
-}
+});
 
 function ChartEmptyState({
   text,

@@ -3,13 +3,14 @@ import {
   RiCheckboxCircleLine,
   RiTimeLine,
 } from "@remixicon/react";
+import { memo } from "react";
 import { Avatar } from "@/components/premium/avatar";
 import { ButtonLink } from "@/components/motion/button/base";
 import { Badge } from "@/components/premium/badge";
 import { cx } from "@/utils/cx";
 import { TaskItemRow, type WorkStatus } from "./task-item-row";
 
-export function MemberCompareCard({
+export const MemberCompareCard = memo(function MemberCompareCard({
   member,
   plans,
   hasRisk = false,
@@ -153,5 +154,5 @@ export function MemberCompareCard({
       </div>
     </article>
   );
-}
+});
 
