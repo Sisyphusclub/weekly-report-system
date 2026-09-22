@@ -81,8 +81,7 @@ export function StatisticCard({
     <Card
       className={cx(
         "h-full min-h-24",
-        tone === "danger" &&
-          "border-danger-border bg-danger-subtle text-destructive",
+        tone === "danger" && "border-danger-border/70 bg-card",
         className,
       )}
     >

@@ -64,8 +64,8 @@ const reportColumns: TableColumn<RecentReport>[] = [
       <p
         className={
           item.deliverableSummary === "未登记"
-            ? "truncate text-slate-400"
-            : "truncate text-slate-600"
+            ? "truncate text-muted-foreground"
+            : "truncate text-foreground"
         }
       >
         {item.deliverableSummary}
@@ -81,13 +81,13 @@ const reportColumns: TableColumn<RecentReport>[] = [
         <Badge
           status="success"
           text="已提交"
-          className="border-emerald-200 bg-emerald-50 text-emerald-700"
+          className="border-success-border bg-success-subtle text-success"
         />
       ) : (
         <Badge
           status="warning"
           text="草稿"
-          className="border-amber-200 bg-amber-50 text-amber-700"
+          className="border-warning-border bg-warning-subtle text-warning"
         />
       ),
   },
@@ -208,9 +208,9 @@ export function EmployeeDashboard({
 
         {openBlockers > 0 ? (
           <Alert
-            type="error"
+            type="warning"
             showIcon
-            message={`${openBlockers} 项卡点正在等待协调`}
+            message={`${openBlockers} 项卡点待协调`}
             className="rounded-none border-x-0 border-t-0"
             action={
               <ButtonLink
@@ -218,7 +218,7 @@ export function EmployeeDashboard({
                 variant="ghost"
                 size="small"
                 trailingIcon={ArrowRight}
-                className="text-rose-700 hover:bg-rose-700 hover:text-white"
+                className="text-warning hover:bg-warning hover:text-card"
               >
                 查看卡点
               </ButtonLink>
@@ -305,8 +305,8 @@ function WorkColumn({
         emptyState={empty}
         itemClassName={
           kind === "plan"
-            ? "border-slate-200 bg-slate-50/70 shadow-none"
-            : "bg-white shadow-xs"
+            ? "border-info-border/70 border-l-2 bg-info-subtle/30 shadow-none"
+            : "border-success-border/70 border-l-2 bg-card shadow-xs"
         }
         renderItem={(entry, index) => (
           <ListItem
@@ -319,7 +319,7 @@ function WorkColumn({
                   variant="ghost"
                   size="xs"
                   trailingIcon={ArrowRight}
-                  className="h-auto shrink-0 rounded bg-blue-50 px-2 py-1 text-xs text-blue-600 hover:bg-blue-100 hover:text-blue-700"
+                  className="h-auto shrink-0 rounded bg-info-subtle px-2 py-1 text-xs text-info hover:bg-info-subtle/80 hover:text-info"
                   aria-label={`核销完成：${entry.content}`}
                 >
                   核销完成
@@ -357,12 +357,12 @@ function WorkStatusBadge({ status }: { status: DailyEntry["status"] }) {
     DONE: {
       status: "success",
       text: "已完成",
-      className: "border-emerald-200 bg-emerald-50 text-emerald-700",
+      className: "border-success-border bg-success-subtle text-success",
     },
     BLOCKED: {
       status: "danger",
       text: "阻塞",
-      className: "border-rose-200 bg-rose-50 text-rose-700",
+      className: "border-danger-border bg-danger-subtle text-destructive",
     },
     CANCELED: { status: "neutral", text: "已取消", className: "" },
   } as const;
