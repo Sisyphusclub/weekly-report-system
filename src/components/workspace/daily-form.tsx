@@ -17,6 +17,7 @@ import { useAnimatedSidebar } from "@/components/motion/animated-sidebar";
 import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { FooterToolbar } from "@/components/premium/footer-toolbar";
+import { PageHeader, Panel } from "@/components/premium/page-header";
 import {
   Checkbox,
   DatePicker,
@@ -494,33 +495,27 @@ export function DailyForm({
       }}
       className={`mx-auto flex w-full max-w-7xl flex-col gap-4 ${!preview ? "pb-20" : ""}`}
     >
-      <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-        <div className="min-w-0">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="text-xs font-semibold text-primary">今日工作</p>
-            <Badge
-              variant="caption"
-              color={state.submitted ? "success" : "warning"}
-            >
-              {state.submitted
-                ? "已提交"
-                : state.pending
-                  ? "正在同步"
-                  : state.dirty
-                    ? "待同步"
-                    : "草稿已同步"}
-            </Badge>
-          </div>
-          <h1 className="mt-2 text-2xl font-bold text-foreground">
-            今日工作台
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            汇报人：{reporterName}，计划与实际在同一处核销。
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow="今日工作"
+        meta={
+          <Badge
+            variant="caption"
+            color={state.submitted ? "success" : "warning"}
+          >
+            {state.submitted
+              ? "已提交"
+              : state.pending
+                ? "正在同步"
+                : state.dirty
+                  ? "待同步"
+                  : "草稿已同步"}
+          </Badge>
+        }
+        title="今日工作台"
+        description={`汇报人：${reporterName}，计划与实际在同一处核销。`}
+      />
 
-      <Card className="overflow-hidden">
+      <Panel className="overflow-hidden">
         <CardHeader className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -675,7 +670,7 @@ export function DailyForm({
           </Row>
         </CardBody>
 
-        <div className="border-t border-slate-100 bg-slate-50/60 p-4">
+        <div className="border-t border-border bg-muted/30 p-4 sm:p-5">
           <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <Checkbox
               isSelected={blockerOpen}
@@ -692,7 +687,7 @@ export function DailyForm({
           </div>
 
           {blockerOpen ? (
-            <div className="mt-3 border-t border-border pt-4">
+            <div className="mt-4 rounded-lg border border-border bg-card p-3.5 sm:p-4">
               {projects.length ? (
                 <div className="space-y-3">
                   {blockers.map((blocker, index) => (
@@ -817,18 +812,19 @@ export function DailyForm({
             </div>
           ) : null}
 
-          <Input
-            label="补充说明（可选）"
-            value={state.content.summary}
-            onChange={(summary) => controller.update({ summary })}
-            placeholder="补充今日渠道数据与协同事项…"
-            isDisabled={disabled}
-            maxLength={10000}
-            size="small"
-            className="mt-3"
-          />
+          <div className="mt-5 border-t border-border pt-4">
+            <Input
+              label="补充说明（可选）"
+              value={state.content.summary}
+              onChange={(summary) => controller.update({ summary })}
+              placeholder="补充今日渠道数据与协同事项…"
+              isDisabled={disabled}
+              maxLength={10000}
+              size="small"
+            />
+          </div>
         </div>
-      </Card>
+      </Panel>
 
       {preview && !state.submitted ? (
         <Card aria-label="提交预览">
