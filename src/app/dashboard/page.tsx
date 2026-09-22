@@ -500,7 +500,7 @@ function PageIntro({
   action?: React.ReactNode;
 }) {
   return (
-    <header className="mx-auto flex w-full max-w-7xl flex-wrap items-end justify-between gap-4">
+    <header className="flex w-full flex-wrap items-end justify-between gap-4">
       <div>
         <p className="text-xs font-semibold leading-4 uppercase tracking-[0.08em] text-primary">
           {eyebrow}

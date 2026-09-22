@@ -13,7 +13,6 @@ import {
 } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import { Alert } from "@/components/premium/alert";
 import { Avatar } from "@/components/premium/avatar";
 import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
@@ -26,7 +25,6 @@ import {
   TabsTrigger,
 } from "@/components/motion/tabs";
 import { WorkAnalyticsCharts } from "@/components/dashboard/work-analytics-charts";
-import { PlanStrip } from "@/components/dashboard/plan-strip";
 import { Button } from "@/components/motion/button/base";
 import { ProgressCircle } from "@/components/premium/stats/progress-circle";
 import { StatisticCard } from "@/components/premium/stats/statistic-card";
@@ -60,21 +58,13 @@ export function BossDashboard({
   const projectNames = new Map(
     breakdown.projects.map((item) => [item.id, item.name]),
   );
-  const blockedItems = breakdown.blockerItems.slice(0, 3);
-  const hasBlockers = metrics.openBlockers > 0 && blockedItems.length > 0;
+  const firstBlocker = breakdown.blockerItems[0];
   const submissionRate = todaySubmission.total
     ? percent(todaySubmission.submitted, todaySubmission.total)
     : 0;
   const planRate = breakdown.todayPlanFulfillment.rate ?? 0;
-  const attentionMembers = breakdown.members.filter(
-    (member) =>
-      member.openBlockers > 0 ||
-      !member.todaySubmitted ||
-      (member.todayPlans > 0 && member.todayCompleted < member.todayPlans),
-  );
-
   return (
-    <div className="mx-auto w-full max-w-7xl">
+    <div className="w-full min-w-0">
       <DashboardFilters
         selectedDate={selectedDate}
         selectedProject={selectedProjectId}
@@ -110,10 +100,11 @@ export function BossDashboard({
         <TabsContent value="overview">
           <div className="flex flex-col gap-4">
             <section
-              className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4"
+              className="grid grid-cols-2 gap-2.5 xl:grid-cols-4"
               aria-label="团队指标概览"
             >
               <StatisticCard
+                compact
                 className="h-20 min-h-20"
                 icon={Users}
                 label="团队人数"
@@ -122,6 +113,7 @@ export function BossDashboard({
                 tone="neutral"
               />
               <StatisticCard
+                compact
                 className="h-20 min-h-20"
                 icon={CalendarCheck2}
                 label="今日提交"
@@ -129,16 +121,19 @@ export function BossDashboard({
                 suffix={`/ ${todaySubmission.total} 人`}
                 tone="success"
                 trailing={
-                  <ProgressCircle
-                    value={submissionRate}
-                    size={34}
-                    stroke={3.5}
-                    tone="success"
-                    label="今日提交率"
-                  />
+                  <span className="hidden xl:block">
+                    <ProgressCircle
+                      value={submissionRate}
+                      size={34}
+                      stroke={3.5}
+                      tone="success"
+                      label="今日提交率"
+                    />
+                  </span>
                 }
               />
               <StatisticCard
+                compact
                 className="h-20 min-h-20"
                 icon={Gauge}
                 label="计划兑现率"
@@ -146,16 +141,19 @@ export function BossDashboard({
                 suffix="%"
                 tone="info"
                 trailing={
-                  <ProgressCircle
-                    value={planRate}
-                    size={34}
-                    stroke={3.5}
-                    tone="primary"
-                    label="计划兑现率"
-                  />
+                  <span className="hidden xl:block">
+                    <ProgressCircle
+                      value={planRate}
+                      size={34}
+                      stroke={3.5}
+                      tone="primary"
+                      label="计划兑现率"
+                    />
+                  </span>
                 }
               />
               <StatisticCard
+                compact
                 className="h-20 min-h-20"
                 icon={CircleAlert}
                 label="开放阻塞"
@@ -165,22 +163,25 @@ export function BossDashboard({
               />
             </section>
 
-            <Alert
-              type={hasBlockers ? "error" : "success"}
-              showIcon
-              message={
-                hasBlockers
-                  ? `团队阻塞概览 · ${metrics.openBlockers} 项开放`
-                  : "团队阻塞概览 · 当前无开放事项"
-              }
-              description={
-                hasBlockers
-                  ? blockedItems
-                      .map((item) => `${item.projectName}：${item.description}`)
-                      .join(" · ")
-                  : "当前没有开放阻塞记录。"
-              }
-            />
+            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border px-1 pb-3 text-sm">
+              <CircleAlert
+                className={cx(
+                  "size-4 shrink-0",
+                  metrics.openBlockers ? "text-destructive" : "text-success",
+                )}
+                aria-hidden
+              />
+              <span className="font-medium text-foreground">
+                {metrics.openBlockers
+                  ? `${metrics.openBlockers} 项开放阻塞`
+                  : "当前无开放阻塞"}
+              </span>
+              {firstBlocker ? (
+                <span className="min-w-0 truncate text-muted-foreground">
+                  {firstBlocker.projectName} · {firstBlocker.description}
+                </span>
+              ) : null}
+            </div>
 
             <section
               className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(390px,2fr)]"
@@ -239,77 +240,6 @@ export function BossDashboard({
                 }))}
               />
             </section>
-
-            <Card>
-              <CardHeader className="flex items-start justify-between gap-3 py-3.5">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <Users className="size-4 text-primary" aria-hidden />
-                    <h2 className="text-sm font-semibold text-foreground">
-                      人员履约状态
-                    </h2>
-                  </div>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    默认展示需要跟进的成员，点击姓名查看当日计划与实际
-                  </p>
-                </div>
-                <Tag color="neutral" className="shrink-0">
-                  {attentionMembers.length} 人需关注
-                </Tag>
-              </CardHeader>
-              <CardBody className="p-4">
-                {attentionMembers.length ? (
-                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                    {attentionMembers.map((member) => (
-                      <Button
-                        key={member.id}
-                        variant="outline"
-                        size="medium"
-                        onClick={() => setSelectedMember(member)}
-                        className="h-auto min-w-0 justify-start gap-2.5 rounded-lg px-3 py-2.5 text-left"
-                      >
-                        <Avatar initials={member.name.slice(0, 1)} size="sm" />
-                        <span className="min-w-0 flex-1">
-                          <span className="flex min-w-0 items-center gap-1.5">
-                            <span className="truncate text-sm font-medium text-foreground">
-                              {member.name}
-                            </span>
-                            <span
-                              className={cx(
-                                "size-1.5 shrink-0 rounded-full",
-                                member.openBlockers
-                                  ? "bg-destructive"
-                                  : "bg-warning",
-                              )}
-                              aria-hidden
-                            />
-                          </span>
-                          <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                            {member.openBlockers
-                              ? `${member.openBlockers} 项阻塞`
-                              : member.todaySubmitted
-                                ? `计划完成 ${percent(member.todayCompleted, member.todayPlans)}%`
-                                : "今日尚未提交"}
-                          </span>
-                        </span>
-                        <ArrowRight
-                          className="size-3.5 shrink-0 text-muted-foreground"
-                          aria-hidden
-                        />
-                      </Button>
-                    ))}
-                  </div>
-                ) : (
-                  <EmptyState text="当前没有需要跟进的成员" />
-                )}
-                {breakdown.members.length > attentionMembers.length ? (
-                  <p className="mt-3 text-xs text-muted-foreground">
-                    另有 {breakdown.members.length - attentionMembers.length}{" "}
-                    名成员状态正常
-                  </p>
-                ) : null}
-              </CardBody>
-            </Card>
           </div>
         </TabsContent>
 
@@ -317,13 +247,10 @@ export function BossDashboard({
           <DailySummary
             breakdown={breakdown}
             todaySubmission={todaySubmission}
-            memberCount={memberCount}
-            selectedDate={selectedDate}
           />
-          <DailyOverviewGrid
+          <MemberRoster
             members={breakdown.members}
             blockerItems={breakdown.blockerItems}
-            projectNames={projectNames}
             onOpenMember={setSelectedMember}
             selectedDate={selectedDate}
           />
@@ -420,389 +347,203 @@ function DashboardFilters({
 function DailySummary({
   breakdown,
   todaySubmission,
-  memberCount,
-  selectedDate,
 }: {
   breakdown: DashboardBreakdown;
   todaySubmission: { submitted: number; total: number };
-  memberCount: number;
-  selectedDate: string;
 }) {
-  const categoryMax = Math.max(
-    ...breakdown.categoryBreakdown.map((item) => item.value),
-    1,
+  const actualCount = breakdown.members.reduce(
+    (total, member) => total + member.todayActualItems.length,
+    0,
   );
-  const deliverableMax = Math.max(
-    ...breakdown.deliverableSummary.map((item) => item.quantity),
-    1,
-  );
-  const actualItems = breakdown.members.flatMap(
-    (member) => member.todayActualItems,
-  );
-  const completedActuals = actualItems.filter(
-    (item) => item.status === "DONE",
-  ).length;
-  const followUpActuals = actualItems.filter(
-    (item) => item.status !== "DONE",
-  ).length;
   return (
-    <div className="mb-4 flex flex-col gap-4">
-      <section
-        className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-6"
-        aria-label="日报统计"
-      >
-        <StatisticCard
-          icon={Users}
-          label="部门人数"
-          value={memberCount}
-          suffix="人"
-          tone="neutral"
-        />
-        <StatisticCard
-          icon={ClipboardList}
-          label="工作项总数"
-          value={breakdown.members.reduce(
-            (sum, member) => sum + member.todayActualItems.length,
-            0,
-          )}
-          suffix="项"
-          tone="info"
-        />
-        <StatisticCard
-          icon={CalendarCheck2}
-          label="已完成"
-          value={completedActuals}
-          suffix="项"
-          tone="success"
-        />
-        <StatisticCard
-          icon={CircleAlert}
-          label="待跟进"
-          value={followUpActuals}
-          suffix="项"
-          tone="danger"
-        />
-        <StatisticCard
-          icon={Gauge}
-          label="工作计划"
-          value={breakdown.todayPlanFulfillment.due}
-          suffix="项"
-          tone="neutral"
-        />
-        <StatisticCard
-          icon={CalendarCheck2}
-          label="已提交"
-          value={todaySubmission.submitted}
-          suffix={`/ ${todaySubmission.total} 人`}
-          tone="success"
-        />
-      </section>
-
-      <Card>
-        <CardHeader className="flex items-start justify-between gap-3 py-3.5">
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">
-              当日工作计划
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              {selectedDate.replaceAll("-", ".")} · 按成员查看计划状态
-            </p>
-          </div>
-          <Tag color="neutral">
-            {breakdown.todayPlanFulfillment.completed}/
-            {breakdown.todayPlanFulfillment.due} 已完成
-          </Tag>
-        </CardHeader>
-        <CardBody className="p-0">
-          <PlanStrip>
-            {breakdown.members.map((member) => (
-              <article
-                key={member.id}
-                className="w-[236px] shrink-0 rounded-xl border border-border bg-card p-3.5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <div className="flex min-w-0 items-center gap-2">
-                    <Avatar initials={member.name.slice(0, 1)} size="sm" />
-                    <span className="truncate text-sm font-semibold text-foreground">
-                      {member.name}
-                    </span>
-                  </div>
-                  <Badge color={member.todaySubmitted ? "success" : "warning"}>
-                    {member.todaySubmitted ? "已提交" : "未提交"}
-                  </Badge>
-                </div>
-                <div className="mt-3 space-y-2">
-                  {member.todayPlanItems.slice(0, 3).map((item, index) => (
-                    <div
-                      key={`${member.id}-plan-${index}`}
-                      className="flex items-start gap-2 text-xs text-muted-foreground"
-                    >
-                      <span
-                        className={cx(
-                          "mt-1 size-1.5 shrink-0 rounded-full",
-                          item.status === "DONE" ? "bg-success" : "bg-warning",
-                        )}
-                      />
-                      <span className="line-clamp-2">{item.content}</span>
-                    </div>
-                  ))}
-                  {!member.todayPlanItems.length ? (
-                    <p className="text-xs text-muted-foreground">暂无计划</p>
-                  ) : null}
-                </div>
-              </article>
-            ))}
-          </PlanStrip>
-        </CardBody>
-      </Card>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader className="py-3.5">
-            <h2 className="text-sm font-semibold text-foreground">
-              工作类型分布
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              按实际工作条目统计
-            </p>
-          </CardHeader>
-          <CardBody className="space-y-3">
-            {breakdown.categoryBreakdown.length ? (
-              breakdown.categoryBreakdown.slice(0, 8).map((item) => (
-                <div key={item.name} className="flex items-center gap-3">
-                  <span className="w-16 shrink-0 truncate text-xs text-muted-foreground">
-                    {item.name}
-                  </span>
-                  <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-primary"
-                      style={{
-                        width: `${Math.round((item.value / categoryMax) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="w-8 text-right text-xs font-semibold tabular-nums text-foreground">
-                    {item.value}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <EmptyState text="暂无实际工作" />
-            )}
-          </CardBody>
-        </Card>
-        <Card>
-          <CardHeader className="py-3.5">
-            <h2 className="text-sm font-semibold text-foreground">
-              产出物统计
-            </h2>
-            <p className="mt-1 text-xs text-muted-foreground">
-              从日报产出字段汇总
-            </p>
-          </CardHeader>
-          <CardBody className="space-y-3">
-            {breakdown.deliverableSummary.length ? (
-              breakdown.deliverableSummary.slice(0, 8).map((item) => (
-                <div key={item.unitId} className="flex items-center gap-3">
-                  <span className="w-20 shrink-0 truncate text-xs text-muted-foreground">
-                    {item.label}
-                  </span>
-                  <div className="h-2 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
-                    <div
-                      className="h-full rounded-full bg-info"
-                      style={{
-                        width: `${Math.round((item.quantity / deliverableMax) * 100)}%`,
-                      }}
-                    />
-                  </div>
-                  <span className="w-14 text-right text-xs font-semibold tabular-nums text-foreground">
-                    {item.quantity} {item.unit}
-                  </span>
-                </div>
-              ))
-            ) : (
-              <EmptyState text="暂无登记产出" />
-            )}
-          </CardBody>
-        </Card>
-      </div>
-    </div>
+    <section
+      className="mb-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4"
+      aria-label="日报统计"
+    >
+      <StatisticCard
+        compact
+        icon={CalendarCheck2}
+        label="今日提交"
+        value={todaySubmission.submitted}
+        suffix={`/ ${todaySubmission.total} 人`}
+        tone="success"
+      />
+      <StatisticCard
+        compact
+        icon={ClipboardList}
+        label="实际工作"
+        value={actualCount}
+        suffix="项"
+        tone="info"
+      />
+      <StatisticCard
+        compact
+        icon={Gauge}
+        label="计划完成"
+        value={breakdown.todayPlanFulfillment.completed}
+        suffix={`/ ${breakdown.todayPlanFulfillment.due} 项`}
+        tone="neutral"
+      />
+      <StatisticCard
+        compact
+        icon={CircleAlert}
+        label="开放阻塞"
+        value={breakdown.blockerItems.length}
+        suffix="项"
+        tone={breakdown.blockerItems.length ? "danger" : "neutral"}
+      />
+    </section>
   );
 }
 
-function DailyOverviewGrid({
+function MemberRoster({
   members,
   blockerItems,
-  projectNames,
   onOpenMember,
   selectedDate,
 }: {
   members: DashboardBreakdown["members"];
   blockerItems: DashboardBreakdown["blockerItems"];
-  projectNames: Map<string, string>;
   onOpenMember: (member: Member) => void;
   selectedDate: string;
 }) {
-  if (!members.length) return <EmptyState text="暂无团队日报数据" />;
+  const rankedMembers = [...members].sort(
+    (a, b) => memberPriority(a) - memberPriority(b),
+  );
+  const attentionCount = members.filter(
+    (member) => memberPriority(member) < 3,
+  ).length;
 
   return (
-    <section
-      className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3"
+    <Card
+      className="min-w-0 overflow-hidden"
       aria-label={`${selectedDate} 全员日报速览`}
     >
-      {members.map((member, index) => (
-        <MemberDailyCard
-          key={member.id}
-          member={member}
-          blockers={blockerItems.filter(
-            (item) =>
-              item.reporterId === member.id || item.coordinatorId === member.id,
-          )}
-          projectNames={projectNames}
-          avatarClassName={avatarTone(index)}
-          onOpen={() => onOpenMember(member)}
-        />
-      ))}
-    </section>
+      <CardHeader className="flex flex-wrap items-center justify-between gap-2 py-3.5">
+        <div className="min-w-0">
+          <h2 className="text-sm font-semibold text-foreground">成员日报</h2>
+          <p className="mt-1 text-xs text-muted-foreground">
+            按阻塞、未提交和计划进度排序
+          </p>
+        </div>
+        <Tag color={attentionCount ? "warning" : "success"}>
+          {attentionCount ? `${attentionCount} 人需关注` : "全部正常"}
+        </Tag>
+      </CardHeader>
+      {members.length ? (
+        <div className="divide-y divide-border">
+          <div className="hidden grid-cols-[minmax(150px,1fr)_minmax(180px,2fr)_90px_90px_100px_16px] gap-4 bg-muted/40 px-5 py-2 text-xs text-muted-foreground xl:grid">
+            <span>成员</span>
+            <span>工作摘要</span>
+            <span>实际工作</span>
+            <span>计划完成</span>
+            <span>状态</span>
+            <span aria-hidden />
+          </div>
+          {rankedMembers.map((member, index) => (
+            <MemberStatusRow
+              key={member.id}
+              member={member}
+              blocker={
+                blockerItems.find(
+                  (item) =>
+                    item.reporterId === member.id ||
+                    item.coordinatorId === member.id,
+                )?.description
+              }
+              avatarClassName={avatarTone(index)}
+              onOpen={() => onOpenMember(member)}
+            />
+          ))}
+        </div>
+      ) : (
+        <EmptyState text="暂无团队日报数据" />
+      )}
+    </Card>
   );
 }
 
-function MemberDailyCard({
+function MemberStatusRow({
   member,
-  blockers,
-  projectNames,
+  blocker,
   avatarClassName,
   onOpen,
 }: {
   member: Member;
-  blockers: DashboardBreakdown["blockerItems"];
-  projectNames: Map<string, string>;
+  blocker?: string;
   avatarClassName: string;
   onOpen: () => void;
 }) {
-  const status = member.openBlockers
-    ? { color: "danger" as const, label: "阻塞" }
-    : member.todaySubmitted
-      ? { color: "success" as const, label: "已提交" }
-      : { color: "warning" as const, label: "进行中" };
+  const priority = memberPriority(member);
+  const status =
+    priority === 0
+      ? { color: "danger" as const, label: `${member.openBlockers} 项阻塞` }
+      : priority === 1
+        ? { color: "warning" as const, label: "未提交" }
+        : priority === 2
+          ? { color: "warning" as const, label: "计划待完成" }
+          : { color: "success" as const, label: "已提交" };
+  const preview = blocker
+    ? `阻塞：${blocker}`
+    : (member.todayActualItems[0]?.content ??
+      member.todayPlanItems[0]?.content ??
+      "暂无工作记录");
 
   return (
-    <Card className="h-full min-w-0 overflow-hidden">
-      {blockers.length ? (
-        <Alert
-          type="error"
-          showIcon
-          className="rounded-none border-x-0 border-t-0"
-          message={`卡点：${blockers[0].description}`}
-          description={
-            blockers.length > 1
-              ? `另有 ${blockers.length - 1} 项开放阻塞`
-              : undefined
-          }
+    <Button
+      variant="ghost"
+      size="medium"
+      onClick={onOpen}
+      whileHover={{ scale: 1 }}
+      pressScale={1}
+      className="grid h-auto min-h-16 w-full min-w-0 grid-cols-[minmax(0,1fr)_auto] items-center gap-x-4 gap-y-1 rounded-none px-4 py-3 text-left hover:bg-muted/50 sm:px-5 xl:grid-cols-[minmax(150px,1fr)_minmax(180px,2fr)_90px_90px_100px_16px]"
+      aria-label={`查看${member.name}的日报明细，${status.label}`}
+    >
+      <span className="flex min-w-0 items-center gap-2.5">
+        <Avatar
+          initials={member.name.slice(0, 1)}
+          size="sm"
+          className={avatarClassName}
         />
-      ) : null}
-      <CardHeader className="flex items-center justify-between gap-3 py-3">
-        <Button
-          variant="ghost"
-          size="small"
-          onClick={onOpen}
-          className="-ml-2 h-auto min-w-0 justify-start px-2 py-1"
-        >
-          <Avatar
-            initials={member.name.slice(0, 1)}
-            size="md"
-            className={avatarClassName}
-          />
-          <span className="truncate text-sm font-semibold text-foreground">
-            {member.name}
-          </span>
-        </Button>
+        <span className="truncate text-sm font-semibold text-foreground">
+          {member.name}
+        </span>
+      </span>
+      <span
+        className={cx(
+          "col-span-2 row-start-2 min-w-0 truncate text-xs text-muted-foreground xl:col-span-1 xl:row-start-auto xl:text-sm",
+          priority === 0 && "text-destructive",
+        )}
+        title={preview}
+      >
+        {preview}
+      </span>
+      <span className="hidden text-sm tabular-nums text-foreground xl:block">
+        {member.todayActualItems.length} 项
+      </span>
+      <span className="hidden text-sm tabular-nums text-foreground xl:block">
+        {member.todayCompleted} / {member.todayPlans}
+      </span>
+      <span className="col-start-2 row-start-1 xl:col-start-auto xl:row-start-auto">
         <Badge color={status.color}>{status.label}</Badge>
-      </CardHeader>
-      <CardBody className="space-y-4 p-4">
-        <section>
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 className="text-xs font-semibold text-foreground">当日计划</h3>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {member.todayPlanItems.length} 项
-            </span>
-          </div>
-          <List
-            dataSource={member.todayPlanItems}
-            rowKey={(item, itemIndex) =>
-              `${member.id}-plan-${itemIndex}-${item.content}`
-            }
-            className="space-y-0"
-            itemClassName="rounded-none border-0 border-b border-border bg-transparent px-0 py-2 last:border-b-0"
-            emptyState={
-              <p className="text-xs text-muted-foreground">当日暂无计划</p>
-            }
-            renderItem={(item, itemIndex) => (
-              <ListItem
-                index={String(itemIndex + 1).padStart(2, "0")}
-                title={item.content}
-                footer={
-                  <span className="truncate text-xs text-muted-foreground">
-                    {item.projectId
-                      ? (projectNames.get(item.projectId) ?? "未关联项目")
-                      : "未关联项目"}
-                    {item.category ? ` · ${item.category}` : ""}
-                  </span>
-                }
-              />
-            )}
-          />
-        </section>
-        <section className="border-t border-border pt-3">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <h3 className="text-xs font-semibold text-foreground">实际工作</h3>
-            <span className="text-xs tabular-nums text-muted-foreground">
-              {member.todayActualItems.length} 项
-            </span>
-          </div>
-          <List
-            dataSource={member.todayActualItems}
-            rowKey={(item, itemIndex) =>
-              `${member.id}-actual-${itemIndex}-${item.content}`
-            }
-            className="space-y-0"
-            itemClassName="rounded-none border-0 border-b border-border bg-transparent px-0 py-2.5 last:border-b-0"
-            emptyState={
-              <p className="text-xs text-muted-foreground">当日暂无实际工作</p>
-            }
-            renderItem={(item, itemIndex) => (
-              <ListItem
-                index={String(itemIndex + 1).padStart(2, "0")}
-                title={
-                  <div className="min-w-0">
-                    <div className="flex min-w-0 flex-wrap items-center gap-1.5">
-                      <span>{item.content}</span>
-                      <Tag color="neutral">{item.category || "未分类"}</Tag>
-                    </div>
-                  </div>
-                }
-                footer={
-                  item.deliverables.length ? (
-                    <div className="flex min-w-0 flex-wrap gap-1">
-                      {item.deliverables.map((deliverable) => (
-                        <Tag key={deliverable} color="processing">
-                          产出：{deliverable.replace(/^产出[：:]\s*/, "")}
-                        </Tag>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-xs text-muted-foreground">
-                      未登记产出
-                    </span>
-                  )
-                }
-              />
-            )}
-          />
-        </section>
-      </CardBody>
-    </Card>
+      </span>
+      <ArrowRight
+        className="hidden size-4 text-muted-foreground xl:block"
+        aria-hidden
+      />
+      <span className="col-span-2 row-start-3 text-xs tabular-nums text-muted-foreground xl:hidden">
+        实际 {member.todayActualItems.length} 项 · 计划 {member.todayCompleted}/
+        {member.todayPlans}
+      </span>
+    </Button>
   );
+}
+
+function memberPriority(member: Member) {
+  if (member.openBlockers > 0) return 0;
+  if (!member.todaySubmitted) return 1;
+  if (member.todayPlans > member.todayCompleted) return 2;
+  return 3;
 }
 
 function ProjectReportDetail({
@@ -917,9 +658,9 @@ function ProjectSnapshot({
   const total = project.completed + project.inProgress + project.blocked;
   return (
     <article className="px-5 py-4">
-      <div className="flex min-w-0 items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex min-w-0 items-center gap-2">
+      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             <h3 className="truncate text-sm font-semibold text-foreground">
               {project.name}
             </h3>
@@ -931,7 +672,7 @@ function ProjectSnapshot({
             负责人：{project.owner?.name ?? "未设置"} · 本周 {total} 条工作记录
           </p>
         </div>
-        <div className="flex shrink-0 items-center gap-3">
+        <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto sm:justify-start">
           <div className="flex -space-x-1.5" aria-label="协同成员">
             {project.members.slice(0, 4).map((member) => (
               <Avatar

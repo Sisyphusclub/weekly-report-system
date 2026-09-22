@@ -33,9 +33,7 @@ export function Statistic({
         {label}
       </dt>
       <dd
-        className={cx(
-          "mt-1 text-2xl font-bold tabular-nums text-foreground",
-        )}
+        className={cx("mt-1 text-2xl font-bold tabular-nums text-foreground")}
       >
         {value}
         {suffix ? (
@@ -65,6 +63,7 @@ export interface StatisticCardProps extends StatisticProps {
   icon: ComponentType<{ className?: string; "aria-hidden"?: boolean }>;
   href?: string;
   trailing?: ReactNode;
+  compact?: boolean;
   className?: string;
 }
 
@@ -72,6 +71,7 @@ export function StatisticCard({
   icon: Icon,
   href,
   trailing,
+  compact = false,
   className,
   tone = "neutral",
   ...statisticProps
@@ -79,15 +79,22 @@ export function StatisticCard({
   const card = (
     <Card
       className={cx(
-        "h-full min-h-24",
+        "h-full",
+        compact ? "min-h-20 sm:min-h-24" : "min-h-24",
         tone === "danger" && "border-danger-border/70 bg-card",
         className,
       )}
     >
-      <CardBody className="flex h-full items-center gap-4">
+      <CardBody
+        className={cx(
+          "flex h-full items-center",
+          compact ? "gap-2 px-3 py-3 sm:gap-4 sm:px-5 sm:py-4" : "gap-4",
+        )}
+      >
         <span
           className={cx(
-            "grid size-10 shrink-0 place-items-center rounded-lg border border-transparent bg-muted text-muted-foreground",
+            "grid shrink-0 place-items-center rounded-lg border border-transparent bg-muted text-muted-foreground",
+            compact ? "size-8 sm:size-10" : "size-10",
             tone === "info" && "border-info-border bg-info-subtle text-info",
             tone === "success" &&
               "border-success-border bg-success-subtle text-success",
@@ -95,7 +102,10 @@ export function StatisticCard({
               "border-danger-border bg-danger-subtle text-destructive",
           )}
         >
-          <Icon className="size-5" aria-hidden />
+          <Icon
+            className={compact ? "size-4 sm:size-5" : "size-5"}
+            aria-hidden
+          />
         </span>
         <Statistic tone={tone} {...statisticProps} />
         {trailing}
@@ -107,7 +117,7 @@ export function StatisticCard({
   return href ? (
     <a
       href={href}
-      className="block h-full rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      className="block h-full rounded-lg outline-none focus-visible:ring-2 focus-visible:ring-ring"
     >
       {card}
     </a>

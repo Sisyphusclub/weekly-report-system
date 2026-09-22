@@ -172,6 +172,26 @@ const CategoryDonut = memo(function CategoryDonut({
     );
   }
 
+  if (data.length === 1) {
+    return (
+      <div
+        className="flex min-h-32 items-center justify-between gap-4 border-y border-border py-4"
+        aria-label="工作分类统计"
+      >
+        <div className="min-w-0">
+          <p className="truncate text-sm font-medium text-foreground">
+            {data[0].label}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">全部实际工作</p>
+        </div>
+        <p className="shrink-0 text-lg font-semibold tabular-nums text-foreground">
+          {total}{" "}
+          <span className="text-xs font-normal text-muted-foreground">项</span>
+        </p>
+      </div>
+    );
+  }
+
   return (
     <ChartContainer
       config={config}
