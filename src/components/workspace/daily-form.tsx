@@ -518,7 +518,7 @@ export function DailyForm({
         event.preventDefault();
         void controller.save(false);
       }}
-      className={`mx-auto flex w-full max-w-7xl flex-col gap-4 ${!preview ? "pb-20" : ""}`}
+      className={`flex w-full min-w-0 flex-col gap-4 ${!preview ? "pb-20" : ""}`}
     >
       <PageHeader
         eyebrow="今日工作"
@@ -1166,7 +1166,7 @@ export function DailyForm({
         <FooterToolbar
           className={`fixed inset-x-0 bottom-0 z-40 mx-0 rounded-none border-x-0 px-0 py-0 sm:mx-0 sm:rounded-none ${sidebarState === "collapsed" ? "md:left-[var(--sidebar-width-icon)]" : "md:left-[var(--sidebar-width)]"}`}
         >
-          <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 xl:px-8">
+          <div className="mx-auto flex w-full max-w-[1560px] items-center justify-between gap-3 px-4 py-3 sm:px-6 xl:px-8">
             <div className="min-w-0">
               <p className="text-sm font-medium text-foreground">
                 今日计划 {plans.length} 项 · 已完成 {completedWorks} 项 · 达成率{" "}

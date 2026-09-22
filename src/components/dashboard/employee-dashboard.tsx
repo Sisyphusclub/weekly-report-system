@@ -132,7 +132,7 @@ export function EmployeeDashboard({
     : 0;
 
   return (
-    <section className="mx-auto flex w-full max-w-7xl flex-col gap-6">
+    <section className="flex w-full min-w-0 flex-col gap-6">
       <PageHeading
         eyebrow={`${today} · 我的工作`}
         title={`你好，${name}`}
