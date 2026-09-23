@@ -103,7 +103,7 @@ export function BossDashboard({
           </TabsList>
         </div>
 
-        <TabsContent value="overview">
+        <TabsContent value="overview" animation="fade">
           <div className="flex flex-col gap-4">
             <section
               className="grid grid-cols-2 gap-2.5 xl:grid-cols-4"
@@ -249,17 +249,19 @@ export function BossDashboard({
           </div>
         </TabsContent>
 
-        <TabsContent value="daily">
-          <DailySummary
-            breakdown={breakdown}
-            todaySubmission={todaySubmission}
-          />
-          <MemberRoster
-            members={breakdown.members}
-            blockerItems={breakdown.blockerItems}
-            onOpenMember={setSelectedMember}
-            selectedDate={selectedDate}
-          />
+        <TabsContent value="daily" animation="fade">
+          <div className="flex flex-col gap-4">
+            <DailySummary
+              breakdown={breakdown}
+              todaySubmission={todaySubmission}
+            />
+            <MemberRoster
+              members={breakdown.members}
+              blockerItems={breakdown.blockerItems}
+              onOpenMember={setSelectedMember}
+              selectedDate={selectedDate}
+            />
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -363,7 +365,7 @@ function DailySummary({
   );
   return (
     <section
-      className="mb-4 grid grid-cols-2 gap-2.5 xl:grid-cols-4"
+      className="grid grid-cols-2 gap-2.5 xl:grid-cols-4"
       aria-label="日报统计"
     >
       <StatisticCard

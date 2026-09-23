@@ -471,10 +471,12 @@ export function TabsContent({
   value,
   children,
   className,
+  animation = "slide",
 }: {
   value: string;
   children: ReactNode;
   className?: string;
+  animation?: "slide" | "fade";
 }) {
   const { value: current } = useTabs();
   const reduce = useReducedMotion();
@@ -492,7 +494,10 @@ export function TabsContent({
   return (
     <motion.div
       key={value}
-      initial={{ opacity: 0, y: reduce ? 0 : 4 }}
+      initial={{
+        opacity: 0,
+        y: animation === "slide" && !reduce ? 4 : 0,
+      }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.18, ease: EASE_OUT }}
       className={cn("mt-4", className)}
