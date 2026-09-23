@@ -8,10 +8,18 @@ import { taskSnapshot } from "@/lib/task-snapshot";
 import { reportVisibility } from "@/lib/reports";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/motion/button/base";
+import { Badge } from "@/components/premium/badge";
+import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
+import { List } from "@/components/premium/list";
+import { DailyEntryList } from "@/components/workspace/daily-entry-list";
 import { RevisionForm } from "@/components/workspace/revision-form";
 import { RevisionRequests } from "@/components/workspace/revision-requests";
 import { CommentSection } from "@/components/workspace/comment-section";
-import { dailyBlockersSchema, dailyEntriesSchema } from "@/lib/daily-input";
+import {
+  dailyBlockersSchema,
+  dailyEntriesSchema,
+  type DailyEntry,
+} from "@/lib/daily-input";
 
 export default async function ReportPage({
   params,
@@ -133,26 +141,81 @@ export default async function ReportPage({
         {item.noPlanReason && <p>无计划原因：{item.noPlanReason}</p>}
       </section>
       {item.type === "DAILY" && (
-        <section className="rounded-xl border border-slate-200/80 p-6">
-          <h2 className="text-xl font-medium leading-7">日报明细</h2>
-          <DailyEntrySection title="工作计划 / 进度" entries={dailyPlans} />
-          <DailyEntrySection title="工作内容 / 产出" entries={dailyWorks} />
-          <div className="mt-6">
-            <h3 className="text-sm font-medium leading-5">阻塞事项</h3>
-            {dailyBlockers.length ? (
-              <ul className="mt-3 flex flex-col gap-2">
-                {dailyBlockers.map((blocker, index) => (
-                  <li key={index} className="rounded-lg bg-rose-50 p-3">
-                    {blocker.description} · 关联项目{" "}
-                    {blocker.projectName ?? blocker.projectId}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="mt-3 text-slate-500">无阻塞事项</p>
-            )}
-          </div>
-        </section>
+        <Card
+          className="min-w-0 overflow-hidden"
+          aria-labelledby="daily-detail-title"
+        >
+          <CardHeader className="flex flex-wrap items-center justify-between gap-2">
+            <h2
+              id="daily-detail-title"
+              className="text-lg font-semibold text-foreground"
+            >
+              日报明细
+            </h2>
+            <p className="text-xs tabular-nums text-muted-foreground">
+              计划 {dailyPlans.length} · 实际 {dailyWorks.length} · 阻塞{" "}
+              {dailyBlockers.length}
+            </p>
+          </CardHeader>
+          <CardBody className="space-y-6">
+            <div className="grid min-w-0 gap-6 xl:grid-cols-2">
+              <DailyEntrySection
+                id="daily-plans-title"
+                title="工作计划"
+                entries={dailyPlans}
+                emptyText="暂无工作计划"
+              />
+              <DailyEntrySection
+                id="daily-works-title"
+                title="实际工作"
+                entries={dailyWorks}
+                emptyText="暂无实际工作"
+              />
+            </div>
+            <section
+              aria-labelledby="daily-blockers-title"
+              className="border-t border-border pt-5"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <h3
+                  id="daily-blockers-title"
+                  className="text-sm font-semibold text-foreground"
+                >
+                  阻塞事项
+                </h3>
+                <span className="text-xs tabular-nums text-muted-foreground">
+                  {dailyBlockers.length} 项
+                </span>
+              </div>
+              {dailyBlockers.length ? (
+                <List
+                  dataSource={dailyBlockers}
+                  rowKey={(blocker, index) =>
+                    String(index) + ":" + blocker.description
+                  }
+                  itemClassName="bg-background/60 px-4 py-3.5"
+                  renderItem={(blocker) => (
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-start gap-2">
+                        <Badge tone="danger" showIcon={false}>
+                          阻塞
+                        </Badge>
+                        <p className="min-w-0 flex-1 whitespace-pre-wrap break-words text-sm leading-6 text-foreground">
+                          {blocker.description}
+                        </p>
+                      </div>
+                      <p className="mt-2 break-words text-xs text-muted-foreground">
+                        关联项目 · {blocker.projectName ?? blocker.projectId}
+                      </p>
+                    </div>
+                  )}
+                />
+              ) : (
+                <p className="text-sm text-muted-foreground">无阻塞事项</p>
+              )}
+            </section>
+          </CardBody>
+        </Card>
       )}
       {tasks.length > 0 && (
         <section className="rounded-xl border border-slate-200/80 p-6">
@@ -267,53 +330,27 @@ export default async function ReportPage({
 }
 
 function DailyEntrySection({
+  id,
   title,
   entries,
+  emptyText,
 }: {
+  id: string;
   title: string;
-  entries: Array<{
-    content: string;
-    status: string;
-    category: string;
-    deliverables: string[];
-  }>;
+  entries: DailyEntry[];
+  emptyText: string;
 }) {
   return (
-    <div className="mt-5">
-      <h3 className="text-sm font-medium leading-5">{title}</h3>
-      {entries.length ? (
-        <ol className="mt-3 flex flex-col gap-2">
-          {entries.map((entry, index) => (
-            <li
-              key={index}
-              className="rounded-lg border border-slate-200/80 p-3"
-            >
-              <p>
-                {index + 1}、{entry.content}
-              </p>
-              <p className="mt-1 text-sm font-normal leading-5 text-slate-500">
-                {entry.status === "DONE"
-                  ? "已完成"
-                  : entry.status === "IN_PROGRESS"
-                    ? "进行中"
-                    : entry.status === "TODO"
-                      ? "未开始"
-                      : entry.status === "BLOCKED"
-                        ? "阻塞"
-                        : "已取消"}{" "}
-                · 类型：{entry.category}
-              </p>
-              {entry.deliverables.length > 0 && (
-                <p className="mt-1 text-sm font-normal leading-5 text-slate-500">
-                  产出：{entry.deliverables.join(" ")}
-                </p>
-              )}
-            </li>
-          ))}
-        </ol>
-      ) : (
-        <p className="mt-3 text-slate-500">暂无条目</p>
-      )}
-    </div>
+    <section aria-labelledby={id} className="min-w-0">
+      <div className="mb-3 flex items-center gap-2">
+        <h3 id={id} className="text-sm font-semibold text-foreground">
+          {title}
+        </h3>
+        <span className="text-xs tabular-nums text-muted-foreground">
+          {entries.length} 项
+        </span>
+      </div>
+      <DailyEntryList entries={entries} emptyText={emptyText} />
+    </section>
   );
 }

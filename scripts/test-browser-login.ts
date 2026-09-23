@@ -154,6 +154,29 @@ async function main() {
                 summary: "已完成关联任务日报",
                 noWorkReason: "",
                 noPlanReason: "暂无下一周期计划",
+                plans: [
+                  {
+                    content: "整理下周计划",
+                    status: "TODO",
+                    category: "协作",
+                    deliverables: [],
+                  },
+                ],
+                works: [
+                  {
+                    content: "完成日报页面验收",
+                    status: "DONE",
+                    category: "开发",
+                    deliverables: ["验收记录", "演示材料"],
+                  },
+                ],
+                blockers: [
+                  {
+                    description: "等待接口联调",
+                    projectId: linkedProjectId,
+                    severity: "IMPORTANT",
+                  },
+                ],
                 taskIds: [linkedTaskId],
                 submit: true,
               },
@@ -175,8 +198,28 @@ async function main() {
             status: "SUBMITTED",
             task_id: linkedTaskId,
           });
+          await page.goto(origin + "/reports/" + linkedReport.id);
+          const dailyDetail = page.getByRole("region", { name: "日报明细" });
+          await expect(
+            dailyDetail.getByRole("heading", { name: "工作计划" }),
+          ).toBeVisible();
+          await expect(dailyDetail.getByText("完成日报页面验收")).toBeVisible();
+          await expect(
+            dailyDetail.getByText("产出 · 验收记录 · 演示材料"),
+          ).toBeVisible();
+          await expect(dailyDetail.getByText("等待接口联调")).toBeVisible();
+          await page.setViewportSize({ width: 390, height: 844 });
+          assert.equal(
+            await page.evaluate(
+              () =>
+                document.documentElement.scrollWidth >
+                document.documentElement.clientWidth,
+            ),
+            false,
+          );
+          await page.setViewportSize(viewport);
           console.log(
-            "PASS: daily submission linked to assigned task and persisted task snapshot relation",
+            "PASS: daily detail layout, mobile width, linked task and snapshot relation",
           );
           // A fixed past week makes submission independent of today's weekday.
           for (const date of [
@@ -561,6 +604,22 @@ async function main() {
             await expect(
               bossPage.getByRole("heading", { name: "团队工作驾驶舱" }),
             ).toBeVisible();
+            await bossPage.goto(origin + "/dashboard?date=2026-09-17");
+            await bossPage
+              .getByRole("button", { name: /查看浏览器验收的日报明细/ })
+              .click();
+            const memberDetail = bossPage.getByRole("dialog", {
+              name: /浏览器验收/,
+            });
+            await expect(
+              memberDetail.getByText("完成日报页面验收"),
+            ).toBeVisible();
+            await expect(
+              memberDetail.getByText("产出 · 验收记录 · 演示材料"),
+            ).toBeVisible();
+            await memberDetail
+              .getByRole("button", { name: "关闭弹层" })
+              .click();
             await bossPage.goto(`${origin}/blockers`);
             await expect(
               bossPage.getByRole("heading", { name: "阻塞中心" }),

@@ -18,6 +18,7 @@ import { Badge, Tag } from "@/components/premium/badge";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import { Drawer } from "@/components/premium/drawer";
 import { List, ListItem } from "@/components/premium/list";
+import { DailyEntryList } from "@/components/workspace/daily-entry-list";
 import {
   Tabs,
   TabsContent,
@@ -750,83 +751,57 @@ function MemberDetail({
   projectNames: Map<string, string>;
 }) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div className="grid grid-cols-3 divide-x divide-border rounded-lg border border-border bg-muted/50">
-        <SummaryCell label="当日计划" value={`${member.todayPlans} 项`} />
-        <SummaryCell label="已完成" value={`${member.todayCompleted} 项`} />
+        <SummaryCell label="当日计划" value={member.todayPlans + " 项"} />
+        <SummaryCell label="已完成" value={member.todayCompleted + " 项"} />
         <SummaryCell
           label="提交状态"
           value={member.todaySubmitted ? "已提交" : "未提交"}
         />
       </div>
-      <section>
-        <h3 className="text-sm font-semibold text-foreground">当日计划</h3>
-        <List
-          dataSource={member.todayPlanItems}
-          rowKey={(item, index) => `plan-${index}-${item.content}`}
-          className="mt-2"
-          itemClassName="bg-muted/40"
-          emptyState={
-            <p className="text-xs text-muted-foreground">暂无工作计划</p>
-          }
-          renderItem={(item, index) => (
-            <ListItem
-              index={String(index + 1).padStart(2, "0")}
-              title={
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    {item.content}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {item.projectId
-                      ? (projectNames.get(item.projectId) ?? "未关联项目")
-                      : "未关联项目"}{" "}
-                    · {item.category}
-                  </p>
-                </div>
-              }
-              trailing={<StatusDot status={item.status} />}
-            />
-          )}
+      <section aria-labelledby="member-plans-title" className="min-w-0">
+        <div className="mb-3 flex items-center gap-2">
+          <h3
+            id="member-plans-title"
+            className="text-sm font-semibold text-foreground"
+          >
+            当日计划
+          </h3>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {member.todayPlanItems.length} 项
+          </span>
+        </div>
+        <DailyEntryList
+          entries={member.todayPlanItems.map((item) => ({
+            ...item,
+            projectName: item.projectId
+              ? projectNames.get(item.projectId)
+              : undefined,
+          }))}
+          emptyText="暂无工作计划"
         />
       </section>
-      <section>
-        <h3 className="text-sm font-semibold text-foreground">当日实际工作</h3>
-        <List
-          dataSource={member.todayActualItems}
-          rowKey={(item, index) => `actual-${index}-${item.content}`}
-          className="mt-2"
-          itemClassName="bg-card"
-          emptyState={
-            <p className="text-xs text-muted-foreground">暂无实际工作记录</p>
-          }
-          renderItem={(item, index) => (
-            <ListItem
-              index={String(index + 1).padStart(2, "0")}
-              title={
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">
-                    {item.content}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {item.category}
-                  </p>
-                </div>
-              }
-              trailing={
-                <Badge color={item.status === "DONE" ? "success" : "warning"}>
-                  {statusLabel(item.status)}
-                </Badge>
-              }
-              footer={
-                item.deliverables.length ? (
-                  <span className="truncate text-xs text-info">
-                    产出：{item.deliverables.join(" · ")}
-                  </span>
-                ) : undefined
-              }
-            />
-          )}
+      <section aria-labelledby="member-works-title" className="min-w-0">
+        <div className="mb-3 flex items-center gap-2">
+          <h3
+            id="member-works-title"
+            className="text-sm font-semibold text-foreground"
+          >
+            实际工作
+          </h3>
+          <span className="text-xs tabular-nums text-muted-foreground">
+            {member.todayActualItems.length} 项
+          </span>
+        </div>
+        <DailyEntryList
+          entries={member.todayActualItems.map((item) => ({
+            ...item,
+            projectName: item.projectId
+              ? projectNames.get(item.projectId)
+              : undefined,
+          }))}
+          emptyText="暂无实际工作"
         />
       </section>
     </div>
@@ -844,27 +819,6 @@ function SummaryCell({ label, value }: { label: string; value: string }) {
   );
 }
 
-function StatusDot({
-  status,
-}: {
-  status: Member["todayPlanItems"][number]["status"];
-}) {
-  return (
-    <span
-      className={cx(
-        "size-2 shrink-0 rounded-full",
-        status === "DONE"
-          ? "bg-success"
-          : status === "BLOCKED"
-            ? "bg-destructive"
-            : "bg-warning",
-      )}
-      title={statusLabel(status)}
-      aria-label={statusLabel(status)}
-    />
-  );
-}
-
 function EmptyState({ icon, text }: { icon?: ReactNode; text: string }) {
   return (
     <div className="grid min-h-28 place-items-center gap-2 border border-dashed border-border bg-muted/30 px-4 text-center text-sm text-muted-foreground">
@@ -876,16 +830,4 @@ function EmptyState({ icon, text }: { icon?: ReactNode; text: string }) {
 
 function percent(value: number, total: number) {
   return total > 0 ? Math.min(100, Math.round((value / total) * 100)) : 0;
-}
-
-function statusLabel(
-  status: "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELED",
-) {
-  return {
-    TODO: "待开始",
-    IN_PROGRESS: "进行中",
-    BLOCKED: "阻塞",
-    DONE: "完成",
-    CANCELED: "已取消",
-  }[status];
 }
