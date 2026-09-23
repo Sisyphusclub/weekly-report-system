@@ -13,9 +13,9 @@ export default async function SecurityPage() {
           href={actor.role === "BOSS" ? "/boss/dashboard" : "/dashboard"}
           variant="ghost"
           size="small"
-          leadingIcon={ArrowLeft}
           className="self-start"
         >
+          <ArrowLeft className="size-4 shrink-0" aria-hidden />
           返回工作台
         </ButtonLink>
         <div className="flex items-center justify-between gap-4">

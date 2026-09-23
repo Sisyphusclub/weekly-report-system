@@ -64,6 +64,12 @@ async function main() {
           data: {},
         });
         assert.equal(denied.status(), 403);
+        await page.goto(`${origin}/security`);
+        await expect(
+          page.getByRole("heading", { name: "账号安全", exact: true }),
+        ).toBeVisible();
+        await page.getByRole("link", { name: "返回工作台" }).click();
+        await page.waitForURL("**/dashboard");
         await page.goto(`${origin}/daily`);
         assert.equal(new URL(page.url()).pathname, "/daily");
         assert.ok(await page.locator("main").isVisible());
