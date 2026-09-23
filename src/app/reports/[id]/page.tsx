@@ -143,7 +143,8 @@ export default async function ReportPage({
               <ul className="mt-3 flex flex-col gap-2">
                 {dailyBlockers.map((blocker, index) => (
                   <li key={index} className="rounded-lg bg-rose-50 p-3">
-                    {blocker.description} · 关联项目 {blocker.projectName ?? blocker.projectId}
+                    {blocker.description} · 关联项目{" "}
+                    {blocker.projectName ?? blocker.projectId}
                   </li>
                 ))}
               </ul>
@@ -153,64 +154,66 @@ export default async function ReportPage({
           </div>
         </section>
       )}
-      {tasks.length > 0 && <section className="rounded-xl border border-slate-200/80 p-6">
-        <h2 className="text-xl font-medium leading-7">任务与交付物</h2>
-        {tasks.length ? (
-          <ul className="mt-4 divide-y divide-separator-border">
-            {tasks.map((row) => {
-              const parsed = taskSnapshot.safeParse(row.snapshot);
-              if (!parsed.success)
+      {tasks.length > 0 && (
+        <section className="rounded-xl border border-slate-200/80 p-6">
+          <h2 className="text-xl font-medium leading-7">任务与交付物</h2>
+          {tasks.length ? (
+            <ul className="mt-4 divide-y divide-separator-border">
+              {tasks.map((row) => {
+                const parsed = taskSnapshot.safeParse(row.snapshot);
+                if (!parsed.success)
+                  return (
+                    <li key={row.id} className="py-4">
+                      此任务快照格式无法读取，请联系管理员核查。
+                    </li>
+                  );
+                const task = parsed.data;
                 return (
-                  <li key={row.id} className="py-4">
-                    此任务快照格式无法读取，请联系管理员核查。
+                  <li key={row.id} className="flex flex-col gap-2 py-4">
+                    <p className="whitespace-pre-wrap break-words">
+                      {task.content}
+                    </p>
+                    <p className="text-sm font-normal leading-5 text-slate-500">
+                      {task.kind === "PLAN" ? "计划" : "实际工作"} ·{" "}
+                      {task.categoryName} ·{" "}
+                      {
+                        {
+                          TODO: "待开始",
+                          IN_PROGRESS: "进行中",
+                          BLOCKED: "阻塞",
+                          DONE: "完成",
+                          CANCELED: "已取消",
+                        }[task.status]
+                      }
+                      {task.dueDate ? ` · 截止 ${task.dueDate}` : ""}
+                    </p>
+                    {task.deliverables.length > 0 && (
+                      <ul className="flex flex-wrap gap-3" aria-label="交付物">
+                        {task.deliverables.map((delivery) => (
+                          <li key={delivery.unitId}>
+                            {delivery.quantity} {delivery.unitName}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    {item.type === "WEEKLY" && row.sourceReportId && (
+                      <ButtonLink
+                        href={`/reports/${row.sourceReportId}`}
+                        variant="ghost"
+                        className="self-start"
+                      >
+                        查看来源日报
+                      </ButtonLink>
+                    )}
                   </li>
                 );
-              const task = parsed.data;
-              return (
-                <li key={row.id} className="flex flex-col gap-2 py-4">
-                  <p className="whitespace-pre-wrap break-words">
-                    {task.content}
-                  </p>
-                  <p className="text-sm font-normal leading-5 text-slate-500">
-                    {task.kind === "PLAN" ? "计划" : "实际工作"} ·{" "}
-                    {task.categoryName} ·{" "}
-                    {
-                      {
-                        TODO: "待开始",
-                        IN_PROGRESS: "进行中",
-                        BLOCKED: "阻塞",
-                        DONE: "完成",
-                        CANCELED: "已取消",
-                      }[task.status]
-                    }
-                    {task.dueDate ? ` · 截止 ${task.dueDate}` : ""}
-                  </p>
-                  {task.deliverables.length > 0 && (
-                    <ul className="flex flex-wrap gap-3" aria-label="交付物">
-                      {task.deliverables.map((delivery) => (
-                        <li key={delivery.unitId}>
-                          {delivery.quantity} {delivery.unitName}
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {item.type === "WEEKLY" && row.sourceReportId && (
-                    <ButtonLink
-                      href={`/reports/${row.sourceReportId}`}
-                      variant="ghost"
-                      className="self-start"
-                    >
-                      查看来源日报
-                    </ButtonLink>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
-        ) : (
-          <p className="mt-4 text-slate-500">未关联任务</p>
-        )}
-      </section>}
+              })}
+            </ul>
+          ) : (
+            <p className="mt-4 text-slate-500">未关联任务</p>
+          )}
+        </section>
+      )}
       <section className="rounded-xl border border-slate-200/80 p-6">
         <h2 className="text-xl font-medium leading-7">最近修订记录</h2>
         {versions.length > 0 && (
@@ -281,12 +284,30 @@ function DailyEntrySection({
       {entries.length ? (
         <ol className="mt-3 flex flex-col gap-2">
           {entries.map((entry, index) => (
-            <li key={index} className="rounded-lg border border-slate-200/80 p-3">
-              <p>{index + 1}、{entry.content}</p>
-              <p className="mt-1 text-sm font-normal leading-5 text-slate-500">
-                {entry.status === "DONE" ? "已完成" : entry.status === "IN_PROGRESS" ? "进行中" : entry.status === "TODO" ? "未开始" : entry.status === "BLOCKED" ? "阻塞" : "已取消"} · 类型：{entry.category}
+            <li
+              key={index}
+              className="rounded-lg border border-slate-200/80 p-3"
+            >
+              <p>
+                {index + 1}、{entry.content}
               </p>
-              {entry.deliverables.length > 0 && <p className="mt-1 text-sm font-normal leading-5 text-slate-500">产出：{entry.deliverables.join(" ")}</p>}
+              <p className="mt-1 text-sm font-normal leading-5 text-slate-500">
+                {entry.status === "DONE"
+                  ? "已完成"
+                  : entry.status === "IN_PROGRESS"
+                    ? "进行中"
+                    : entry.status === "TODO"
+                      ? "未开始"
+                      : entry.status === "BLOCKED"
+                        ? "阻塞"
+                        : "已取消"}{" "}
+                · 类型：{entry.category}
+              </p>
+              {entry.deliverables.length > 0 && (
+                <p className="mt-1 text-sm font-normal leading-5 text-slate-500">
+                  产出：{entry.deliverables.join(" ")}
+                </p>
+              )}
             </li>
           ))}
         </ol>

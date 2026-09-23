@@ -92,7 +92,9 @@ export function TaskForm({
       setMessageTone("success");
       router.refresh();
     } catch {
-      setMessage(initial ? "未能保存任务，请稍后重试" : "未能创建任务，请稍后重试");
+      setMessage(
+        initial ? "未能保存任务，请稍后重试" : "未能创建任务，请稍后重试",
+      );
       setMessageTone("error");
     } finally {
       setPending(false);
@@ -197,7 +199,13 @@ export function TaskForm({
         />
       </div>
       <Button type="submit" disabled={pending || !projectId || !categoryId}>
-        {pending ? (initial ? "正在保存" : "正在创建") : initial ? "保存修改" : "创建任务"}
+        {pending
+          ? initial
+            ? "正在保存"
+            : "正在创建"
+          : initial
+            ? "保存修改"
+            : "创建任务"}
       </Button>
       {message && <FormStatus tone={messageTone}>{message}</FormStatus>}
     </form>

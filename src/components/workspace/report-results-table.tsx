@@ -68,9 +68,7 @@ const columns: ResponsiveDataTableColumn<ReportRow>[] = [
         <span
           className={cn(
             "size-2 rounded-full",
-            row.status === "SUBMITTED"
-              ? "bg-emerald-700"
-              : "bg-amber-700",
+            row.status === "SUBMITTED" ? "bg-emerald-700" : "bg-amber-700",
           )}
         />
         {row.status === "DRAFT" ? "草稿" : `已提交 · v${row.revisionNumber}`}

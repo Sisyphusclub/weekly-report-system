@@ -575,7 +575,9 @@ function MetricCard({
   return (
     <section className="rounded-xl border border-border bg-card p-5 shadow-xs">
       <div className="flex items-start justify-between gap-3">
-        <p className="text-xs font-medium leading-4 text-muted-foreground">{label}</p>
+        <p className="text-xs font-medium leading-4 text-muted-foreground">
+          {label}
+        </p>
         {Icon && <Icon className={cx("size-5", toneClass)} aria-hidden />}
       </div>
       <p

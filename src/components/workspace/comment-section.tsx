@@ -111,4 +111,3 @@ export function CommentSection({ reportId }: { reportId: string }) {
     </section>
   );
 }
-

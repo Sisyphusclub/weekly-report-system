@@ -106,4 +106,3 @@ export default async function DictionariesPage({
     </WorkspaceShell>
   );
 }
-

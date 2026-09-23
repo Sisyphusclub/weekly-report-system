@@ -40,15 +40,15 @@ export default async function DailyPage({
     )
     .limit(1);
   const projects = await db
-      .select({ id: project.id, name: project.name })
-      .from(project)
-      .where(
-        and(
-          eq(project.organizationId, actor.organizationId),
-          ne(project.status, "ARCHIVED"),
-        ),
-      )
-      .orderBy(asc(project.name));
+    .select({ id: project.id, name: project.name })
+    .from(project)
+    .where(
+      and(
+        eq(project.organizationId, actor.organizationId),
+        ne(project.status, "ARCHIVED"),
+      ),
+    )
+    .orderBy(asc(project.name));
   return (
     <WorkspaceShell actor={actor} selected="daily">
       <DailyForm
@@ -61,4 +61,3 @@ export default async function DailyPage({
     </WorkspaceShell>
   );
 }
-

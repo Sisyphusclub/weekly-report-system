@@ -81,7 +81,9 @@ export async function POST(request: Request) {
       }));
       if (selectedTasks.length !== input.taskIds.length)
         throw new BusinessError("任务不存在或无权选择", 403);
-      const blockerProjectIds = [...new Set(input.blockers.map((item) => item.projectId))];
+      const blockerProjectIds = [
+        ...new Set(input.blockers.map((item) => item.projectId)),
+      ];
       const blockerProjects = blockerProjectIds.length
         ? await tx
             .select({ id: project.id, name: project.name })

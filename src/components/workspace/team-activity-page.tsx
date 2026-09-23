@@ -17,9 +17,10 @@ export async function TeamActivityPage({
   const actor = await requireUser();
   const params = await searchParams;
   const parsedPage = Number(params.page ?? 1);
-  const page = Number.isSafeInteger(parsedPage) && parsedPage > 0
-    ? Math.min(parsedPage, 100000)
-    : 1;
+  const page =
+    Number.isSafeInteger(parsedPage) && parsedPage > 0
+      ? Math.min(parsedPage, 100000)
+      : 1;
   const rows = await getDb()
     .select({
       id: report.id,
@@ -33,7 +34,10 @@ export async function TeamActivityPage({
     .from(report)
     .innerJoin(
       user,
-      and(eq(user.id, report.authorId), eq(user.organizationId, report.organizationId)),
+      and(
+        eq(user.id, report.authorId),
+        eq(user.organizationId, report.organizationId),
+      ),
     )
     .where(
       and(
@@ -51,7 +55,9 @@ export async function TeamActivityPage({
     <WorkspaceShell actor={actor} selected="activity">
       <header className="border-b border-border pb-5">
         <p className="text-xs font-medium text-primary">团队视角</p>
-        <h1 className="mt-2 text-2xl font-semibold text-foreground">团队动态</h1>
+        <h1 className="mt-2 text-2xl font-semibold text-foreground">
+          团队动态
+        </h1>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">
           查看团队成员已提交的日报和周报，了解最近工作进展。
         </p>
@@ -62,17 +68,29 @@ export async function TeamActivityPage({
           {items.map((item) => {
             const date = item.date ?? item.weekStart ?? "未设置日期";
             return (
-              <li key={item.id} className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-5">
+              <li
+                key={item.id}
+                className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:gap-5"
+              >
                 <span className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary">
-                  {item.type === "DAILY" ? <FileText className="size-4" aria-hidden /> : <Users className="size-4" aria-hidden />}
+                  {item.type === "DAILY" ? (
+                    <FileText className="size-4" aria-hidden />
+                  ) : (
+                    <Users className="size-4" aria-hidden />
+                  )}
                 </span>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="font-medium text-foreground">{item.author}</span>
+                    <span className="font-medium text-foreground">
+                      {item.author}
+                    </span>
                     <Badge tone={item.type === "DAILY" ? "info" : "neutral"}>
                       {item.type === "DAILY" ? "日报" : "周报"}
                     </Badge>
-                    <time className="font-mono text-xs text-muted-foreground" dateTime={item.submittedAt?.toISOString()}>
+                    <time
+                      className="font-mono text-xs text-muted-foreground"
+                      dateTime={item.submittedAt?.toISOString()}
+                    >
                       {date}
                     </time>
                   </div>
@@ -80,7 +98,12 @@ export async function TeamActivityPage({
                     {item.summary?.trim() || "已提交报告，未填写总结。"}
                   </p>
                 </div>
-                <ButtonLink href={`/reports/${item.id}`} variant="outline" size="sm" className="shrink-0 rounded-lg">
+                <ButtonLink
+                  href={`/reports/${item.id}`}
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 rounded-lg"
+                >
                   查看报告
                 </ButtonLink>
               </li>
@@ -91,15 +114,28 @@ export async function TeamActivityPage({
         <div className="grid min-h-48 place-items-center rounded-xl border border-dashed border-border bg-background px-6 text-center">
           <div>
             <p className="font-medium text-foreground">还没有团队动态</p>
-            <p className="mt-1 text-sm text-muted-foreground">团队成员提交报告后，会在这里显示。</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              团队成员提交报告后，会在这里显示。
+            </p>
           </div>
         </div>
       )}
 
-      <nav aria-label="团队动态分页" className="flex flex-wrap items-center gap-3">
-        {page > 1 && <ButtonLink href={`/activity?page=${page - 1}`} variant="secondary">上一页</ButtonLink>}
+      <nav
+        aria-label="团队动态分页"
+        className="flex flex-wrap items-center gap-3"
+      >
+        {page > 1 && (
+          <ButtonLink href={`/activity?page=${page - 1}`} variant="secondary">
+            上一页
+          </ButtonLink>
+        )}
         <span className="text-sm text-muted-foreground">第 {page} 页</span>
-        {hasNext && <ButtonLink href={`/activity?page=${page + 1}`} variant="secondary">下一页</ButtonLink>}
+        {hasNext && (
+          <ButtonLink href={`/activity?page=${page + 1}`} variant="secondary">
+            下一页
+          </ButtonLink>
+        )}
       </nav>
     </WorkspaceShell>
   );

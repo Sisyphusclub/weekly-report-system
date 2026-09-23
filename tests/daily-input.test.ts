@@ -43,7 +43,11 @@ describe("日报输入边界", () => {
   it("要求阻塞关联有效项目和严重程度", () => {
     expect(
       dailyBlockersSchema.safeParse([
-        { description: "等待项目方确认", projectId: "project-1", severity: "IMPORTANT" },
+        {
+          description: "等待项目方确认",
+          projectId: "project-1",
+          severity: "IMPORTANT",
+        },
       ]).success,
     ).toBe(true);
     expect(
@@ -60,7 +64,12 @@ describe("日报输入边界", () => {
     ).toBe(false);
     expect(
       dailyEntriesSchema.safeParse([
-        { content: "排查导出缺陷", status: "DONE", category: "", deliverables: [] },
+        {
+          content: "排查导出缺陷",
+          status: "DONE",
+          category: "",
+          deliverables: [],
+        },
       ]).success,
     ).toBe(false);
   });

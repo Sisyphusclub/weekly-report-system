@@ -14,29 +14,36 @@ import {
 } from "@/lib/db/schema";
 import { shanghaiDate } from "@/lib/daily-input";
 
-const inputSchema = z.object({
-  projectId: z.string().min(1),
-  categoryId: z.string().min(1),
-  content: z.string().trim().min(1).max(5000),
-  deliverables: z
-    .array(
-      z.object({
-        unitId: z.string().min(1),
-        quantity: z.number().finite().min(0).max(1_000_000_000).multipleOf(0.0001),
-      }),
-    )
-    .max(20)
-    .default([]),
-}).superRefine((value, ctx) => {
-  const unitIds = value.deliverables.map((item) => item.unitId);
-  if (new Set(unitIds).size !== unitIds.length) {
-    ctx.addIssue({
-      code: "custom",
-      path: ["deliverables"],
-      message: "同一交付物单位只能填写一次",
-    });
-  }
-});
+const inputSchema = z
+  .object({
+    projectId: z.string().min(1),
+    categoryId: z.string().min(1),
+    content: z.string().trim().min(1).max(5000),
+    deliverables: z
+      .array(
+        z.object({
+          unitId: z.string().min(1),
+          quantity: z
+            .number()
+            .finite()
+            .min(0)
+            .max(1_000_000_000)
+            .multipleOf(0.0001),
+        }),
+      )
+      .max(20)
+      .default([]),
+  })
+  .superRefine((value, ctx) => {
+    const unitIds = value.deliverables.map((item) => item.unitId);
+    if (new Set(unitIds).size !== unitIds.length) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["deliverables"],
+        message: "同一交付物单位只能填写一次",
+      });
+    }
+  });
 
 export async function POST(request: Request) {
   try {
@@ -44,7 +51,9 @@ export async function POST(request: Request) {
     if (actor.role === "ADMIN") {
       throw new BusinessError("管理员不能创建业务任务", 403);
     }
-    const parsed = inputSchema.safeParse(await request.json().catch(() => null));
+    const parsed = inputSchema.safeParse(
+      await request.json().catch(() => null),
+    );
     if (!parsed.success) throw new BusinessError("临时任务内容或交付物无效");
     const input = parsed.data;
     const unitIds = [...new Set(input.deliverables.map((item) => item.unitId))];

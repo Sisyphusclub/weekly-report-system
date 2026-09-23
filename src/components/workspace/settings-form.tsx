@@ -2,7 +2,12 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { FormStatus, Input, Textarea, type FormStatusTone } from "@/components/premium/forms";
+import {
+  FormStatus,
+  Input,
+  Textarea,
+  type FormStatusTone,
+} from "@/components/premium/forms";
 import { Button } from "@/components/motion/button/base";
 
 export function SettingsForm({
@@ -90,10 +95,7 @@ export function SettingsForm({
           </Button>
         )}
       </div>
-      {message && (
-        <FormStatus tone={messageTone}>{message}</FormStatus>
-      )}
+      {message && <FormStatus tone={messageTone}>{message}</FormStatus>}
     </form>
   );
 }
-

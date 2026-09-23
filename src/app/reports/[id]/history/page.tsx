@@ -121,7 +121,9 @@ export default async function ReportHistoryPage({
       </section>
       <article className="flex flex-col gap-6 rounded-xl border border-slate-200/80 p-6">
         <header className="flex flex-col gap-2">
-          <h2 className="text-xl font-medium leading-7">版本 {selected.number}</h2>
+          <h2 className="text-xl font-medium leading-7">
+            版本 {selected.number}
+          </h2>
           <p>
             {selected.editor} ·{" "}
             {selected.createdAt.toLocaleString("zh-CN", {

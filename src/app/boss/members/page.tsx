@@ -24,13 +24,11 @@ export default async function BossMembersPage() {
             member={member}
             plans={breakdown.projects
               .flatMap((project) =>
-                project.nextPlans
-                  .slice(0, 1)
-                  .map((plan) => ({
-                    content: plan.content,
-                    projectName: project.name,
-                    status: "TODO" as const,
-                  })),
+                project.nextPlans.slice(0, 1).map((plan) => ({
+                  content: plan.content,
+                  projectName: project.name,
+                  status: "TODO" as const,
+                })),
               )
               .slice(0, 2)}
             hasRisk={member.openBlockers > 0}

@@ -7,8 +7,18 @@ describe("员工工作台指标", () => {
       employeeDailyMetrics([
         { id: "plan-1", kind: "PLAN", status: "TODO", sourceTaskId: null },
         { id: "plan-2", kind: "PLAN", status: "DONE", sourceTaskId: null },
-        { id: "actual-1", kind: "ACTUAL", status: "DONE", sourceTaskId: "plan-1" },
-        { id: "actual-2", kind: "ACTUAL", status: "IN_PROGRESS", sourceTaskId: null },
+        {
+          id: "actual-1",
+          kind: "ACTUAL",
+          status: "DONE",
+          sourceTaskId: "plan-1",
+        },
+        {
+          id: "actual-2",
+          kind: "ACTUAL",
+          status: "IN_PROGRESS",
+          sourceTaskId: null,
+        },
       ]),
     ).toEqual({
       planCount: 2,

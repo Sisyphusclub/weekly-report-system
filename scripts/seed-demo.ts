@@ -74,12 +74,7 @@ function snapshot(
   };
 }
 
-type DemoEntryStatus =
-  | "TODO"
-  | "IN_PROGRESS"
-  | "BLOCKED"
-  | "DONE"
-  | "CANCELED";
+type DemoEntryStatus = "TODO" | "IN_PROGRESS" | "BLOCKED" | "DONE" | "CANCELED";
 
 type DemoDailyEntry = {
   content: string;
@@ -185,26 +180,28 @@ async function main() {
     const demoTeam = [
       boss,
       employee,
-      ...(await Promise.all([
-        ["demo_yujipeng", "于继鹏", "后端开发"],
-        ["demo_lixue", "李雪", "产品运营"],
-        ["demo_luchuanmin", "卢传民", "研发工程师"],
-        ["demo_yanglifei", "杨力飞", "测试工程师"],
-        ["demo_yuyuanxin", "于元鑫", "前端开发"],
-        ["demo_yumiao", "于淼", "项目运营"],
-        ["demo_pujingjing", "朴景璟", "产品经理"],
-        ["demo_liutianyi", "刘天一", "研发工程师"],
-        ["demo_wangsiyuan", "王思远", "数据分析"],
-        ["demo_chenlu", "陈璐", "交付运营"],
-        ["demo_zhaozihan", "赵子涵", "测试工程师"],
-      ].map(([username, name, title]) =>
-        ensureUser({
-          username,
-          name,
-          role: "EMPLOYEE",
-          title,
-        }),
-      ))),
+      ...(await Promise.all(
+        [
+          ["demo_yujipeng", "于继鹏", "后端开发"],
+          ["demo_lixue", "李雪", "产品运营"],
+          ["demo_luchuanmin", "卢传民", "研发工程师"],
+          ["demo_yanglifei", "杨力飞", "测试工程师"],
+          ["demo_yuyuanxin", "于元鑫", "前端开发"],
+          ["demo_yumiao", "于淼", "项目运营"],
+          ["demo_pujingjing", "朴景璟", "产品经理"],
+          ["demo_liutianyi", "刘天一", "研发工程师"],
+          ["demo_wangsiyuan", "王思远", "数据分析"],
+          ["demo_chenlu", "陈璐", "交付运营"],
+          ["demo_zhaozihan", "赵子涵", "测试工程师"],
+        ].map(([username, name, title]) =>
+          ensureUser({
+            username,
+            name,
+            role: "EMPLOYEE",
+            title,
+          }),
+        ),
+      )),
     ];
     const zhangweichen = await ensureUser({
       username: "zhangweichen",
@@ -639,7 +636,8 @@ async function main() {
             },
             {
               content: "数智云编辑器打印导出测试与缺陷排查",
-              status: date === today ? ("IN_PROGRESS" as const) : ("DONE" as const),
+              status:
+                date === today ? ("IN_PROGRESS" as const) : ("DONE" as const),
               category: "测试",
               deliverables: [],
               projectId: projects.growth.id,
@@ -724,7 +722,11 @@ async function main() {
           })
           .where(eq(report.id, existing.id));
         return (
-          await tx.select().from(report).where(eq(report.id, existing.id)).limit(1)
+          await tx
+            .select()
+            .from(report)
+            .where(eq(report.id, existing.id))
+            .limit(1)
         )[0];
       }
       const created = {
@@ -756,7 +758,7 @@ async function main() {
       杨力飞: 1,
       于元鑫: 1,
       于淼: 3,
-      "朴景璟": 4,
+      朴景璟: 4,
       刘天一: 4,
       王思远: 2,
       陈璐: 1,

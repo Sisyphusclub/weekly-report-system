@@ -26,11 +26,13 @@ export function CopyFilterLink({ href }: { href: string }) {
         复制筛选链接
       </Button>
       {message && (
-        <span role="status" className="text-sm font-normal leading-5 text-slate-500">
+        <span
+          role="status"
+          className="text-sm font-normal leading-5 text-slate-500"
+        >
           {message}
         </span>
       )}
     </span>
   );
 }
-

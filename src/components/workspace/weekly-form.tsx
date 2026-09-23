@@ -1,6 +1,10 @@
 "use client";
 import { useState } from "react";
-import { FormStatus, Textarea, type FormStatusTone } from "@/components/premium/forms";
+import {
+  FormStatus,
+  Textarea,
+  type FormStatusTone,
+} from "@/components/premium/forms";
 import { Button, ButtonLink } from "@/components/motion/button/base";
 export function WeeklyForm({
   date,

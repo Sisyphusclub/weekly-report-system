@@ -53,7 +53,9 @@ export function RevisionForm({
   }
   return (
     <details className="rounded-xl border border-slate-200/80 p-6">
-      <summary className="cursor-pointer text-xl font-medium leading-7">修订总结</summary>
+      <summary className="cursor-pointer text-xl font-medium leading-7">
+        修订总结
+      </summary>
       <form onSubmit={submit} className="mt-4 flex flex-col gap-4">
         <Textarea
           label="修订后的总结"
@@ -81,4 +83,3 @@ export function RevisionForm({
     </details>
   );
 }
-

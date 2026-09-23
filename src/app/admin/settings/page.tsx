@@ -56,7 +56,9 @@ export default async function SettingsPage() {
               key={label}
               className="flex flex-wrap justify-between gap-3 py-3"
             >
-              <dt className="text-sm font-normal leading-5 text-slate-500">{label}</dt>
+              <dt className="text-sm font-normal leading-5 text-slate-500">
+                {label}
+              </dt>
               <dd className="text-sm font-medium leading-5">{value}</dd>
             </div>
           ))}

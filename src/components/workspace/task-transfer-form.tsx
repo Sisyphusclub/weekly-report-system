@@ -184,7 +184,10 @@ export function TaskTransferForm({ people }: { people: Person[] }) {
         </>
       )}
       {message && (
-        <p role="status" className="text-sm font-normal leading-5 text-slate-500">
+        <p
+          role="status"
+          className="text-sm font-normal leading-5 text-slate-500"
+        >
           {message}
         </p>
       )}
@@ -200,4 +203,3 @@ export function TaskTransferForm({ people }: { people: Person[] }) {
     </form>
   );
 }
-

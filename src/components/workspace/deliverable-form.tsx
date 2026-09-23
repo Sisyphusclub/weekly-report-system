@@ -106,11 +106,8 @@ export function DeliverableForm({
           {message && <p role="status">{message}</p>}
         </form>
       ) : (
-        <p className="text-slate-500">
-          暂无可用交付物单位，请联系管理员配置。
-        </p>
+        <p className="text-slate-500">暂无可用交付物单位，请联系管理员配置。</p>
       )}
     </details>
   );
 }
-

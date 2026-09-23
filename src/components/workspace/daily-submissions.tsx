@@ -73,7 +73,8 @@ export function DailySubmissions({
   const completed = rows.filter(
     (row) => row.status === "SUBMITTED" || row.status === "LATE",
   ).length;
-  const due = rows.length -
+  const due =
+    rows.length -
     rows.filter(
       (row) =>
         row.status === "EXEMPT" ||
@@ -91,8 +92,12 @@ export function DailySubmissions({
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-xs font-medium leading-4 text-slate-500">日报看板</p>
-          <h2 className="mt-1 text-xl font-medium leading-7">今日提交 · {displayDate}</h2>
+          <p className="text-xs font-medium leading-4 text-slate-500">
+            日报看板
+          </p>
+          <h2 className="mt-1 text-xl font-medium leading-7">
+            今日提交 · {displayDate}
+          </h2>
         </div>
         <p className="text-sm font-normal leading-5 text-slate-500">
           按当前有效成员统计
@@ -109,7 +114,9 @@ export function DailySubmissions({
             key={label}
             className="rounded-xl border border-slate-200/80 bg-white p-4"
           >
-            <p className="text-xs font-medium leading-4 text-slate-500">{label}</p>
+            <p className="text-xs font-medium leading-4 text-slate-500">
+              {label}
+            </p>
             <div className="mt-2 flex items-end justify-between gap-2">
               <p className="text-xl font-medium leading-7">{value}</p>
               <Badge
@@ -130,10 +137,7 @@ export function DailySubmissions({
               className="flex flex-wrap items-center justify-between gap-3 py-3"
             >
               <span className="text-sm font-medium leading-5">{row.name}</span>
-              <Badge
-                variant="caption"
-                color={statusColors[row.status]}
-              >
+              <Badge variant="caption" color={statusColors[row.status]}>
                 {statusLabels[row.status]}
               </Badge>
               {showReportLinks && row.report && (
@@ -178,4 +182,3 @@ export function DailySubmissions({
     </section>
   );
 }
-

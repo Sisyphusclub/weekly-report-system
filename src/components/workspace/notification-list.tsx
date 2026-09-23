@@ -49,7 +49,9 @@ export function NotificationList({ items: initial }: { items: Item[] }) {
             <div>
               <p
                 className={
-                  item.readAt ? "text-sm font-normal leading-5" : "text-sm font-medium leading-5"
+                  item.readAt
+                    ? "text-sm font-normal leading-5"
+                    : "text-sm font-medium leading-5"
                 }
               >
                 {item.title}
@@ -87,4 +89,3 @@ export function NotificationList({ items: initial }: { items: Item[] }) {
     </div>
   );
 }
-
