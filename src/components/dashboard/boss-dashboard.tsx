@@ -169,26 +169,6 @@ export function BossDashboard({
               />
             </section>
 
-            <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 border-b border-border px-1 pb-3 text-sm">
-              <CircleAlert
-                className={cx(
-                  "size-4 shrink-0",
-                  metrics.openBlockers ? "text-destructive" : "text-success",
-                )}
-                aria-hidden
-              />
-              <span className="font-medium text-foreground">
-                {metrics.openBlockers
-                  ? `${metrics.openBlockers} 项开放阻塞`
-                  : "当前无开放阻塞"}
-              </span>
-              {firstBlocker ? (
-                <span className="min-w-0 truncate text-muted-foreground">
-                  {firstBlocker.projectName} · {firstBlocker.description}
-                </span>
-              ) : null}
-            </div>
-
             <section
               className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(390px,2fr)]"
               aria-label="项目全景与效能分析"
@@ -210,6 +190,25 @@ export function BossDashboard({
                     </p>
                   </div>
                 </CardHeader>
+                {metrics.openBlockers > 0 ? (
+                  <div className="flex min-w-0 items-start gap-2 border-b border-border px-5 py-2.5 text-xs">
+                    <CircleAlert
+                      className="mt-0.5 size-3.5 shrink-0 text-destructive"
+                      aria-hidden
+                    />
+                    <p className="min-w-0 text-muted-foreground">
+                      <span className="font-medium text-destructive">
+                        {metrics.openBlockers} 项开放阻塞
+                      </span>
+                      {firstBlocker ? (
+                        <span className="ml-2">
+                          {firstBlocker.projectName} ·{" "}
+                          {firstBlocker.description}
+                        </span>
+                      ) : null}
+                    </p>
+                  </div>
+                ) : null}
                 <CardBody className="p-0">
                   {breakdown.projects.length ? (
                     <div className="divide-y divide-border">
