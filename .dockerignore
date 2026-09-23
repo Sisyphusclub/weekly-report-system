@@ -1,7 +1,11 @@
 node_modules
-.next
+.next*
 .git
 .env*
+.local
+.agents
+.codex-backups
+.docker-config
 coverage
 playwright-report
 test-results

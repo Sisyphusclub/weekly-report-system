@@ -1,0 +1,129 @@
+name: weekly-report
+
+x-app-environment: &app-environment
+  DATABASE_URL: postgresql://${POSTGRES_USER:?set POSTGRES_USER}:${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB:?set POSTGRES_DB}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?set BETTER_AUTH_SECRET}
+  APP_ENV: ${APP_ENV:-production}
+  S3_ENDPOINT: ${S3_ENDPOINT:?set S3_ENDPOINT}
+  S3_REGION: ${S3_REGION:-us-east-1}
+  S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+  S3_ACCESS_KEY_ID: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID}
+  S3_SECRET_ACCESS_KEY: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY}
+  ATTACHMENT_SCANNER_URL: http://app:3000/api/internal/attachment-scan
+  ATTACHMENT_SCANNER_TOKEN: ${ATTACHMENT_SCANNER_TOKEN:?set ATTACHMENT_SCANNER_TOKEN}
+  CLAMAV_URL: tcp://clamav:3310
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:?set POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:?set POSTGRES_DB}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  minio:
+    image: quay.io/minio/minio:latest
+    command: server /data
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY}
+      MINIO_API_CORS_ALLOW_ORIGIN: ${BETTER_AUTH_URL:?set BETTER_AUTH_URL}
+    ports:
+      - "127.0.0.1:${S3_PORT:-9000}:9000"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  minio-init:
+    image: quay.io/minio/mc:latest
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - >-
+        mc alias set local http://minio:9000 "$${MINIO_ROOT_USER}" "$${MINIO_ROOT_PASSWORD}";
+        mc mb --ignore-existing "local/$${S3_BUCKET}";
+        mc anonymous set none "local/$${S3_BUCKET}";
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY_ID:?set S3_ACCESS_KEY_ID}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_ACCESS_KEY:?set S3_SECRET_ACCESS_KEY}
+      S3_BUCKET: ${S3_BUCKET:?set S3_BUCKET}
+
+  clamav:
+    image: clamav/clamav:latest
+    restart: unless-stopped
+    expose:
+      - "3310"
+    volumes:
+      - clamav-data:/var/lib/clamav
+    healthcheck:
+      test: ["CMD-SHELL", "clamdscan --ping 3"]
+      interval: 30s
+      timeout: 10s
+      retries: 20
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+      minio-init:
+        condition: service_completed_successfully
+      clamav:
+        condition: service_healthy
+    environment: *app-environment
+    ports:
+      - "127.0.0.1:${APP_PORT:-3000}:3000"
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  tools:
+    profiles: [tools]
+    build:
+      context: .
+      target: tools
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:22-alpine}
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      <<: *app-environment
+      REMINDER_ORGANIZATION_ID: ${REMINDER_ORGANIZATION_ID:-}
+      CALENDAR_YEAR: ${CALENDAR_YEAR:-2026}
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+
+volumes:
+  postgres-data:
+  minio-data:
+  clamav-data:
