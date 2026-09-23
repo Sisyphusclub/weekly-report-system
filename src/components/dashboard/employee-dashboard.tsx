@@ -189,7 +189,7 @@ export function EmployeeDashboard({
         </Col>
       </Row>
 
-      <Card className="overflow-hidden border-border/80 shadow-xs">
+      <Card className="overflow-hidden border-border/80">
         <CardHeader className="bg-muted/25">
           <Inline justify="between" gap="md" wrap>
             <section>
@@ -197,7 +197,8 @@ export function EmployeeDashboard({
                 今日计划与实际
               </h2>
               <p className="mt-1 text-xs text-muted-foreground">
-                {completedPlans}/{plans.length} 项计划已核销，达成率 {fulfillment}%
+                {completedPlans}/{plans.length} 项计划已核销，达成率{" "}
+                {fulfillment}%
               </p>
             </section>
             <ButtonLink href="/daily" variant="secondary" size="small">
@@ -252,7 +253,7 @@ export function EmployeeDashboard({
         </CardBody>
       </Card>
 
-      <Card className="overflow-hidden border-border/80 shadow-xs">
+      <Card className="overflow-hidden border-border/80">
         <CardHeader className="bg-muted/25">
           <Inline justify="between" gap="md">
             <Inline gap="sm">
@@ -309,8 +310,8 @@ function WorkColumn({
         emptyState={empty}
         itemClassName={
           kind === "plan"
-            ? "border-info-border/70 border-l-2 bg-info-subtle/30 shadow-none"
-            : "border-success-border/70 border-l-2 bg-card shadow-xs"
+            ? "border-info-border/70 border-l-2 bg-info-subtle/30"
+            : "border-success-border/70 border-l-2 bg-card"
         }
         renderItem={(entry, index) => (
           <ListItem
