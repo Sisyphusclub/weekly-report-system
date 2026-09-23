@@ -69,12 +69,14 @@ async function main() {
         assert.ok(await page.locator("main").isVisible());
         if (viewport.width === 1440) {
           const summary = `日报验收 ${randomUUID()}`;
-          await page.getByLabel("工作总结", { exact: true }).fill(summary);
           await page
-            .getByLabel("无实际任务时的原因", { exact: true })
+            .getByLabel("补充说明（可选）", { exact: true })
+            .fill(summary);
+          await page
+            .getByLabel("没有实际工作的原因", { exact: true })
             .fill("当日培训，无项目任务");
           await page
-            .getByLabel("无下一周期计划时的原因", { exact: true })
+            .getByLabel("没有计划的原因", { exact: true })
             .fill("等待下一周期安排");
           await page
             .getByRole("button", { name: "保存草稿", exact: true })
@@ -92,7 +94,7 @@ async function main() {
             .toBe(summary);
           await page.reload();
           await expect(
-            page.getByLabel("工作总结", { exact: true }),
+            page.getByLabel("补充说明（可选）", { exact: true }),
           ).toHaveValue(summary);
           await page
             .getByRole("button", { name: "预览并提交", exact: true })
@@ -116,7 +118,7 @@ async function main() {
             .toBe("SUBMITTED");
           await page.reload();
           await expect(
-            page.getByLabel("工作总结", { exact: true }),
+            page.getByLabel("补充说明（可选）", { exact: true }),
           ).toBeDisabled();
           console.log(
             "PASS: daily draft persistence, reload, submission preview, database submission, submitted form lock",
@@ -500,7 +502,7 @@ async function main() {
                 [blockerId],
               )
             ).rows[0];
-            const assigned = await bossContext.request.patch(
+            const assignmentDenied = await bossContext.request.patch(
               `${origin}/api/blockers/${blockerId}`,
               {
                 headers: { origin },
@@ -511,18 +513,18 @@ async function main() {
                 },
               },
             );
-            assert.equal(assigned.status(), 200);
-            const acknowledged = await bossContext.request.patch(
+            assert.equal(assignmentDenied.status(), 400);
+            const acknowledgeDenied = await bossContext.request.patch(
               `${origin}/api/blockers/${blockerId}`,
               {
                 headers: { origin },
                 data: {
                   action: "ACKNOWLEDGE",
-                  version: blockerState.version + 1,
+                  version: blockerState.version,
                 },
               },
             );
-            assert.equal(acknowledged.status(), 200);
+            assert.equal(acknowledgeDenied.status(), 403);
             const resolved = await context.request.patch(
               `${origin}/api/blockers/${blockerId}`,
               {
@@ -530,7 +532,7 @@ async function main() {
                 data: {
                   action: "RESOLVE",
                   resolution: "已完成协调并解除阻塞",
-                  version: blockerState.version + 2,
+                  version: blockerState.version,
                 },
               },
             );
@@ -544,7 +546,7 @@ async function main() {
               ).rows[0],
               {
                 status: "RESOLVED",
-                coordinator_id: id,
+                coordinator_id: null,
                 resolution: "已完成协调并解除阻塞",
               },
             );
@@ -558,7 +560,7 @@ async function main() {
               bossPage.getByRole("heading", { name: "阻塞中心" }),
             ).toBeVisible();
             console.log(
-              "PASS: boss revision approval and rejection, dashboard and blocker center access, version guard, reviewer identity, notification deduplication, repeated review denial",
+              "PASS: boss revision approval and rejection, read-only blocker access, version guard, reviewer identity, notification deduplication, repeated review denial",
             );
           } finally {
             await bossContext.close();
@@ -614,48 +616,16 @@ async function main() {
             "PASS: authenticated plan rolling, source preservation, concurrent idempotency, stale version rejection",
           );
           await page.goto(`${origin}/tasks`);
-          const sourceCard = page
-            .getByRole("region", { name: "任务列表", exact: true })
-            .locator(":scope > div")
-            .filter({ has: page.locator("span", { hasText: "2026-09-17" }) });
-          await expect(sourceCard).toHaveCount(1);
-          await sourceCard.getByLabel(/新截止日期/).fill("2026-09-20");
-          await expect(sourceCard.getByLabel(/新截止日期/)).toHaveValue(
-            "2026-09-20",
-          );
+          await page.waitForURL("**/daily");
           await expect(
-            sourceCard.getByRole("button", { name: "滚动计划", exact: true }),
-          ).toBeEnabled();
-          await sourceCard
-            .getByRole("button", { name: "滚动计划", exact: true })
-            .click();
-          await expect(sourceCard.getByRole("status")).toHaveText(
-            "后续计划已创建",
-          );
-          await expect
-            .poll(
-              async () =>
-                (
-                  await pool.query(
-                    "SELECT count(*)::int AS count FROM work_task WHERE source_task_id=$1 AND due_date='2026-09-20'",
-                    [planId],
-                  )
-                ).rows[0].count,
-            )
-            .toBe(1);
-          await page.reload();
-          await expect(
-            page
-              .getByRole("region", { name: "任务列表", exact: true })
-              .locator(":scope > div")
-              .filter({ has: page.locator("span", { hasText: "2026-09-20" }) }),
-          ).toHaveCount(1);
+            page.getByRole("heading", { name: "今日工作台", exact: true }),
+          ).toBeVisible();
           console.log(
-            "PASS: plan roll date input, button submission, success feedback, refreshed task list",
+            "PASS: retired task management route redirects to the daily workspace",
           );
         } else {
           await expect(
-            page.getByLabel("工作总结", { exact: true }),
+            page.getByLabel("补充说明（可选）", { exact: true }),
           ).toBeDisabled();
         }
         assert.equal(
@@ -753,7 +723,12 @@ async function main() {
           `/api/admin/users/${createdRow.id}/reset-password`,
           { password: resetPassword },
         );
-        assert.equal(reset.status(), 200);
+        const resetResult = await reset.json().catch(() => null);
+        assert.equal(
+          reset.status(),
+          200,
+          `admin reset status ${reset.status()}: ${JSON.stringify(resetResult)}`,
+        );
         assert.equal(
           await (
             await employeeContext.request.get(`${origin}/api/auth/get-session`)

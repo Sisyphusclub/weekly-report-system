@@ -22,6 +22,11 @@ export default defineConfig({
     url: "http://127.0.0.1:3100/login",
     reuseExistingServer: false,
     timeout: 120000,
-    env: { DATABASE_URL: "", BETTER_AUTH_SECRET: "", APP_ENV: "development" },
+    env: {
+      DATABASE_URL: "",
+      BETTER_AUTH_SECRET: "",
+      APP_ENV: "development",
+      BROWSER_TEST_BUILD: "1",
+    },
   },
 });
