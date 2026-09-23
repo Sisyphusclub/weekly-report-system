@@ -23,6 +23,7 @@ body {
 html {
   background: var(--be-bg-canvas);
   overscroll-behavior-y: none;
+  scrollbar-gutter: stable;
 }
 
 body {
