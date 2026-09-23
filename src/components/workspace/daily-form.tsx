@@ -318,7 +318,7 @@ function SummaryMetric({
   accentClass: string;
 }) {
   return (
-    <div className="rounded-xl border border-border bg-card px-4 py-3 shadow-xs">
+    <Card className="px-4 py-3">
       <div className="flex items-center gap-2">
         <span className={`size-2 rounded-full ${accentClass}`} aria-hidden />
         <p className="text-xs font-medium text-muted-foreground">{label}</p>
@@ -327,7 +327,7 @@ function SummaryMetric({
         {value}
       </p>
       <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
-    </div>
+    </Card>
   );
 }
 
@@ -598,7 +598,9 @@ export function DailyForm({
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <ClipboardCheck className="size-4 text-primary" aria-hidden />
-              <h2 className="text-base font-semibold text-foreground">工作执行台</h2>
+              <h2 className="text-base font-semibold text-foreground">
+                工作执行台
+              </h2>
               <Badge color="info">计划 → 实际</Badge>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
@@ -620,7 +622,9 @@ export function DailyForm({
               <div className="mb-3 flex items-center justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <h3 className="text-sm font-semibold text-foreground">今日工作计划</h3>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      今日工作计划
+                    </h3>
                     <Badge color="info">待推进</Badge>
                   </div>
                   <p className="mt-0.5 text-xs text-muted-foreground">
@@ -632,7 +636,7 @@ export function DailyForm({
                 <List
                   dataSource={plans}
                   rowKey={(_, index) => `plan-${index}`}
-                  itemClassName="min-h-[96px] border-info-border/70 border-l-2 bg-card/90 shadow-xs lg:h-[96px] lg:overflow-hidden"
+                  itemClassName="min-h-[96px] border-info-border/70 border-l-2 bg-card/90 lg:h-[96px] lg:overflow-hidden"
                   renderItem={(entry, index) => (
                     <PlanListItem
                       entry={entry}
@@ -674,7 +678,9 @@ export function DailyForm({
             >
               <div className="mb-3">
                 <div className="flex items-center gap-2">
-                  <h3 className="text-sm font-semibold text-foreground">今日实际完成</h3>
+                  <h3 className="text-sm font-semibold text-foreground">
+                    今日实际完成
+                  </h3>
                   <Badge color="success">已完成</Badge>
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -685,7 +691,7 @@ export function DailyForm({
                 <List
                   dataSource={works}
                   rowKey={(_, index) => `work-${index}`}
-                  itemClassName="min-h-[96px] border-success-border/70 border-l-2 bg-card shadow-xs lg:h-[96px] lg:overflow-hidden"
+                  itemClassName="min-h-[96px] border-success-border/70 border-l-2 bg-card lg:h-[96px] lg:overflow-hidden"
                   renderItem={(entry, index) => (
                     <WorkListItem
                       entry={entry}
