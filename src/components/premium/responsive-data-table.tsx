@@ -60,6 +60,8 @@ export type ResponsiveDataTableProps<T> = {
   search?: ResponsiveDataTableSearch<T>;
   defaultVisibleColumns?: string[];
   defaultSort?: SortState | null;
+  /** Desktop table viewport height. Omit to use the virtualized default. */
+  tableHeight?: number;
   mobilePageSize?: number;
   emptyState?: ReactNode;
   className?: string;
@@ -97,6 +99,7 @@ export function ResponsiveDataTable<T>({
   search,
   defaultVisibleColumns,
   defaultSort = null,
+  tableHeight: tableHeightProp,
   mobilePageSize = 8,
   emptyState = "没有符合条件的数据",
   className,
@@ -220,10 +223,9 @@ export function ResponsiveDataTable<T>({
     onColumnVisibilityChange?.(keys);
   };
 
-  const tableHeight = Math.min(
-    Math.max(filteredRows.length * 56 + 44, 156),
-    436,
-  );
+  const tableHeight =
+    tableHeightProp ??
+    Math.min(Math.max(filteredRows.length * 56 + 44, 156), 436);
 
   return (
     <section

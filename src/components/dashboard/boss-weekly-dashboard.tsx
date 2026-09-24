@@ -67,13 +67,14 @@ const statusMeta: Record<
 export function BossWeeklyDashboard({
   weekStart,
   weekEnd,
-  weekLabel,
   members,
   stats,
 }: BossWeeklyDashboardProps) {
   const followUpMembers = members.filter(
     (member) => member.weeklyStatus !== "SUBMITTED" || member.openBlockers > 0,
   );
+  const tableHeight =
+    members.length <= 16 ? Math.max(members.length * 56 + 44, 156) : undefined;
 
   return (
     <div className="space-y-4">
@@ -98,7 +99,7 @@ export function BossWeeklyDashboard({
           icon={Clock3}
           label="待跟进"
           value={stats.draft + stats.missing}
-          suffix={`人 · 草稿 ${stats.draft}`}
+          suffix={`人 · 未提交 ${stats.missing} · 草稿 ${stats.draft}`}
           tone={stats.draft + stats.missing ? "danger" : "neutral"}
           compact
         />
@@ -210,7 +211,7 @@ export function BossWeeklyDashboard({
               成员周报状态
             </h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              查看每位成员的周报提交、日报完成和阻塞情况
+              查看每位成员的周报提交、日报完成和阻塞情况，优先处理未提交或有阻塞的成员
             </p>
           </div>
           <span className="text-xs tabular-nums text-muted-foreground">
@@ -223,6 +224,7 @@ export function BossWeeklyDashboard({
             columns={weeklyColumns}
             getRowId={(row) => row.id}
             defaultSort={{ key: "status", direction: "asc" }}
+            tableHeight={tableHeight}
             defaultVisibleColumns={[
               "member",
               "status",
@@ -231,74 +233,26 @@ export function BossWeeklyDashboard({
               "blockers",
               "actions",
             ]}
+            filter={{
+              label: "周报状态",
+              options: [
+                { value: "SUBMITTED", label: "已提交" },
+                { value: "DRAFT", label: "草稿" },
+                { value: "MISSING", label: "未提交" },
+              ],
+              getValue: (row) => row.weeklyStatus,
+            }}
             search={{
               placeholder: "搜索成员或周报摘要",
               getSearchText: (row) =>
                 `${row.name} ${row.title ?? ""} ${row.summary}`,
             }}
             emptyState="本周期还没有团队成员数据"
+            className="rounded-none border-0"
             tableClassName="border-0"
           />
         </CardBody>
       </Card>
-
-      {followUpMembers.length ? (
-        <Card>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <CircleAlert className="size-4 text-warning" aria-hidden />
-              <h2 className="text-base font-semibold text-foreground">
-                待跟进
-              </h2>
-            </div>
-            <p className="mt-1 text-xs text-muted-foreground">
-              优先处理未提交周报和仍有开放阻塞的成员
-            </p>
-          </CardHeader>
-          <CardBody className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-            {followUpMembers.map((member) => (
-              <div
-                key={member.id}
-                className="flex min-w-0 items-center justify-between gap-3 rounded-lg border border-border bg-muted/20 px-3 py-3"
-              >
-                <div className="flex min-w-0 items-center gap-2">
-                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-primary/10 text-xs font-semibold text-primary">
-                    {member.name.slice(0, 1)}
-                  </span>
-                  <div className="min-w-0">
-                    <p className="truncate text-sm font-medium text-foreground">
-                      {member.name}
-                    </p>
-                    <p className="mt-0.5 text-xs text-muted-foreground">
-                      {member.weeklyStatus === "SUBMITTED"
-                        ? "周报已提交"
-                        : statusMeta[member.weeklyStatus].label}
-                      {member.openBlockers
-                        ? ` · 阻塞 ${member.openBlockers} 项`
-                        : ""}
-                    </p>
-                  </div>
-                </div>
-                {member.reportId ? (
-                  <ButtonLink
-                    href={`/reports/${member.reportId}`}
-                    variant="ghost"
-                    size="small"
-                    className="shrink-0"
-                  >
-                    查看
-                  </ButtonLink>
-                ) : null}
-              </div>
-            ))}
-          </CardBody>
-        </Card>
-      ) : null}
-
-      <p className="text-xs text-muted-foreground">
-        周报周期：{formatDate(weekStart)} — {formatDate(weekEnd)} · 归档日：
-        {formatDate(weekLabel)}
-      </p>
     </div>
   );
 }
