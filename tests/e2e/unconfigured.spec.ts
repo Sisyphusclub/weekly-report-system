@@ -26,6 +26,9 @@ test("unconfigured login is accessible, honest and responsive", async ({
 });
 
 test("business routes require authentication", async ({ page }) => {
+  // The matrix intentionally visits every protected route; allow slower CI runners
+  // to finish compiling each route without weakening the redirect assertions.
+  test.setTimeout(60_000);
   for (const path of [
     "/dashboard",
     "/activity",
