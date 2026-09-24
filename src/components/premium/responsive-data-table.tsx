@@ -252,9 +252,9 @@ export function ResponsiveDataTable<T>({
             </div>
           ) : null}
 
-          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 lg:max-w-xl lg:justify-end">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2 lg:ml-auto lg:flex-none lg:justify-end">
             {search ? (
-              <label className="relative min-w-0 flex-1 lg:max-w-64">
+              <label className="relative min-w-0 flex-1 lg:w-64 lg:flex-none">
                 <span className="sr-only">搜索表格</span>
                 <Search
                   aria-hidden
