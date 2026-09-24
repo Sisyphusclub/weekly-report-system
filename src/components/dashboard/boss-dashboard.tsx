@@ -718,10 +718,10 @@ function ProjectSnapshot({
   return (
     <article
       className={cx(
-        "flex h-full min-h-0 flex-col border-b border-border/80 px-5 py-5 transition-colors last:border-b-0",
+        "flex h-full min-h-0 flex-col px-5 py-5 transition-colors",
         project.blocked
-          ? "border-l-2 border-l-destructive bg-destructive/5 hover:bg-destructive/10"
-          : "border-l-2 border-l-success/60 bg-muted/15 hover:bg-muted/35",
+          ? "bg-destructive/5 hover:bg-destructive/10"
+          : "bg-muted/15 hover:bg-muted/35",
       )}
     >
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
