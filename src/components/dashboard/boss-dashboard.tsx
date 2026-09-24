@@ -26,11 +26,14 @@ import {
   TabsTrigger,
 } from "@/components/motion/tabs";
 import { WorkAnalyticsCharts } from "@/components/dashboard/work-analytics-charts";
+import { BossWeeklyDashboard } from "@/components/dashboard/boss-weekly-dashboard";
 import { Button } from "@/components/motion/button/base";
 import { ProgressCircle } from "@/components/premium/stats/progress-circle";
 import { StatisticCard } from "@/components/premium/stats/statistic-card";
 import { DatePicker, Select, SelectItem } from "@/components/premium/forms";
 import type { DashboardBreakdown, DashboardMetrics } from "@/lib/metrics";
+import type { getBossWeeklyData } from "@/lib/boss-weekly-data";
+import { weekDates } from "@/lib/domain";
 import { cx } from "@/utils/cx";
 
 type Member = DashboardBreakdown["members"][number];
@@ -42,16 +45,20 @@ export function BossDashboard({
   todaySubmission,
   memberCount,
   selectedDate,
+  selectedTab,
   selectedProjectId,
   availableProjects,
+  weeklyData,
 }: {
   metrics: DashboardMetrics;
   breakdown: DashboardBreakdown;
   todaySubmission: { submitted: number; total: number };
   memberCount: number;
   selectedDate: string;
+  selectedTab: "daily" | "weekly" | "overview";
   selectedProjectId?: string;
   availableProjects: Array<{ id: string; name: string }>;
+  weeklyData?: Awaited<ReturnType<typeof getBossWeeklyData>>;
 }) {
   const router = useRouter();
   const [selectedMember, setSelectedMember] = useState<Member | null>(null);
@@ -68,35 +75,53 @@ export function BossDashboard({
     <div className="w-full min-w-0">
       <DashboardFilters
         selectedDate={selectedDate}
+        selectedTab={selectedTab}
         selectedProject={selectedProjectId}
         availableProjects={availableProjects}
         onDateChange={(date) => {
           const params = new URLSearchParams(window.location.search);
           if (date) params.set("date", date);
           else params.delete("date");
-          router.push(`/dashboard?${params.toString()}`);
+          router.push(`/boss/dashboard?${params.toString()}`);
         }}
         onProjectChange={(projectId) => {
           const params = new URLSearchParams(window.location.search);
           if (projectId && projectId !== "ALL")
             params.set("project", projectId);
           else params.delete("project");
-          router.push(`/dashboard?${params.toString()}`);
+          router.push(`/boss/dashboard?${params.toString()}`);
         }}
       />
-      <Tabs defaultValue="daily" variant="underline" size="large">
+      <Tabs
+        value={selectedTab}
+        onValueChange={(tab) => {
+          if (tab === selectedTab) return;
+          const params = new URLSearchParams(window.location.search);
+          params.set("tab", tab);
+          router.push(`/boss/dashboard?${params.toString()}`);
+        }}
+        variant="underline"
+        size="large"
+      >
         <div className="border-b border-border">
-          <TabsList className="w-full gap-0 border-b-0 sm:w-auto">
+          <TabsList className="gap-0 border-b-0">
             <TabsTrigger
               value="daily"
-              className="flex-1 justify-center sm:w-[136px] sm:flex-none"
+              className="shrink-0 justify-center sm:w-[136px]"
             >
               <ClipboardList className="mr-2 size-4" aria-hidden />
               全员日报
             </TabsTrigger>
             <TabsTrigger
+              value="weekly"
+              className="shrink-0 justify-center sm:w-[136px]"
+            >
+              <CalendarCheck2 className="mr-2 size-4" aria-hidden />
+              周报
+            </TabsTrigger>
+            <TabsTrigger
               value="overview"
-              className="flex-1 justify-center sm:w-[136px] sm:flex-none"
+              className="shrink-0 justify-center sm:w-[136px]"
             >
               <ChartNoAxesCombined className="mr-2 size-4" aria-hidden />
               项目与效能
@@ -249,6 +274,19 @@ export function BossDashboard({
           </div>
         </TabsContent>
 
+        <TabsContent value="weekly" animation="fade">
+          {weeklyData ? (
+            <div className="flex flex-col gap-4">
+              {selectedProjectId ? (
+                <p className="text-xs text-muted-foreground">
+                  按项目成员筛选；周报摘要和日报产出仍统计成员整周工作。
+                </p>
+              ) : null}
+              <BossWeeklyDashboard {...weeklyData} />
+            </div>
+          ) : null}
+        </TabsContent>
+
         <TabsContent value="daily" animation="fade">
           <div className="flex flex-col gap-4">
             <DailySummary
@@ -305,12 +343,14 @@ export function BossDashboard({
 
 function DashboardFilters({
   selectedDate,
+  selectedTab,
   selectedProject,
   availableProjects,
   onDateChange,
   onProjectChange,
 }: {
   selectedDate: string;
+  selectedTab: "daily" | "weekly" | "overview";
   selectedProject?: string;
   availableProjects: Array<{ id: string; name: string }>;
   onDateChange: (value: string) => void;
@@ -319,14 +359,17 @@ function DashboardFilters({
   return (
     <div className="mb-4 flex flex-wrap items-end gap-3">
       <DatePicker
-        label="日报日期"
+        label={selectedTab === "weekly" ? "周报周期" : "日报日期"}
         value={selectedDate}
         onChange={onDateChange}
         size="small"
-        className="w-[180px]"
-        aria-label="日报日期"
+        formatValue={selectedTab === "weekly" ? formatWeekPeriod : undefined}
+        className={
+          selectedTab === "weekly" ? "w-full sm:w-72" : "w-full sm:w-44"
+        }
+        aria-label={selectedTab === "weekly" ? "周报周期" : "日报日期"}
       />
-      <div className="w-[220px]">
+      <div className="w-full sm:w-56">
         <label className="mb-1.5 block px-1 text-sm font-medium text-foreground">
           项目
         </label>
@@ -350,6 +393,14 @@ function DashboardFilters({
       </div>
     </div>
   );
+}
+
+function formatWeekPeriod(date: string) {
+  const [start, , , , , , end] = weekDates(date);
+  const [startYear, startMonth, startDay] = start.split("-");
+  const [endYear, endMonth, endDay] = end.split("-");
+  const endLabel = `${startYear === endYear ? "" : `${endYear}年`}${endMonth}月${endDay}日`;
+  return `${startYear}年${startMonth}月${startDay}日 — ${endLabel}`;
 }
 
 function DailySummary({

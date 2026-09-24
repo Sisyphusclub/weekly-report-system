@@ -24,7 +24,8 @@ import {
   getDashboardMetrics,
   submissionRate,
 } from "@/lib/metrics";
-import { dailyEntriesSchema, shanghaiDate } from "@/lib/daily-input";
+import { dateInput, dailyEntriesSchema, shanghaiDate } from "@/lib/daily-input";
+import { getBossWeeklyData } from "@/lib/boss-weekly-data";
 import { WorkspaceShell } from "@/components/workspace/shell";
 import { ButtonLink } from "@/components/motion/button/base";
 import { Badge } from "@/components/premium/badge";
@@ -43,17 +44,19 @@ export const metadata = { title: "工作看板" };
 export default async function DashboardPage({
   searchParams,
 }: {
-  searchParams: Promise<{ date?: string; project?: string }>;
+  searchParams: Promise<{ date?: string; project?: string; tab?: string }>;
 }) {
   const actor = await requireUser();
   const db = getDb();
   const now = new Date();
   const params = await searchParams;
   const requestedDate = params.date?.trim() ?? "";
-  const selectedDate = /^\d{4}-\d{2}-\d{2}$/.test(requestedDate)
+  const selectedDate = dateInput.safeParse(requestedDate).success
     ? requestedDate
     : shanghaiDate(now);
   const selectedProject = params.project?.trim() || undefined;
+  const selectedTab =
+    params.tab === "weekly" || params.tab === "overview" ? params.tab : "daily";
   const data = await getSubmissionData(actor, now);
   if (actor.role === "ADMIN") {
     const counts = await Promise.all([
@@ -199,16 +202,27 @@ export default async function DashboardPage({
   const today = shanghaiDate(now).replaceAll("-", ".");
   const isBoss = actor.role === "BOSS";
   if (isBoss) {
+    const weeklyData =
+      selectedTab === "weekly"
+        ? await getBossWeeklyData(actor, selectedDate, selectedProject)
+        : undefined;
     const todayEligible = breakdown.members.length;
     const todaySubmitted = breakdown.members.filter(
       (member) => member.todaySubmitted,
     ).length;
+    const periodLabel = weeklyData
+      ? `${weeklyData.weekStart.replaceAll("-", ".")} — ${weeklyData.weekEnd.replaceAll("-", ".")}`
+      : selectedDate.replaceAll("-", ".");
     return (
       <WorkspaceShell actor={actor} selected="dashboard">
         <PageIntro
-          eyebrow={`负责人视角 · ${selectedDate.replaceAll("-", ".")}`}
+          eyebrow={`负责人视角 · ${periodLabel}`}
           title="团队工作驾驶舱"
-          description="按日期查看团队日报、计划、实际工作和产出。"
+          description={
+            selectedTab === "weekly"
+              ? "查看团队周报提交、日报完成与待跟进事项。"
+              : "按日期查看团队日报、计划、实际工作和产出。"
+          }
         />
         <BossDashboard
           metrics={metrics}
@@ -216,8 +230,10 @@ export default async function DashboardPage({
           todaySubmission={{ submitted: todaySubmitted, total: todayEligible }}
           memberCount={breakdown.members.length}
           selectedDate={selectedDate}
+          selectedTab={selectedTab}
           selectedProjectId={selectedProject}
           availableProjects={availableProjects}
+          weeklyData={weeklyData}
         />
       </WorkspaceShell>
     );

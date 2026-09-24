@@ -76,7 +76,7 @@ export function BossWeeklyDashboard({
   );
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
         <StatisticCard
           icon={Users}

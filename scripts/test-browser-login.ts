@@ -606,12 +606,45 @@ async function main() {
             ).toBeVisible();
             await bossPage.goto(`${origin}/boss/weekly?date=2026-09-11`);
             await expect(
-              bossPage.getByRole("heading", {
-                name: "\u5468\u62a5\u770b\u677f",
-              }),
+              bossPage.getByRole("heading", { name: "团队工作驾驶舱" }),
             ).toBeVisible();
+            await expect(bossPage).toHaveURL(
+              /\/boss\/dashboard\?tab=weekly&date=2026-09-11/,
+            );
+            await expect(
+              bossPage.getByRole("tab", { name: "周报", exact: true }),
+            ).toHaveAttribute("aria-selected", "true");
+            await expect(
+              bossPage.getByRole("button", { name: "周报周期" }),
+            ).toContainText("2026年09月07日 — 09月13日");
             await expect(
               bossPage.getByText("2 \u4f4d\u6210\u5458", { exact: true }),
+            ).toBeVisible();
+            await expect(
+              bossPage.getByText("待审核的修订内容").first(),
+            ).toBeVisible();
+            await expect(
+              bossPage.getByRole("link", { name: "查看周报" }),
+            ).toHaveAttribute("href", `/reports/${weekly.rows[0].id}`);
+            await bossPage.getByRole("tab", { name: "项目与效能" }).click();
+            await expect(bossPage).toHaveURL(/tab=overview/);
+            await bossPage
+              .getByRole("tab", { name: "周报", exact: true })
+              .click();
+            await expect(bossPage).toHaveURL(/tab=weekly/);
+            await expect(
+              bossPage.getByRole("button", { name: "周报周期" }),
+            ).toBeVisible();
+            await bossPage.goto(
+              `${origin}/boss/dashboard?tab=weekly&date=2026-09-11&project=${linkedProjectId}`,
+            );
+            await expect(
+              bossPage.getByText("1 \u4f4d\u6210\u5458", { exact: true }),
+            ).toBeVisible();
+            await expect(
+              bossPage.getByText(
+                "按项目成员筛选；周报摘要和日报产出仍统计成员整周工作。",
+              ),
             ).toBeVisible();
             await bossPage.setViewportSize({ width: 390, height: 844 });
             assert.equal(

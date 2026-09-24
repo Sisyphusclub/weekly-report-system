@@ -338,7 +338,6 @@ function navigationForRole(
         label: "团队视角",
         items: [
           nav("dashboard", "工作总览", "/boss/dashboard", LayoutDashboard),
-          nav("weekly", "周报看板", "/boss/weekly", CalendarDays),
           nav("members", "成员看板", "/boss/members", Users),
           nav("projects", "项目协同", "/boss/projects", FolderKanban),
           nav("blockers", "阻塞中心", "/blockers", CircleAlert),
