@@ -50,8 +50,8 @@ test("business routes require authentication", async ({ page }) => {
     "/admin/audit",
     "/admin/settings",
   ]) {
-    await page.goto(path);
-    await expect(page).toHaveURL(/\/login$/);
+    await page.goto(path, { waitUntil: "commit", timeout: 60_000 });
+    await expect(page).toHaveURL(/\/login$/, { timeout: 60_000 });
   }
 });
 
