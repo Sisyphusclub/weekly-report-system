@@ -604,6 +604,25 @@ async function main() {
             await expect(
               bossPage.getByRole("heading", { name: "团队工作驾驶舱" }),
             ).toBeVisible();
+            await bossPage.goto(`${origin}/boss/weekly?date=2026-09-11`);
+            await expect(
+              bossPage.getByRole("heading", {
+                name: "\u5468\u62a5\u770b\u677f",
+              }),
+            ).toBeVisible();
+            await expect(
+              bossPage.getByText("2 \u4f4d\u6210\u5458", { exact: true }),
+            ).toBeVisible();
+            await bossPage.setViewportSize({ width: 390, height: 844 });
+            assert.equal(
+              await bossPage.evaluate(
+                () =>
+                  document.documentElement.scrollWidth >
+                  document.documentElement.clientWidth,
+              ),
+              false,
+            );
+            await bossPage.setViewportSize({ width: 1280, height: 900 });
             await bossPage.goto(origin + "/dashboard?date=2026-09-17");
             await bossPage
               .getByRole("button", { name: /查看浏览器验收的日报明细/ })

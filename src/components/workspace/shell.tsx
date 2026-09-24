@@ -338,6 +338,7 @@ function navigationForRole(
         label: "团队视角",
         items: [
           nav("dashboard", "工作总览", "/boss/dashboard", LayoutDashboard),
+          nav("weekly", "周报看板", "/boss/weekly", CalendarDays),
           nav("members", "成员看板", "/boss/members", Users),
           nav("projects", "项目协同", "/boss/projects", FolderKanban),
           nav("blockers", "阻塞中心", "/blockers", CircleAlert),
@@ -384,7 +385,7 @@ function pageLabel(selected: NavKey, role: Role) {
       dashboard:
         role === "ADMIN" ? "日报总览" : role === "BOSS" ? "工作总览" : "概览",
       daily: "今日工作台",
-      weekly: "本周周报",
+      weekly: role === "BOSS" ? "周报看板" : "本周周报",
       blockers: "阻塞中心",
       reports: role === "ADMIN" ? "我的报告" : "报告查询",
       notifications: "通知中心",
