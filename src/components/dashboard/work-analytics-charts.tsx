@@ -12,6 +12,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import { ChartNoAxesCombined } from "lucide-react";
 import { memo, useMemo } from "react";
 import { Card, CardBody, CardHeader } from "@/components/premium/cards/card";
 import {
@@ -330,11 +331,18 @@ function ChartEmptyState({
     <div
       className={
         compact
-          ? "grid min-h-[180px] place-items-center border border-dashed border-border bg-muted/30 px-4 text-center text-sm text-muted-foreground"
-          : "grid min-h-[280px] place-items-center border border-dashed border-border bg-muted/30 px-4 text-center text-sm text-muted-foreground"
+          ? "grid min-h-[148px] place-items-center rounded-lg border border-dashed border-border bg-muted/30 px-4 text-center"
+          : "grid min-h-[240px] place-items-center rounded-lg border border-dashed border-border bg-muted/30 px-4 text-center"
       }
     >
-      {text}
+      <div className="grid justify-items-center gap-2">
+        <ChartNoAxesCombined
+          className="size-5 text-muted-foreground/70"
+          aria-hidden
+        />
+        <p className="text-sm text-muted-foreground">{text}</p>
+        <p className="text-xs text-muted-foreground/80">提交日报后自动生成</p>
+      </div>
     </div>
   );
 }

@@ -196,7 +196,7 @@ export function BossDashboard({
             </section>
 
             <section
-              className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(390px,2fr)]"
+              className="grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(390px,2fr)]"
               aria-label="项目全景与效能分析"
             >
               <Card className="min-w-0 overflow-hidden">
@@ -365,7 +365,7 @@ function DashboardFilters({
         size="small"
         formatValue={selectedTab === "weekly" ? formatWeekPeriod : undefined}
         className={
-          selectedTab === "weekly" ? "w-full sm:w-72" : "w-full sm:w-44"
+          selectedTab === "weekly" ? "w-full sm:w-72" : "w-full sm:w-52"
         }
         aria-label={selectedTab === "weekly" ? "周报周期" : "日报日期"}
       />
@@ -716,60 +716,74 @@ function ProjectSnapshot({
 }) {
   const total = project.completed + project.inProgress + project.blocked;
   return (
-    <article className="px-5 py-4">
-      <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+    <article className="px-5 py-5 transition-colors hover:bg-muted/20">
+      <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
-            <h3 className="truncate text-sm font-semibold text-foreground">
+            <h3 className="truncate text-base font-semibold leading-6 text-foreground">
               {project.name}
             </h3>
             <Badge color={project.blocked ? "danger" : "success"}>
               {project.blocked ? `${project.blocked} 项阻塞` : "运行正常"}
             </Badge>
           </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            负责人：{project.owner?.name ?? "未设置"} · 本周 {total} 条工作记录
-          </p>
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+            <span>
+              负责人：
+              <span className="font-medium text-foreground">
+                {project.owner?.name ?? "未设置"}
+              </span>
+            </span>
+            <span>
+              本周{" "}
+              <span className="font-semibold tabular-nums text-foreground">
+                {total}
+              </span>{" "}
+              条工作记录
+            </span>
+          </div>
         </div>
         <div className="flex w-full shrink-0 items-center justify-between gap-3 sm:w-auto sm:justify-start">
-          <div className="flex -space-x-1.5" aria-label="协同成员">
-            {project.members.slice(0, 4).map((member) => (
-              <Avatar
-                key={member.id}
-                initials={member.name.slice(0, 1)}
-                size="sm"
-                className="ring-2 ring-card"
-                title={member.name}
-              />
-            ))}
-            {project.members.length > 4 ? (
-              <span className="grid size-6 place-items-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground ring-2 ring-card">
-                +{project.members.length - 4}
-              </span>
-            ) : null}
+          <div className="flex items-center gap-2" aria-label="协同成员">
+            <span className="hidden text-xs text-muted-foreground sm:inline">
+              协同成员
+            </span>
+            <div className="flex -space-x-1.5">
+              {project.members.slice(0, 4).map((member) => (
+                <Avatar
+                  key={member.id}
+                  initials={member.name.slice(0, 1)}
+                  size="sm"
+                  className="ring-2 ring-card"
+                  title={member.name}
+                />
+              ))}
+              {project.members.length > 4 ? (
+                <span className="grid size-6 place-items-center rounded-full bg-muted text-[10px] font-semibold text-muted-foreground ring-2 ring-card">
+                  +{project.members.length - 4}
+                </span>
+              ) : null}
+            </div>
           </div>
-          <Button variant="ghost" size="small" onClick={onOpenLogs}>
+          <Button variant="outline" size="small" onClick={onOpenLogs}>
             查看日志流水 <ArrowRight className="size-3.5" aria-hidden />
           </Button>
         </div>
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-1.5 text-xs">
+      <div className="mt-4 flex flex-wrap items-center gap-2 text-xs">
         <Tag color="success">已完成 {project.completed}</Tag>
         <Tag color="info">推进中 {project.inProgress}</Tag>
         <Tag color="neutral">交付物 {project.deliverables.length} 类</Tag>
       </div>
-      <div className="mt-3 flex min-w-0 items-center gap-2 border-t border-border pt-3">
-        <FileText
-          className="size-3.5 shrink-0 text-muted-foreground"
-          aria-hidden
-        />
+      <div className="mt-4 flex min-w-0 items-start gap-2 border-t border-border pt-3.5">
+        <FileText className="mt-0.5 size-4 shrink-0 text-primary" aria-hidden />
         {project.deliverables.length ? (
-          <div className="flex min-w-0 flex-1 items-center gap-1.5 overflow-hidden whitespace-nowrap">
+          <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5">
             {project.deliverables.slice(0, 3).map((item) => (
               <Tag
                 key={item.unitId}
                 color="processing"
-                className="max-w-[31%] truncate"
+                className="max-w-full truncate"
               >
                 {item.unitName} {item.quantity}
               </Tag>
@@ -781,7 +795,7 @@ function ProjectSnapshot({
             ) : null}
           </div>
         ) : (
-          <span className="text-xs text-muted-foreground">暂未登记交付物</span>
+          <span className="text-sm text-muted-foreground">暂未登记交付物</span>
         )}
       </div>
       {project.blocked > 0 ? (
