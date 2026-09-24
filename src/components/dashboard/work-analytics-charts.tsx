@@ -55,7 +55,7 @@ export const WorkAnalyticsCharts = memo(function WorkAnalyticsCharts({
 }) {
   if (embedded) {
     return (
-      <Card className="min-w-0 overflow-hidden">
+      <Card className="flex h-full min-w-0 flex-col overflow-hidden">
         <CardHeader className="py-3.5">
           <h2 className="text-sm font-semibold text-foreground">
             投入与交付分析
@@ -64,7 +64,7 @@ export const WorkAnalyticsCharts = memo(function WorkAnalyticsCharts({
             {periodLabel}工作分类占比与核心产出量
           </p>
         </CardHeader>
-        <CardBody className="divide-y divide-border p-0">
+        <CardBody className="grid min-h-0 flex-1 grid-rows-2 divide-y divide-border p-0">
           <ChartSection
             title="工作分类与精力投入"
             description="按实际工作条目统计"
@@ -124,12 +124,12 @@ function ChartSection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="px-4 py-3.5">
+    <section className="flex min-h-0 flex-col px-4 py-3.5">
       <div className="mb-2.5 flex items-baseline justify-between gap-3">
         <h3 className="text-xs font-semibold text-foreground">{title}</h3>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
-      {children}
+      <div className="min-h-0 flex-1">{children}</div>
     </section>
   );
 }

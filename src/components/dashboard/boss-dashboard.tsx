@@ -196,10 +196,10 @@ export function BossDashboard({
             </section>
 
             <section
-              className="grid items-start gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(390px,2fr)]"
+              className="grid items-stretch gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(390px,2fr)]"
               aria-label="项目全景与效能分析"
             >
-              <Card className="min-w-0 overflow-hidden">
+              <Card className="flex h-full min-w-0 flex-col overflow-hidden">
                 <CardHeader className="flex items-start justify-between gap-3 py-3.5">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -235,9 +235,9 @@ export function BossDashboard({
                     </p>
                   </div>
                 ) : null}
-                <CardBody className="p-0">
+                <CardBody className="flex min-h-0 flex-1 flex-col p-0">
                   {breakdown.projects.length ? (
-                    <div className="divide-y divide-border">
+                    <div className="grid min-h-0 flex-1 auto-rows-fr divide-y divide-border">
                       {breakdown.projects.slice(0, 5).map((project) => (
                         <ProjectSnapshot
                           key={project.id}
@@ -716,7 +716,14 @@ function ProjectSnapshot({
 }) {
   const total = project.completed + project.inProgress + project.blocked;
   return (
-    <article className="px-5 py-5 transition-colors hover:bg-muted/20">
+    <article
+      className={cx(
+        "flex h-full min-h-0 flex-col border-b border-border/80 px-5 py-5 transition-colors last:border-b-0",
+        project.blocked
+          ? "border-l-2 border-l-destructive bg-destructive/5 hover:bg-destructive/10"
+          : "border-l-2 border-l-success/60 bg-muted/15 hover:bg-muted/35",
+      )}
+    >
       <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0 flex-1">
           <div className="flex min-w-0 flex-wrap items-center gap-2">
